@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard – InternTrack</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script>
+    (function() {
+      const lang = localStorage.getItem('interntrack_lang') || 'en';
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    })();
+  </script>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <img src="/images/logo.png" alt="InternTrack" onerror="this.style.display='none'">
+    <div class="sidebar-brand-text">
+      <h2>InternTrack</h2>
+      <p data-i18n="student_portal">Student Portal</p>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label" data-i18n="nav_navigation">Navigation</div>
+    <a class="nav-item" href="/">
+      <span class="nav-icon">▦</span> <span data-i18n="nav_public">Public Dashboard</span>
+    </a>
+    <div class="nav-section-label" data-i18n="nav_my_work">My Work</div>
+    <a class="nav-item active" onclick="switchTab('overview')" href="#">
+      <span class="nav-icon">📊</span> <span data-i18n="nav_overview">Overview</span>
+    </a>
+    <a class="nav-item" onclick="switchTab('submit')" href="#">
+      <span class="nav-icon">✏️</span> <span data-i18n="nav_submit">Submit Achievement</span>
+    </a>
+    <a class="nav-item" onclick="switchTab('my')" href="#">
+      <span class="nav-icon">📋</span> <span data-i18n="nav_my_subs">My Submissions</span>
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar">🎓</div>
+      <div class="user-info">
+        <strong id="studentName">Student</strong>
+        <span id="studentTeam" data-i18n="loading">Loading…</span>
+      </div>
+    </div>
+    <button class="sidebar-login-btn" style="background:#374151;margin-top:8px;" onclick="logout()" data-i18n="btn_signout">Sign Out</button>
+  </div>
+</aside>
+
+<div class="main" id="mainLayout">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+      <span class="topbar-title" id="topbarTitle">Overview</span>
+    </div>
+    <div class="topbar-right">
+      <button class="lang-btn" onclick="toggleLang()" id="langBtn">عربي</button>
+      <span class="topbar-badge" id="teamBadge" data-i18n="badge_student">🎓 Student</span>
+    </div>
+  </header>
+
+  <div class="page-content" id="pageContent">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+
+  <footer class="footer">
+    <p data-i18n="footer">© 2026 InternTrack — Student Portal. All rights reserved.</p>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── I18N ──────────────────────────────────────────────────────────────────────
+let currentLang = localStorage.getItem('interntrack_lang') || 'en';
+
+const T = {
+  en: {
+    student_portal: 'Student Portal',
+    nav_navigation: 'Navigation',
+    nav_public: 'Public Dashboard',
+    nav_my_work: 'My Work',
+    nav_overview: 'Overview',
+    nav_submit: 'Submit Achievement',
+    nav_my_subs: 'My Submissions',
+    btn_signout: 'Sign Out',
+    badge_student: '🎓 Student',
+    loading: 'Loading…',
+    footer: '© 2026 InternTrack — Student Portal. All rights reserved.',
+    // Tabs
+    tb_overview: 'Overview',
+    tb_submit: 'Submit Achievement',
+    tb_edit: 'Edit Submission',
+    tb_my: 'My Submissions',
+    // Overview
+    welcome: 'Welcome,',
+    lbl_team: 'Team:',
+    not_assigned: 'Not assigned yet',
+    btn_submit_ach: '+ Submit Achievement',
+    lbl_total_sub: 'Total Submitted',
+    lbl_published: 'Published',
+    lbl_pending: 'Pending Review',
+    lbl_rejected: 'Rejected',
+    // No team warning
+    no_team_title: "You're not assigned to a team yet",
+    no_team_desc: "You can't submit achievements until your team leader or admin assigns you to a group. Please contact your supervisor.",
+    // How it works
+    h_how: 'How it works',
+    step1_title: '1. Submit',
+    step1_desc: 'Write up your achievement and submit it',
+    step2_title: '2. Leader Reviews',
+    step2_desc: 'Your team leader approves or gives feedback',
+    step3_title: '3. Published',
+    step3_desc: 'Approved achievements appear on the public dashboard',
+    // Recent
+    h_recent: 'Recent Submissions',
+    view_all: 'View all →',
+    no_subs: 'No submissions yet. Start by submitting your first achievement!',
+    // Submit form
+    h_submit: '✏️ Submit Achievement',
+    h_resubmit: '🔄 Resubmit Achievement',
+    sub_submit: 'Describe what you accomplished — your leader will review it before it goes live',
+    sub_resubmit: 'Update your submission and resubmit for review',
+    lbl_title: 'Achievement Title *',
+    title_ph: 'e.g. Built user authentication module',
+    title_hint: 'Keep it clear and specific',
+    lbl_desc: 'Description *',
+    desc_ph: 'Describe your achievement in detail…\n\nSuggestions:\n• What did you build / complete / learn?\n• What tools or methods did you use?\n• What was the impact or outcome?\n• Any challenges you overcame?',
+    lbl_images: 'Images (optional, max 5)',
+    img_hint: 'Screenshots, diagrams, or photos of your work',
+    info_note: 'Your submission will be sent to your team leader for review before it appears publicly. If rejected, you\'ll be able to see their feedback and resubmit.',
+    btn_submit: '🚀 Submit for Review',
+    btn_cancel: 'Cancel',
+    submitting: 'Submitting…',
+    // My submissions
+    h_my: 'My Submissions',
+    total: 'total',
+    btn_new_sub: '+ New Submission',
+    submitted_on: 'Submitted',
+    // Status inline notes
+    rejected_title: '❌ Rejected',
+    rejected_note: 'Check comments below for leader feedback. Edit and resubmit to try again.',
+    pending_title: '⏳ Waiting for leader approval',
+    pending_note: 'Your team leader will review this soon.',
+    btn_resubmit: '🔄 Edit & Resubmit',
+    btn_edit: '✏️ Edit',
+    btn_delete: '🗑️ Delete',
+    // Empty state
+    no_subs_title: 'No submissions yet',
+    no_subs_desc: 'Submit your first achievement and get it reviewed by your team leader.',
+    btn_submit_first: '+ Submit Achievement',
+    // Status badges
+    badge_published: '📢 Published',
+    badge_pending: '⏳ Pending Review',
+    badge_draft: '📝 Draft',
+    badge_rejected: '❌ Rejected',
+    // Check rejected label
+    check_comments: 'Check comments for leader feedback',
+    awaiting_leader: 'Awaiting leader',
+    // Toasts
+    toast_submitted: '🎉 Submitted! Waiting for leader review.',
+    toast_deleted: 'Deleted',
+    toast_fail_sub: 'Failed to submit',
+    toast_fail_delete: 'Cannot delete this submission',
+    toast_error: 'Error submitting',
+    // Confirm
+    confirm_delete: 'Delete this submission?',
+    max_images: 'Max 5 images',
+    supervisor_feedback_lbl: '🔒 Supervisor Feedback (Private)',
+  },
+  ar: {
+    student_portal: 'بوابة الطالب',
+    nav_navigation: 'التنقل',
+    nav_public: 'اللوحة الرئيسية',
+    nav_my_work: 'عملي',
+    nav_overview: 'نظرة عامة',
+    nav_submit: 'تقديم إنجاز',
+    nav_my_subs: 'تقديماتي',
+    btn_signout: 'تسجيل الخروج',
+    badge_student: '🎓 طالب',
+    loading: 'جارٍ التحميل…',
+    footer: '© 2026 InternTrack — بوابة الطالب. جميع الحقوق محفوظة.',
+    tb_overview: 'نظرة عامة',
+    tb_submit: 'تقديم إنجاز',
+    tb_edit: 'تعديل التقديم',
+    tb_my: 'تقديماتي',
+    welcome: 'مرحباً،',
+    lbl_team: 'الفريق:',
+    not_assigned: 'غير معين بعد',
+    btn_submit_ach: '+ تقديم إنجاز',
+    lbl_total_sub: 'إجمالي المقدمة',
+    lbl_published: 'منشورة',
+    lbl_pending: 'بانتظار المراجعة',
+    lbl_rejected: 'مرفوضة',
+    no_team_title: 'لم يتم تعيينك في فريق بعد',
+    no_team_desc: 'لا يمكنك تقديم الإنجازات حتى يعينك قائد فريقك أو المشرف في مجموعة. يرجى التواصل مع المشرف.',
+    h_how: 'كيف يعمل النظام',
+    step1_title: '١. التقديم',
+    step1_desc: 'اكتب إنجازك وقدّمه',
+    step2_title: '٢. مراجعة القائد',
+    step2_desc: 'يوافق قائد فريقك أو يعطيك ملاحظات',
+    step3_title: '٣. النشر',
+    step3_desc: 'تظهر الإنجازات الموافق عليها على اللوحة العامة',
+    h_recent: 'آخر التقديمات',
+    view_all: 'عرض الكل ←',
+    no_subs: 'لا توجد تقديمات بعد. ابدأ بتقديم أول إنجاز لك!',
+    h_submit: '✏️ تقديم إنجاز',
+    h_resubmit: '🔄 إعادة تقديم الإنجاز',
+    sub_submit: 'صف ما حققته — سيراجعه قائدك قبل نشره',
+    sub_resubmit: 'تحديث تقديمك وإعادة إرساله للمراجعة',
+    lbl_title: 'عنوان الإنجاز *',
+    title_ph: 'مثال: بناء وحدة مصادقة المستخدم',
+    title_hint: 'اجعله واضحاً ومحدداً',
+    lbl_desc: 'الوصف *',
+    desc_ph: 'صف إنجازك بالتفصيل…\n\nاقتراحات:\n• ماذا بنيت / أكملت / تعلمت؟\n• ما الأدوات أو الأساليب التي استخدمتها؟\n• ما التأثير أو النتيجة؟\n• أي تحديات تغلبت عليها؟',
+    lbl_images: 'صور (اختياري، بحد أقصى 5)',
+    img_hint: 'لقطات شاشة أو مخططات أو صور من عملك',
+    info_note: 'سيُرسَل تقديمك إلى قائد فريقك للمراجعة قبل نشره. في حال الرفض، ستتمكن من رؤية ملاحظاته وإعادة التقديم.',
+    btn_submit: '🚀 تقديم للمراجعة',
+    btn_cancel: 'إلغاء',
+    submitting: 'جارٍ التقديم…',
+    h_my: 'تقديماتي',
+    total: 'المجموع',
+    btn_new_sub: '+ تقديم جديد',
+    submitted_on: 'قُدِّم',
+    rejected_title: '❌ مرفوض',
+    rejected_note: 'راجع التعليقات أدناه لملاحظات القائد. عدّل وأعد التقديم.',
+    pending_title: '⏳ بانتظار موافقة القائد',
+    pending_note: 'سيراجع قائد فريقك هذا قريباً.',
+    btn_resubmit: '🔄 تعديل وإعادة التقديم',
+    btn_edit: '✏️ تعديل',
+    btn_delete: '🗑️ حذف',
+    no_subs_title: 'لا توجد تقديمات بعد',
+    no_subs_desc: 'قدّم أول إنجازاتك وانتظر مراجعة قائد فريقك.',
+    btn_submit_first: '+ تقديم إنجاز',
+    badge_published: '📢 منشور',
+    badge_pending: '⏳ بانتظار المراجعة',
+    badge_draft: '📝 مسودة',
+    badge_rejected: '❌ مرفوض',
+    check_comments: 'راجع التعليقات لملاحظات القائد',
+    awaiting_leader: 'بانتظار القائد',
+    toast_submitted: '🎉 تم التقديم! بانتظار مراجعة القائد.',
+    toast_deleted: 'تم الحذف',
+    toast_fail_sub: 'فشل في التقديم',
+    toast_fail_delete: 'لا يمكن حذف هذا التقديم',
+    toast_error: 'خطأ في التقديم',
+    confirm_delete: 'حذف هذا التقديم؟',
+    max_images: 'الحد الأقصى 5 صور',
+    supervisor_feedback_lbl: '🔒 ملاحظات المشرف (خاصة)',
+  }
+};
+
+function t(k) { return T[currentLang]?.[k] ?? T.en[k] ?? k; }
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('interntrack_lang', lang);
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  const btn = document.getElementById('langBtn');
+  if (btn) btn.textContent = lang === 'ar' ? 'English' : 'عربي';
+  applyTranslations();
+  switchTab(currentTabName);
+}
+
+function toggleLang() { setLang(currentLang === 'en' ? 'ar' : 'en'); }
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+}
+
+// ── CORE ──────────────────────────────────────────────────────────────────────
+const token = (() => {
+  const c = document.cookie.split(';').find(c => c.trim().startsWith('token='));
+  return c ? c.trim().slice(6) : localStorage.getItem('token');
+})();
+
+if (!token) {
+  document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);"><div style="text-align:center;padding:40px;background:#fff;border-radius:20px;box-shadow:0 10px 40px rgba(0,0,0,.1);"><div style="font-size:48px;margin-bottom:16px;">🔒</div><h1 style="font-family:\'Plus Jakarta Sans\',sans-serif;margin-bottom:8px;">Not Logged In</h1><p style="color:#64748b;margin-bottom:20px;">Please sign in to access your dashboard.</p><a href="/" style="background:#2563eb;color:#fff;padding:11px 24px;border-radius:10px;text-decoration:none;font-weight:600;">Go to Login</a></div></div>';
+}
+
+let currentUser = null, myAchievements = [], editingId = null;
+let currentTabName = 'overview';
+
+function getHeaders(json=true) {
+  const h = { Authorization: 'Bearer ' + token };
+  if (json) h['Content-Type'] = 'application/json';
+  return h;
+}
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(d) {
+  if (!d) return '—';
+  const s = String(d).replace(' ', 'T');
+  const dt = new Date(s);
+  const locale = currentLang === 'ar' ? 'ar-AE' : 'en-US';
+  return isNaN(dt) ? d : dt.toLocaleDateString(locale, { month:'short', day:'numeric', year:'numeric' });
+}
+
+function showToast(msg, type='info') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast show ' + type;
+  clearTimeout(el._t); el._t = setTimeout(() => el.className = 'toast', 3500);
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+  document.getElementById('mainLayout').classList.toggle('expanded');
+}
+
+async function logout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  document.cookie = 'token=;max-age=0;path=/';
+  localStorage.removeItem('token');
+  window.location.href = '/';
+}
+
+function statusBadge(status) {
+  const map = {
+    published: `<span class="badge badge-green">${t('badge_published')}</span>`,
+    pending:   `<span class="badge" style="background:#fef3c7;color:#92400e;">${t('badge_pending')}</span>`,
+    draft:     `<span class="badge badge-amber">${t('badge_draft')}</span>`,
+    rejected:  `<span class="badge" style="background:#fee2e2;color:#991b1b;">${t('badge_rejected')}</span>`
+  };
+  return map[status] || status;
+}
+
+function switchTab(tab) {
+  currentTabName = tab;
+  document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
+  const navItems = document.querySelectorAll('.sidebar-nav .nav-item');
+  const idx = { overview: 1, submit: 2, my: 3 };
+  navItems[idx[tab]]?.classList.add('active');
+  const titles = {
+    overview: t('tb_overview'),
+    submit:   editingId ? t('tb_edit') : t('tb_submit'),
+    my:       t('tb_my')
+  };
+  document.getElementById('topbarTitle').textContent = titles[tab] || tab;
+  const el = document.getElementById('pageContent');
+  switch (tab) {
+    case 'overview': renderOverview(el); break;
+    case 'submit':   renderSubmitForm(el); break;
+    case 'my':       renderMySubmissions(el); break;
+  }
+}
+
+async function loadMyAchievements() {
+  myAchievements = await fetch('/api/student/achievements', { headers: getHeaders() }).then(r => r.json());
+  return myAchievements;
+}
+
+// ── OVERVIEW ──────────────────────────────────────────────────────────────────
+async function renderOverview(el) {
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  const achievements = await loadMyAchievements();
+
+  const published = achievements.filter(a => a.Status === 'published').length;
+  const pending   = achievements.filter(a => a.Status === 'pending').length;
+  const rejected  = achievements.filter(a => a.Status === 'rejected').length;
+
+  const recentItems = achievements.slice(0, 5).map((a, i) => `
+    <div class="achievement-item">
+      ${a.FirstImage
+        ? `<img src="${escHtml(a.FirstImage)}" class="achievement-thumb" onerror="this.outerHTML='<div class=\'achievement-thumb-placeholder ${['','b','c'][i%3]}\'></div>'">`
+        : `<div class="achievement-thumb-placeholder ${['','b','c'][i%3]}"></div>`}
+      <div class="achievement-info">
+        <h4>${escHtml(a.Title)}</h4>
+        <p>${statusBadge(a.Status)} · ${fmtDate(a.CreatedAt)}</p>
+        ${a.Status === 'rejected' ? `<small style="color:#ef4444;">${t('check_comments')}</small>` : ''}
+      </div>
+      ${a.Status !== 'published' ? `
+      <div style="display:flex;gap:6px;">
+        ${a.Status === 'rejected' ? `<button class="btn btn-sm btn-primary" onclick="openEdit(${a.AchievementID})">🔄 ${t('btn_resubmit').replace('🔄 ','')}</button>` : ''}
+        ${a.Status === 'pending' ? `<span style="font-size:12px;color:#f59e0b;">${t('awaiting_leader')}</span>` : ''}
+      </div>` : ''}
+    </div>`).join('') || `<div class="empty-state"><div class="empty-icon">🏆</div><p>${t('no_subs')}</p></div>`;
+
+  const teamAssigned = currentUser?.TeamID;
+
+  el.innerHTML = `
+    <div class="page-header">
+      <div>
+        <h2>${t('welcome')} ${escHtml(currentUser?.Name || 'Student')}! 👋</h2>
+        <p>${t('lbl_team')} <strong>${escHtml(currentUser?.TeamName || t('not_assigned'))}</strong></p>
+      </div>
+      ${teamAssigned ? `<button class="btn btn-primary" onclick="switchTab('submit')">${t('btn_submit_ach')}</button>` : ''}
+    </div>
+
+    ${!teamAssigned ? `
+    <div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:14px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:16px;">
+      <span style="font-size:32px;">⚠️</span>
+      <div>
+        <strong style="font-size:15px;">${t('no_team_title')}</strong>
+        <p style="color:#92400e;font-size:13px;margin-top:3px;">${t('no_team_desc')}</p>
+      </div>
+    </div>` : ''}
+
+    <div class="stats-row" style="grid-template-columns:repeat(4,1fr);">
+      <div class="stat-card">
+        <div class="stat-icon gold">🏆</div>
+        <div class="stat-info"><h3>${achievements.length}</h3><p>${t('lbl_total_sub')}</p></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">📢</div>
+        <div class="stat-info"><h3>${published}</h3><p>${t('lbl_published')}</p></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon blue">⏳</div>
+        <div class="stat-info"><h3 style="${pending>0?'color:#f59e0b':''}">${pending}</h3><p>${t('lbl_pending')}</p></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple">❌</div>
+        <div class="stat-info"><h3 style="${rejected>0?'color:#ef4444':''}">${rejected}</h3><p>${t('lbl_rejected')}</p></div>
+      </div>
+    </div>
+
+    <div class="full-panel" style="margin-bottom:20px;">
+      <div class="panel-header"><h3>${t('h_how')}</h3></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+        <div style="text-align:center;padding:16px;">
+          <div style="font-size:36px;margin-bottom:10px;">✍️</div>
+          <strong>${t('step1_title')}</strong>
+          <p style="font-size:13px;color:var(--text-muted);margin-top:4px;">${t('step1_desc')}</p>
+        </div>
+        <div style="text-align:center;padding:16px;">
+          <div style="font-size:36px;margin-bottom:10px;">🔍</div>
+          <strong>${t('step2_title')}</strong>
+          <p style="font-size:13px;color:var(--text-muted);margin-top:4px;">${t('step2_desc')}</p>
+        </div>
+        <div style="text-align:center;padding:16px;">
+          <div style="font-size:36px;margin-bottom:10px;">🌍</div>
+          <strong>${t('step3_title')}</strong>
+          <p style="font-size:13px;color:var(--text-muted);margin-top:4px;">${t('step3_desc')}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="full-panel">
+      <div class="panel-header"><h3>${t('h_recent')}</h3><a onclick="switchTab('my')">${t('view_all')}</a></div>
+      ${recentItems}
+    </div>`;
+}
+
+// ── SUBMIT FORM ───────────────────────────────────────────────────────────────
+function renderSubmitForm(el, prefill = {}) {
+  el.innerHTML = `
+    <div class="page-header">
+      <div>
+        <h2>${editingId ? t('h_resubmit') : t('h_submit')}</h2>
+        <p>${editingId ? t('sub_resubmit') : t('sub_submit')}</p>
+      </div>
+    </div>
+    <div class="full-panel">
+      <form id="submitForm" onsubmit="handleSubmit(event)">
+        <div class="form-group">
+          <label class="form-label">${t('lbl_title')}</label>
+          <input type="text" id="sTitle" class="form-input" placeholder="${t('title_ph')}" value="${escHtml(prefill.title || '')}" required>
+          <small class="text-muted">${t('title_hint')}</small>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_desc')}</label>
+          <textarea id="sDesc" class="form-textarea" style="min-height:260px;" placeholder="${t('desc_ph')}" required>${escHtml(prefill.description || '')}</textarea>
+        </div>
+        ${!editingId ? `
+        <div class="form-group">
+          <label class="form-label">${t('lbl_images')}</label>
+          <input type="file" id="sImages" class="form-input" accept="image/*" multiple onchange="previewImages(this)">
+          <small class="text-muted">${t('img_hint')}</small>
+          <div id="imagePreview"></div>
+        </div>` : ''}
+        <div style="background:#eff6ff;border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:13px;color:#1d4ed8;display:flex;gap:10px;align-items:flex-start;">
+          <span>ℹ️</span>
+          <span>${t('info_note')}</span>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button type="submit" id="submitBtn" class="btn btn-primary">${t('btn_submit')}</button>
+          ${editingId ? `<button type="button" class="btn btn-ghost" onclick="editingId=null;switchTab('my')">${t('btn_cancel')}</button>` : ''}
+        </div>
+      </form>
+    </div>`;
+}
+
+function previewImages(input) {
+  const preview = document.getElementById('imagePreview');
+  preview.innerHTML = '';
+  if (input.files.length > 5) { alert(t('max_images')); input.value = ''; return; }
+  [...input.files].forEach(f => {
+    if (!f.type.startsWith('image/')) return;
+    const r = new FileReader();
+    r.onload = e => { const img = document.createElement('img'); img.src = e.target.result; preview.appendChild(img); };
+    r.readAsDataURL(f);
+  });
+}
+
+async function handleSubmit(e) {
+  e.preventDefault();
+  const title = document.getElementById('sTitle').value.trim();
+  const description = document.getElementById('sDesc').value.trim();
+  const imagesInput = document.getElementById('sImages');
+  const btn = document.getElementById('submitBtn');
+
+  btn.disabled = true; btn.textContent = t('submitting');
+
+  try {
+    let r;
+    if (editingId) {
+      r = await fetch('/api/student/achievements/' + editingId, {
+        method: 'PUT', headers: getHeaders(),
+        body: JSON.stringify({ title, description })
+      });
+    } else {
+      const fd = new FormData();
+      fd.append('title', title); fd.append('description', description);
+      if (imagesInput?.files) [...imagesInput.files].forEach(f => fd.append('images', f));
+      r = await fetch('/api/student/achievements', { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: fd });
+    }
+
+    if (r.ok) {
+      editingId = null;
+      showToast(t('toast_submitted'), 'success');
+      switchTab('my');
+    } else {
+      const d = await r.json();
+      showToast(d.error || t('toast_fail_sub'), 'error');
+    }
+  } catch (err) { showToast(t('toast_error'), 'error'); }
+  finally { btn.disabled = false; btn.textContent = t('btn_submit'); }
+}
+
+// ── MY SUBMISSIONS ────────────────────────────────────────────────────────────
+async function renderMySubmissions(el) {
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  const achievements = await loadMyAchievements();
+
+  // Load supervisor feedback for each achievement
+  const supFeedbackMap = {};
+  await Promise.all(achievements.map(async a => {
+    try {
+      const fb = await fetch(`/api/team/achievements/${a.AchievementID}/supervisor-feedback`, { headers: getHeaders() }).then(r => r.ok ? r.json() : []);
+      supFeedbackMap[a.AchievementID] = fb;
+    } catch(e) { supFeedbackMap[a.AchievementID] = []; }
+  }));
+
+  el.innerHTML = `
+    <div class="page-header">
+      <div><h2>${t('h_my')}</h2><p>${achievements.length} ${t('total')}</p></div>
+      <button class="btn btn-primary" onclick="switchTab('submit')">${t('btn_new_sub')}</button>
+    </div>
+    <div class="full-panel">
+      ${achievements.length ? achievements.map(a => `
+        <div style="padding:18px 0;border-bottom:1px solid var(--border);" class="submission-row">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;">
+                <strong style="font-size:15px;">${escHtml(a.Title)}</strong>
+                ${statusBadge(a.Status)}
+              </div>
+              <p style="font-size:13px;color:var(--text-muted);margin-bottom:6px;">${t('submitted_on')} ${fmtDate(a.CreatedAt)}</p>
+              <p style="font-size:14px;line-height:1.6;color:var(--text);">${escHtml(a.Description).substring(0, 120)}${a.Description.length > 120 ? '…' : ''}</p>
+              ${a.Status === 'rejected' ? `
+              <div style="background:#fee2e2;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:13px;">
+                <strong style="color:#991b1b;">${t('rejected_title')}</strong>
+                <p style="color:#7f1d1d;margin-top:3px;">${t('rejected_note')}</p>
+              </div>` : ''}
+              ${supFeedbackMap[a.AchievementID]?.length ? `
+              <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1.5px solid #f59e0b;border-radius:10px;padding:12px 14px;margin-top:10px;">
+                <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;">🔒 ${t('supervisor_feedback_lbl')}</div>
+                ${supFeedbackMap[a.AchievementID].map(f=>`
+                <div style="background:#fff;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;margin-bottom:5px;">
+                  <div style="font-size:11px;color:#92400e;font-weight:600;">🎓 ${escHtml(f.AuthorName)}</div>
+                  <div style="font-size:13px;color:#374151;margin-top:2px;">${escHtml(f.Content)}</div>
+                </div>`).join('')}
+              </div>` : ''}
+              ${a.Status === 'pending' ? `
+              <div style="background:#fef3c7;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:13px;">
+                <strong style="color:#92400e;">${t('pending_title')}</strong>
+                <p style="color:#78350f;margin-top:3px;">${t('pending_note')}</p>
+              </div>` : ''}
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+              ${a.Status === 'rejected' ? `<button class="btn btn-sm btn-primary" onclick="openEdit(${a.AchievementID})">${t('btn_resubmit')}</button>` : ''}
+              ${a.Status === 'draft' ? `<button class="btn btn-sm btn-ghost" onclick="openEdit(${a.AchievementID})">${t('btn_edit')}</button>` : ''}
+              ${a.Status !== 'published' ? `<button class="btn btn-sm btn-danger" onclick="deleteSubmission(${a.AchievementID})">${t('btn_delete')}</button>` : ''}
+            </div>
+          </div>
+        </div>`).join('') + '<style>.submission-row:last-child{border-bottom:none;}</style>'
+      : `<div class="empty-state"><div class="empty-icon">🏆</div><h3>${t('no_subs_title')}</h3><p>${t('no_subs_desc')}</p><button class="btn btn-primary" style="margin-top:14px;" onclick="switchTab('submit')">${t('btn_submit_first')}</button></div>`}
+    </div>`;
+}
+
+async function openEdit(id) {
+  const a = myAchievements.find(a => a.AchievementID === id);
+  if (!a) return;
+  editingId = id;
+  renderSubmitForm(document.getElementById('pageContent'), { title: a.Title, description: a.Description });
+  document.getElementById('topbarTitle').textContent = t('tb_edit');
+  document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.sidebar-nav .nav-item')[2]?.classList.add('active');
+}
+
+async function deleteSubmission(id) {
+  if (!confirm(t('confirm_delete'))) return;
+  const r = await fetch('/api/student/achievements/' + id, { method: 'DELETE', headers: getHeaders() });
+  if (r.ok) { showToast(t('toast_deleted'), 'info'); switchTab('my'); }
+  else showToast(t('toast_fail_delete'), 'error');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+(async () => {
+  const savedLang = localStorage.getItem('interntrack_lang') || 'en';
+  currentLang = savedLang;
+  document.getElementById('langBtn').textContent = savedLang === 'ar' ? 'English' : 'عربي';
+  applyTranslations();
+
+  try {
+    currentUser = await fetch('/api/auth/me', { headers: getHeaders() }).then(r => r.json());
+    if (currentUser.Role !== 'Student') { window.location.href = '/'; return; }
+    document.getElementById('studentName').textContent = currentUser.Name || 'Student';
+    document.getElementById('studentTeam').textContent = currentUser.TeamName || t('not_assigned');
+    document.getElementById('teamBadge').textContent = (currentUser.TeamName || 'Student') + ' · ' + t('badge_student').replace('🎓 ','');
+  } catch (e) { window.location.href = '/'; }
+  switchTab('overview');
+})();
+</script>
+</body>
+</html>

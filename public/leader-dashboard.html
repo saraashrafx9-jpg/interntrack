@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leader Dashboard – InternTrack</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script>
+    (function() {
+      const lang = localStorage.getItem('interntrack_lang') || 'en';
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    })();
+  </script>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <img src="/images/logo.png" alt="InternTrack" onerror="this.style.display='none'">
+    <div class="sidebar-brand-text">
+      <h2>InternTrack</h2>
+      <p data-i18n="leader_dashboard">Leader Dashboard</p>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label" data-i18n="nav_navigation">Navigation</div>
+    <a class="nav-item" href="/">
+      <span class="nav-icon">▦</span> <span data-i18n="nav_public">Public Dashboard</span>
+    </a>
+    <div class="nav-section-label" data-i18n="nav_my_work">My Work</div>
+    <a class="nav-item active" onclick="switchTab('overview')" href="#">
+      <span class="nav-icon">📊</span> <span data-i18n="nav_overview">Overview</span>
+    </a>
+    <a class="nav-item" onclick="switchTab('post')" href="#">
+      <span class="nav-icon">✏️</span> <span data-i18n="nav_post">Post Achievement</span>
+    </a>
+    <a class="nav-item" onclick="switchTab('manage')" href="#">
+      <span class="nav-icon">📋</span> <span data-i18n="nav_my_ach">My Achievements</span>
+    </a>
+    <a class="nav-item" onclick="switchTab('approvals')" href="#" id="approvalsNav">
+      <span class="nav-icon">🔔</span> <span data-i18n="nav_approvals">Approve Submissions</span>
+      <span id="pendingBadge" style="display:none;background:#ef4444;color:#fff;border-radius:20px;padding:1px 7px;font-size:11px;margin-left:4px;"></span>
+    </a>
+    <a class="nav-item" onclick="switchTab('feedback')" href="#" id="feedbackNav">
+      <span class="nav-icon">💬</span> <span data-i18n="nav_supervisor_fb">Supervisor Feedback</span>
+      <span id="feedbackBadge" style="display:none;background:#f59e0b;color:#fff;border-radius:20px;padding:1px 7px;font-size:11px;margin-left:4px;"></span>
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar">👤</div>
+      <div class="user-info">
+        <strong id="leaderName">Leader</strong>
+        <span id="leaderTeam" data-i18n="loading">Loading…</span>
+      </div>
+    </div>
+    <button class="sidebar-login-btn" style="background:#374151;margin-top:8px;" onclick="logout()" data-i18n="btn_signout">Sign Out</button>
+  </div>
+</aside>
+
+<div class="main" id="mainLayout">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+      <span class="topbar-title" id="topbarTitle">Overview</span>
+    </div>
+    <div class="topbar-right">
+      <button class="lang-btn" onclick="toggleLang()" id="langBtn">عربي</button>
+      <span class="topbar-badge" id="teamBadge" data-i18n="lbl_team_leader">Team Leader</span>
+    </div>
+  </header>
+
+  <div class="page-content" id="pageContent">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+
+  <footer class="footer">
+    <p data-i18n="footer">© 2026 InternTrack — Achievement Portal. All rights reserved.</p>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── I18N ──────────────────────────────────────────────────────────────────────
+let currentLang = localStorage.getItem('interntrack_lang') || 'en';
+
+const T = {
+  en: {
+    leader_dashboard: 'Leader Dashboard',
+    nav_navigation: 'Navigation',
+    nav_public: 'Public Dashboard',
+    nav_my_work: 'My Work',
+    nav_overview: 'Overview',
+    nav_post: 'Post Achievement',
+    nav_my_ach: 'My Achievements',
+    nav_approvals: 'Approve Submissions',
+    btn_signout: 'Sign Out',
+    lbl_team_leader: 'Team Leader',
+    loading: 'Loading…',
+    footer: '© 2026 InternTrack — Achievement Portal. All rights reserved.',
+    // Tab titles
+    tb_overview: 'Overview',
+    tb_post: 'Post Achievement',
+    tb_edit: 'Edit Achievement',
+    tb_manage: 'My Achievements',
+    tb_approvals: 'Approve Submissions',
+    // Overview
+    welcome: 'Welcome back,',
+    lbl_team: 'Team:',
+    not_assigned: 'Not assigned',
+    btn_post_ach: '+ Post Achievement',
+    lbl_my_posts: 'My Posts',
+    lbl_published: 'Published',
+    lbl_drafts: 'Drafts',
+    lbl_pending_review: 'Pending Review',
+    h_students_waiting: '⚠️ Students Waiting for Approval',
+    review_all: 'Review all →',
+    by: 'by',
+    submitted: 'submitted',
+    btn_approve: '✅ Approve',
+    btn_reject: '❌ Reject',
+    h_recent_ach: 'My Recent Achievements',
+    view_all: 'View all →',
+    no_ach_yet: 'No achievements posted yet.',
+    // Post form
+    h_post_new: 'Post New Achievement',
+    h_edit_ach: 'Edit Achievement',
+    sub_post: 'Share what your team has accomplished',
+    sub_edit: 'Update your achievement details',
+    lbl_title: 'Achievement Title *',
+    title_ph: 'e.g. Completed Homepage Design',
+    lbl_desc: 'Description *',
+    desc_ph: 'Describe what your team achieved this week…',
+    lbl_status: 'Status',
+    opt_publish: '📢 Publish Now',
+    opt_draft: '📝 Save as Draft',
+    lbl_images: 'Images (optional, max 5)',
+    img_hint: 'Supported: JPG, PNG, GIF, WebP — max 5MB each',
+    btn_post: '📢 Post Achievement',
+    btn_update: '💾 Update Achievement',
+    btn_cancel: 'Cancel',
+    saving: 'Saving…',
+    // Manage
+    h_my_ach: 'My Achievements',
+    btn_new_ach: '+ New Achievement',
+    th_title: 'Title',
+    th_status: 'Status',
+    th_date: 'Date',
+    th_actions: 'Actions',
+    btn_edit: '✏️ Edit',
+    no_ach_empty: 'No achievements yet',
+    btn_post_first: '+ Post Achievement',
+    // Approvals
+    h_submissions: 'Student Submissions',
+    awaiting_review: 'awaiting your review',
+    btn_approve_publish: '✅ Approve & Publish',
+    btn_reject_feedback: '❌ Reject with Feedback',
+    h_all_caught: 'All caught up!',
+    no_pending: 'No student submissions are waiting for review.',
+    lbl_pending_badge: '⏳ Pending',
+    submitted_by: 'Submitted by',
+    // Status badges
+    badge_published: '📢 Published',
+    badge_draft: '📝 Draft',
+    badge_pending: '⏳ Pending',
+    badge_rejected: '❌ Rejected',
+    // Toasts
+    toast_saved: 'Achievement saved! 🎉',
+    toast_deleted: 'Deleted',
+    toast_fail_post: 'Error posting',
+    toast_fail_delete: 'Failed to delete',
+    toast_fail_load: 'Failed to submit',
+    toast_approved: '✅ Achievement published!',
+    toast_rejected: '❌ Submission rejected',
+    toast_fail_review: 'Failed to review',
+    supervisor_feedback_lbl: 'Supervisor Feedback (Private)',
+    nav_supervisor_fb: 'Supervisor Feedback',
+    tb_supervisor_fb: 'Supervisor Feedback',
+    h_supervisor_fb: 'Supervisor Feedback',
+    sub_supervisor_fb: 'Private feedback from your supervisor on team achievements',
+    no_supervisor_fb: 'No supervisor feedback yet.',
+    no_supervisor_fb_sub: 'Feedback from your supervisor will appear here.',
+    lbl_new_fb_badge: 'NEW',
+    // Errors
+    confirm_delete: 'Delete this achievement?',
+    reject_prompt: 'Optional: give the student feedback on why it was rejected:',
+    max_images: 'Max 5 images',
+    err_post: 'Error posting',
+    total: 'total',
+  },
+  ar: {
+    leader_dashboard: 'لوحة قائد الفريق',
+    nav_navigation: 'التنقل',
+    nav_public: 'اللوحة الرئيسية',
+    nav_my_work: 'عملي',
+    nav_overview: 'نظرة عامة',
+    nav_post: 'نشر إنجاز',
+    nav_my_ach: 'إنجازاتي',
+    nav_approvals: 'مراجعة التقديمات',
+    btn_signout: 'تسجيل الخروج',
+    lbl_team_leader: 'قائد الفريق',
+    loading: 'جارٍ التحميل…',
+    footer: '© 2026 InternTrack — بوابة الإنجازات. جميع الحقوق محفوظة.',
+    tb_overview: 'نظرة عامة',
+    tb_post: 'نشر إنجاز',
+    tb_edit: 'تعديل الإنجاز',
+    tb_manage: 'إنجازاتي',
+    tb_approvals: 'مراجعة التقديمات',
+    welcome: 'مرحباً،',
+    lbl_team: 'الفريق:',
+    not_assigned: 'غير معين',
+    btn_post_ach: '+ نشر إنجاز',
+    lbl_my_posts: 'منشوراتي',
+    lbl_published: 'منشورة',
+    lbl_drafts: 'المسودات',
+    lbl_pending_review: 'بانتظار المراجعة',
+    h_students_waiting: '⚠️ طلاب ينتظرون الموافقة',
+    review_all: 'مراجعة الكل ←',
+    by: 'بقلم',
+    submitted: 'قُدِّم',
+    btn_approve: '✅ موافقة',
+    btn_reject: '❌ رفض',
+    h_recent_ach: 'إنجازاتي الأخيرة',
+    view_all: 'عرض الكل ←',
+    no_ach_yet: 'لا توجد إنجازات بعد.',
+    h_post_new: 'نشر إنجاز جديد',
+    h_edit_ach: 'تعديل الإنجاز',
+    sub_post: 'شارك ما حققه فريقك',
+    sub_edit: 'تحديث تفاصيل الإنجاز',
+    lbl_title: 'عنوان الإنجاز *',
+    title_ph: 'مثال: اكتمال تصميم الصفحة الرئيسية',
+    lbl_desc: 'الوصف *',
+    desc_ph: 'صف ما حققه فريقك هذا الأسبوع…',
+    lbl_status: 'الحالة',
+    opt_publish: '📢 نشر الآن',
+    opt_draft: '📝 حفظ كمسودة',
+    lbl_images: 'صور (اختياري، بحد أقصى 5)',
+    img_hint: 'المدعوم: JPG، PNG، GIF، WebP — بحد أقصى 5MB لكل صورة',
+    btn_post: '📢 نشر الإنجاز',
+    btn_update: '💾 تحديث الإنجاز',
+    btn_cancel: 'إلغاء',
+    saving: 'جارٍ الحفظ…',
+    h_my_ach: 'إنجازاتي',
+    btn_new_ach: '+ إنجاز جديد',
+    th_title: 'العنوان',
+    th_status: 'الحالة',
+    th_date: 'التاريخ',
+    th_actions: 'الإجراءات',
+    btn_edit: '✏️ تعديل',
+    no_ach_empty: 'لا توجد إنجازات بعد',
+    btn_post_first: '+ نشر إنجاز',
+    h_submissions: 'تقديمات الطلاب',
+    awaiting_review: 'بانتظار مراجعتك',
+    btn_approve_publish: '✅ موافقة ونشر',
+    btn_reject_feedback: '❌ رفض مع ملاحظات',
+    h_all_caught: 'تم الانتهاء!',
+    no_pending: 'لا توجد تقديمات طلاب بانتظار المراجعة.',
+    lbl_pending_badge: '⏳ معلق',
+    submitted_by: 'قُدِّم بواسطة',
+    badge_published: '📢 منشور',
+    badge_draft: '📝 مسودة',
+    badge_pending: '⏳ معلق',
+    badge_rejected: '❌ مرفوض',
+    toast_saved: 'تم حفظ الإنجاز! 🎉',
+    toast_deleted: 'تم الحذف',
+    toast_fail_post: 'خطأ في النشر',
+    toast_fail_delete: 'فشل في الحذف',
+    toast_fail_load: 'فشل في التقديم',
+    toast_approved: '✅ تم نشر الإنجاز!',
+    toast_rejected: '❌ تم رفض التقديم',
+    toast_fail_review: 'فشل المراجعة',
+    supervisor_feedback_lbl: 'ملاحظات المشرف (خاصة)',
+    nav_supervisor_fb: 'ملاحظات المشرف',
+    tb_supervisor_fb: 'ملاحظات المشرف',
+    h_supervisor_fb: 'ملاحظات المشرف',
+    sub_supervisor_fb: 'ملاحظات خاصة من مشرفك على إنجازات الفريق',
+    no_supervisor_fb: 'لا توجد ملاحظات من المشرف بعد.',
+    no_supervisor_fb_sub: 'ستظهر ملاحظات مشرفك هنا.',
+    lbl_new_fb_badge: 'جديد',
+    confirm_delete: 'حذف هذا الإنجاز؟',
+    reject_prompt: 'اختياري: أعطِ الطالب ملاحظات حول سبب الرفض:',
+    max_images: 'الحد الأقصى 5 صور',
+    err_post: 'خطأ في النشر',
+    total: 'المجموع',
+  }
+};
+
+function t(k) { return T[currentLang]?.[k] ?? T.en[k] ?? k; }
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('interntrack_lang', lang);
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  const btn = document.getElementById('langBtn');
+  if (btn) btn.textContent = lang === 'ar' ? 'English' : 'عربي';
+  applyTranslations();
+  switchTab(currentTabName);
+}
+
+function toggleLang() { setLang(currentLang === 'en' ? 'ar' : 'en'); }
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+}
+
+// ── CORE ──────────────────────────────────────────────────────────────────────
+const token = (() => {
+  const c = document.cookie.split(';').find(c => c.trim().startsWith('token='));
+  return c ? c.trim().slice(6) : localStorage.getItem('token');
+})();
+
+if (!token) {
+  document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;"><div style="text-align:center;"><h1>Not Authenticated</h1><a href="/" style="color:var(--primary);">Go to Login</a></div></div>';
+}
+
+let currentUser = null, editingId = null, myAchievements = [], pendingFromStudents = [];
+let currentTabName = 'overview';
+
+function getHeaders(json=true) {
+  const h = { Authorization:'Bearer '+token };
+  if (json) h['Content-Type'] = 'application/json';
+  return h;
+}
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(d) {
+  if (!d) return '—';
+  const s = String(d).replace(' ', 'T');
+  const dt = new Date(s);
+  const locale = currentLang === 'ar' ? 'ar-AE' : 'en-US';
+  return isNaN(dt) ? String(d) : dt.toLocaleDateString(locale,{month:'short',day:'numeric',year:'numeric'});
+}
+
+function showToast(msg,type='info') {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast show '+type;
+  clearTimeout(el._t); el._t=setTimeout(()=>el.className='toast',3500);
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+  document.getElementById('mainLayout').classList.toggle('expanded');
+}
+
+async function logout() {
+  await fetch('/api/auth/logout',{method:'POST'});
+  document.cookie='token=;max-age=0;path=/';
+  localStorage.removeItem('token');
+  window.location.href='/';
+}
+
+function switchTab(tab) {
+  currentTabName = tab;
+  document.querySelectorAll('.sidebar-nav .nav-item').forEach(n=>n.classList.remove('active'));
+  const navItems = document.querySelectorAll('.sidebar-nav .nav-item');
+  const idx={overview:1,post:2,manage:3,approvals:4,feedback:5};
+  navItems[idx[tab]]?.classList.add('active');
+  const titles={
+    overview:  t('tb_overview'),
+    post:      editingId ? t('tb_edit') : t('tb_post'),
+    manage:    t('tb_manage'),
+    approvals: t('tb_approvals'),
+    feedback:  t('tb_supervisor_fb')
+  };
+  document.getElementById('topbarTitle').textContent=titles[tab]||tab;
+  const el=document.getElementById('pageContent');
+  switch(tab){
+    case 'overview':  renderOverview(el); break;
+    case 'post':      editingId=null; renderPostForm(el); break;
+    case 'manage':    renderManage(el); break;
+    case 'approvals': renderApprovals(el); break;
+    case 'feedback':  renderSupervisorFeedback(el); break;
+  }
+}
+
+async function loadAchievements() {
+  const data = await fetch('/api/leader/achievements',{headers:getHeaders()}).then(r=>r.json());
+  myAchievements = data.own || [];
+  pendingFromStudents = data.pendingFromStudents || [];
+  const badge = document.getElementById('pendingBadge');
+  if (badge) {
+    if (pendingFromStudents.length > 0) {
+      badge.style.display = 'inline';
+      badge.textContent = pendingFromStudents.length;
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  // Check for supervisor feedback across ALL team achievements and show badge
+  const allAchievements = [...myAchievements, ...pendingFromStudents];
+  let totalFeedback = 0;
+  await Promise.all(allAchievements.map(async a => {
+    try {
+      const fb = await fetch(`/api/team/achievements/${a.AchievementID}/supervisor-feedback`, {headers:getHeaders()}).then(r=>r.ok?r.json():[]);
+      totalFeedback += fb.length;
+    } catch(e) {}
+  }));
+  const fbBadge = document.getElementById('feedbackBadge');
+  if (fbBadge) {
+    if (totalFeedback > 0) { fbBadge.style.display='inline'; fbBadge.textContent=totalFeedback; }
+    else { fbBadge.style.display='none'; }
+  }
+
+  return { own: myAchievements, pending: pendingFromStudents };
+}
+
+// ── SUPERVISOR FEEDBACK TAB ───────────────────────────────────────────────────
+async function renderSupervisorFeedback(el) {
+  el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  await loadAchievements();
+
+  // Fetch supervisor feedback for every achievement the leader can see
+  const allAchievements = [...myAchievements, ...pendingFromStudents];
+  // Deduplicate by AchievementID
+  const seen = new Set();
+  const uniqueAchievements = allAchievements.filter(a => {
+    if (seen.has(a.AchievementID)) return false;
+    seen.add(a.AchievementID); return true;
+  });
+
+  const feedbackMap = {};
+  await Promise.all(uniqueAchievements.map(async a => {
+    try {
+      const fb = await fetch(`/api/team/achievements/${a.AchievementID}/supervisor-feedback`, {headers:getHeaders()}).then(r=>r.ok?r.json():[]);
+      feedbackMap[a.AchievementID] = fb;
+    } catch(e) { feedbackMap[a.AchievementID] = []; }
+  }));
+
+  const achievementsWithFeedback = uniqueAchievements.filter(a => feedbackMap[a.AchievementID]?.length > 0);
+  const totalCount = achievementsWithFeedback.reduce((sum,a) => sum + feedbackMap[a.AchievementID].length, 0);
+
+  el.innerHTML=`
+    <div class="page-header">
+      <div>
+        <h2>${t('h_supervisor_fb')}</h2>
+        <p style="color:var(--text-muted);font-size:14px;">${t('sub_supervisor_fb')}</p>
+      </div>
+    </div>
+
+    <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1.5px solid #f59e0b;border-radius:14px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px;">
+      <span style="font-size:26px;">🔒</span>
+      <div>
+        <strong style="color:#92400e;">${t('supervisor_feedback_lbl')}</strong>
+        <p style="font-size:13px;color:#78350f;margin-top:2px;">${t('sub_supervisor_fb')}</p>
+      </div>
+      ${totalCount > 0 ? `<span style="margin-left:auto;background:#f59e0b;color:#fff;border-radius:20px;padding:4px 14px;font-weight:700;font-size:13px;">${totalCount}</span>` : ''}
+    </div>
+
+    ${achievementsWithFeedback.length === 0 ? `
+      <div class="full-panel">
+        <div class="empty-state">
+          <div class="empty-icon">💬</div>
+          <h3>${t('no_supervisor_fb')}</h3>
+          <p>${t('no_supervisor_fb_sub')}</p>
+        </div>
+      </div>` :
+      achievementsWithFeedback.map(a => `
+        <div class="full-panel" style="margin-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+            ${a.FirstImage ? `<img src="${escHtml(a.FirstImage)}" style="width:48px;height:48px;border-radius:10px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">` : ''}
+            <div style="flex:1;min-width:0;">
+              <h3 style="font-size:16px;font-weight:700;margin:0;">${escHtml(a.Title)}</h3>
+              <p style="font-size:12px;color:var(--text-muted);margin-top:2px;">${statusBadge(a.Status)} · ${fmtDate(a.CreatedAt)}</p>
+            </div>
+            <span style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:12px;padding:3px 12px;font-size:12px;font-weight:700;flex-shrink:0;">
+              💬 ${feedbackMap[a.AchievementID].length}
+            </span>
+          </div>
+          <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1.5px solid #f59e0b;border-radius:12px;padding:14px 16px;">
+            <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">🔒 ${t('supervisor_feedback_lbl')}</div>
+            ${feedbackMap[a.AchievementID].map(f=>`
+              <div style="background:#fff;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin-bottom:8px;">
+                <div style="font-size:12px;color:#92400e;font-weight:600;margin-bottom:4px;">🎓 ${escHtml(f.AuthorName)} · ${fmtDate(f.CreatedAt)}</div>
+                <div style="font-size:14px;color:#1e293b;line-height:1.6;">${escHtml(f.Content)}</div>
+              </div>`).join('')}
+          </div>
+        </div>`).join('')}`;
+}
+
+function statusBadge(status) {
+  const map = {
+    published: `<span class="badge badge-green">${t('badge_published')}</span>`,
+    draft:     `<span class="badge badge-amber">${t('badge_draft')}</span>`,
+    pending:   `<span class="badge" style="background:#fef3c7;color:#92400e;">${t('badge_pending')}</span>`,
+    rejected:  `<span class="badge" style="background:#fee2e2;color:#991b1b;">${t('badge_rejected')}</span>`
+  };
+  return map[status] || status;
+}
+
+async function renderOverview(el) {
+  el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  const { own, pending } = await loadAchievements();
+  const published = own.filter(a=>a.Status==='published');
+  const drafts = own.filter(a=>a.Status==='draft');
+
+  const recentItems = own.slice(0,5).map((a,i)=>`
+    <div class="achievement-item">
+      ${a.FirstImage
+        ? `<img src="${escHtml(a.FirstImage)}" class="achievement-thumb" onerror="this.outerHTML='<div class=\'achievement-thumb-placeholder ${['','b','c'][i%3]}\'></div>'">`
+        : `<div class="achievement-thumb-placeholder ${['','b','c'][i%3]}"></div>`}
+      <div class="achievement-info">
+        <h4>${escHtml(a.Title)}</h4>
+        <p>${statusBadge(a.Status)} · ${fmtDate(a.CreatedAt)}</p>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-sm btn-ghost" onclick="openEdit(${a.AchievementID})">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteAchievement(${a.AchievementID})">🗑️</button>
+      </div>
+    </div>`).join('') || `<div class="empty-state"><div class="empty-icon">🏆</div><p>${t('no_ach_yet')}</p></div>`;
+
+  el.innerHTML=`
+    <div class="page-header">
+      <div>
+        <h2>${t('welcome')} ${escHtml(currentUser?.Name||'Leader')}!</h2>
+        <p>${t('lbl_team')} <strong>${escHtml(currentUser?.TeamName||t('not_assigned'))}</strong></p>
+      </div>
+      <button class="btn btn-primary" onclick="switchTab('post')">${t('btn_post_ach')}</button>
+    </div>
+
+    <div class="stats-row" style="grid-template-columns:repeat(4,1fr);">
+      <div class="stat-card">
+        <div class="stat-icon gold">🏆</div>
+        <div class="stat-info"><h3>${own.length}</h3><p>${t('lbl_my_posts')}</p></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">📢</div>
+        <div class="stat-info"><h3>${published.length}</h3><p>${t('lbl_published')}</p></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon blue">📝</div>
+        <div class="stat-info"><h3>${drafts.length}</h3><p>${t('lbl_drafts')}</p></div>
+      </div>
+      <div class="stat-card" style="cursor:pointer;" onclick="switchTab('approvals')">
+        <div class="stat-icon purple">🔔</div>
+        <div class="stat-info"><h3 style="${pending.length>0?'color:#ef4444':''}">${pending.length}</h3><p>${t('lbl_pending_review')}</p></div>
+      </div>
+    </div>
+
+    ${pending.length > 0 ? `
+    <div class="full-panel" style="border-left:4px solid #f59e0b;">
+      <div class="panel-header">
+        <h3>${t('h_students_waiting')} (${pending.length})</h3>
+        <a onclick="switchTab('approvals')">${t('review_all')}</a>
+      </div>
+      ${pending.slice(0,3).map(a=>`
+        <div class="achievement-item">
+          <div class="achievement-thumb-placeholder b"></div>
+          <div class="achievement-info">
+            <h4>${escHtml(a.Title)}</h4>
+            <p>${t('by')} ${escHtml(a.CreatorName)} · ${t('submitted')} ${fmtDate(a.CreatedAt)}</p>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-sm btn-success" onclick="reviewAchievement(${a.AchievementID},'approve')">${t('btn_approve')}</button>
+            <button class="btn btn-sm btn-danger" onclick="promptReject(${a.AchievementID})">${t('btn_reject')}</button>
+          </div>
+        </div>`).join('')}
+    </div>` : ''}
+
+    <div class="full-panel">
+      <div class="panel-header"><h3>${t('h_recent_ach')}</h3><a onclick="switchTab('manage')">${t('view_all')}</a></div>
+      ${recentItems}
+    </div>`;
+}
+
+function renderPostForm(el, prefill={}) {
+  el.innerHTML=`
+    <div class="page-header">
+      <div><h2>${editingId?t('h_edit_ach'):t('h_post_new')}</h2><p>${editingId?t('sub_edit'):t('sub_post')}</p></div>
+    </div>
+    <div class="full-panel">
+      <form id="achievementForm" onsubmit="submitAchievement(event)">
+        <div class="form-group">
+          <label class="form-label">${t('lbl_title')}</label>
+          <input type="text" id="aTitle" class="form-input" placeholder="${t('title_ph')}" value="${escHtml(prefill.title||'')}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_desc')}</label>
+          <textarea id="aDesc" class="form-textarea" style="min-height:220px;" placeholder="${t('desc_ph')}" required>${escHtml(prefill.description||'')}</textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_status')}</label>
+          <select id="aStatus" class="form-input">
+            <option value="published" ${prefill.status==='published'||!prefill.status?'selected':''}>${t('opt_publish')}</option>
+            <option value="draft" ${prefill.status==='draft'?'selected':''}>${t('opt_draft')}</option>
+          </select>
+        </div>
+        ${!editingId ? `<div class="form-group">
+          <label class="form-label">${t('lbl_images')}</label>
+          <input type="file" id="aImages" class="form-input" accept="image/*" multiple onchange="previewImages(this)">
+          <small class="text-muted">${t('img_hint')}</small>
+          <div id="imagePreview"></div>
+        </div>` : ''}
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button type="submit" id="submitBtn" class="btn btn-primary">
+            ${editingId ? t('btn_update') : t('btn_post')}
+          </button>
+          ${editingId ? `<button type="button" class="btn btn-ghost" onclick="switchTab('manage')">${t('btn_cancel')}</button>` : ''}
+        </div>
+      </form>
+    </div>`;
+}
+
+function previewImages(input) {
+  const preview=document.getElementById('imagePreview');
+  preview.innerHTML='';
+  if(input.files.length>5){alert(t('max_images'));input.value='';return;}
+  [...input.files].forEach(f=>{
+    if(!f.type.startsWith('image/')) return;
+    const r=new FileReader();
+    r.onload=e=>{const img=document.createElement('img');img.src=e.target.result;preview.appendChild(img);};
+    r.readAsDataURL(f);
+  });
+}
+
+async function submitAchievement(e) {
+  e.preventDefault();
+  const title=document.getElementById('aTitle').value.trim();
+  const description=document.getElementById('aDesc').value.trim();
+  const status=document.getElementById('aStatus').value;
+  const imagesInput=document.getElementById('aImages');
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true; btn.textContent=t('saving');
+  try {
+    let r;
+    if(editingId) {
+      r=await fetch('/api/leader/achievements/'+editingId,{method:'PUT',headers:getHeaders(),body:JSON.stringify({title,description,status})});
+    } else {
+      const fd=new FormData();
+      fd.append('title',title); fd.append('description',description); fd.append('status',status);
+      if(imagesInput?.files) [...imagesInput.files].forEach(f=>fd.append('images',f));
+      r=await fetch('/api/leader/achievements',{method:'POST',headers:{Authorization:'Bearer '+token},body:fd});
+    }
+    if(r.ok){ editingId=null; showToast(t('toast_saved'),'success'); switchTab('manage'); }
+    else { const d=await r.json(); showToast(d.error||t('err_post'),'error'); }
+  } catch(err){ showToast(t('err_post'),'error'); }
+  finally { btn.disabled=false; btn.textContent=editingId?t('btn_update'):t('btn_post'); }
+}
+
+async function renderManage(el) {
+  el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  await loadAchievements();
+  el.innerHTML=`
+    <div class="page-header">
+      <div><h2>${t('h_my_ach')}</h2><p>${myAchievements.length} ${t('total')}</p></div>
+      <button class="btn btn-primary" onclick="switchTab('post')">${t('btn_new_ach')}</button>
+    </div>
+    <div class="full-panel">
+      ${myAchievements.length ? `<div class="table-wrapper"><table>
+        <thead><tr><th>${t('th_title')}</th><th>${t('th_status')}</th><th>${t('th_date')}</th><th>${t('th_actions')}</th></tr></thead>
+        <tbody>${myAchievements.map(a=>`
+          <tr>
+            <td style="max-width:280px;"><strong>${escHtml(a.Title)}</strong></td>
+            <td>${statusBadge(a.Status)}</td>
+            <td style="color:var(--text-muted);font-size:12px;">${fmtDate(a.CreatedAt)}</td>
+            <td><div style="display:flex;gap:6px;">
+              <button class="btn btn-sm btn-ghost" onclick="openEdit(${a.AchievementID})">${t('btn_edit')}</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteAchievement(${a.AchievementID})">🗑️</button>
+            </div></td>
+          </tr>`).join('')}</tbody>
+      </table></div>` : `<div class="empty-state"><div class="empty-icon">🏆</div><h3>${t('no_ach_empty')}</h3><button class="btn btn-primary" style="margin-top:14px;" onclick="switchTab('post')">${t('btn_post_first')}</button></div>`}
+    </div>`;
+}
+
+async function renderApprovals(el) {
+  el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  await loadAchievements();
+
+  // Fetch supervisor feedback for each pending achievement
+  const feedbackMap = {};
+  await Promise.all(pendingFromStudents.map(async a => {
+    try {
+      const fb = await fetch(`/api/team/achievements/${a.AchievementID}/supervisor-feedback`, { headers: getHeaders() }).then(r => r.ok ? r.json() : []);
+      feedbackMap[a.AchievementID] = fb;
+    } catch(e) { feedbackMap[a.AchievementID] = []; }
+  }));
+
+  el.innerHTML=`
+    <div class="page-header">
+      <div><h2>${t('h_submissions')}</h2><p>${pendingFromStudents.length} ${t('awaiting_review')}</p></div>
+    </div>
+    ${pendingFromStudents.length ? pendingFromStudents.map(a=>`
+    <div class="full-panel" style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;">
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:17px;">${escHtml(a.Title)}</h3>
+            <span class="badge" style="background:#fef3c7;color:#92400e;">${t('lbl_pending_badge')}</span>
+          </div>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:6px;">${t('submitted_by')} <strong>${escHtml(a.CreatorName)}</strong> · ${fmtDate(a.CreatedAt)}</p>
+          <p style="font-size:14px;line-height:1.7;white-space:pre-wrap;">${escHtml(a.Description)}</p>
+          ${feedbackMap[a.AchievementID]?.length ? `
+          <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1.5px solid #f59e0b;border-radius:12px;padding:14px 16px;margin-top:14px;">
+            <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;">🔒 ${t('supervisor_feedback_lbl')}</div>
+            ${feedbackMap[a.AchievementID].map(f=>`
+            <div style="background:#fff;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-bottom:6px;">
+              <div style="font-size:12px;color:#92400e;font-weight:600;margin-bottom:3px;">🎓 ${escHtml(f.AuthorName)} · ${fmtDate(f.CreatedAt)}</div>
+              <div style="font-size:13px;color:#374151;">${escHtml(f.Content)}</div>
+            </div>`).join('')}
+          </div>` : ''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;min-width:160px;">
+          <button class="btn btn-success" onclick="reviewAchievement(${a.AchievementID},'approve')">${t('btn_approve_publish')}</button>
+          <button class="btn btn-danger" onclick="promptReject(${a.AchievementID})">${t('btn_reject_feedback')}</button>
+        </div>
+      </div>
+    </div>`).join('') : `
+    <div class="full-panel">
+      <div class="empty-state">
+        <div class="empty-icon">✅</div>
+        <h3>${t('h_all_caught')}</h3>
+        <p>${t('no_pending')}</p>
+      </div>
+    </div>`}`;
+}
+
+async function reviewAchievement(id, action, feedback='') {
+  const r = await fetch('/api/leader/achievements/'+id+'/review', {
+    method:'POST', headers:getHeaders(),
+    body: JSON.stringify({ action, feedback })
+  });
+  if(r.ok) {
+    showToast(action==='approve' ? t('toast_approved') : t('toast_rejected'), action==='approve'?'success':'info');
+    renderApprovals(document.getElementById('pageContent'));
+  } else showToast(t('toast_fail_review'),'error');
+}
+
+function promptReject(id) {
+  const feedback = prompt(t('reject_prompt')) ?? null;
+  if (feedback === null) return;
+  reviewAchievement(id, 'reject', feedback);
+}
+
+async function openEdit(id) {
+  const a = myAchievements.find(a=>a.AchievementID===id);
+  if(!a) return;
+  editingId=id;
+  renderPostForm(document.getElementById('pageContent'),{title:a.Title,description:a.Description,status:a.Status});
+  document.getElementById('topbarTitle').textContent=t('tb_edit');
+  document.querySelectorAll('.sidebar-nav .nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.sidebar-nav .nav-item')[2]?.classList.add('active');
+}
+
+async function deleteAchievement(id) {
+  if(!confirm(t('confirm_delete'))) return;
+  const r=await fetch('/api/leader/achievements/'+id,{method:'DELETE',headers:getHeaders()});
+  if(r.ok){ showToast(t('toast_deleted'),'info'); switchTab('manage'); }
+  else showToast(t('toast_fail_delete'),'error');
+}
+
+(async () => {
+  const savedLang = localStorage.getItem('interntrack_lang') || 'en';
+  currentLang = savedLang;
+  document.getElementById('langBtn').textContent = savedLang === 'ar' ? 'English' : 'عربي';
+  applyTranslations();
+
+  try {
+    currentUser=await fetch('/api/auth/me',{headers:getHeaders()}).then(r=>r.json());
+    document.getElementById('leaderName').textContent=currentUser.Name||'Leader';
+    document.getElementById('leaderTeam').textContent=currentUser.TeamName||t('not_assigned');
+    document.getElementById('teamBadge').textContent=(currentUser.TeamName||'Leader')+' · '+t('lbl_team_leader');
+  } catch(e) {}
+  switchTab('overview');
+})();
+</script>
+</body>
+</html>

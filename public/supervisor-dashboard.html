@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supervisor Dashboard – InternTrack</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script>
+    (function() {
+      const lang = localStorage.getItem('interntrack_lang') || 'en';
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    })();
+  </script>
+  <style>
+    .supervisor-badge-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #fef3c7; color: #92400e;
+      border: 1px solid #fde68a; border-radius: 20px;
+      padding: 4px 14px; font-size: 12px; font-weight: 600;
+    }
+    .private-feedback-box {
+      background: linear-gradient(135deg, #fef3c7, #fffbeb);
+      border: 1.5px solid #f59e0b;
+      border-radius: 12px; padding: 16px 18px; margin-top: 12px;
+    }
+    .private-feedback-box .feedback-header {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 700; color: #92400e;
+      text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px;
+    }
+    .private-feedback-item {
+      background: #fff; border: 1px solid #fde68a;
+      border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
+    }
+    .private-feedback-item:last-child { margin-bottom: 0; }
+    .feedback-meta { font-size: 12px; color: #92400e; margin-bottom: 4px; font-weight: 600; }
+    .feedback-text { font-size: 14px; color: #374151; line-height: 1.6; }
+    .team-section { margin-bottom: 28px; }
+    .team-section-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px; background: var(--card-bg);
+      border-radius: 12px 12px 0 0; border: 1px solid var(--border);
+      border-bottom: 2px solid var(--primary);
+    }
+    .achievement-expand {
+      border: 1px solid var(--border); border-radius: 12px;
+      margin-bottom: 10px; background: var(--card-bg);
+      overflow: hidden;
+    }
+    .achievement-expand-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; cursor: pointer; gap: 12px;
+    }
+    .achievement-expand-header:hover { background: #f8fafc; }
+    .achievement-expand-body { padding: 0 16px 16px; display: none; }
+    .achievement-expand-body.open { display: block; }
+    .feedback-form-area { margin-top: 14px; }
+    .feedback-form-area textarea {
+      width: 100%; min-height: 90px; padding: 10px 12px;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 14px; font-family: inherit; resize: vertical;
+      outline: none; transition: border-color .2s;
+    }
+    .feedback-form-area textarea:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,.1); }
+    .btn-feedback { background: #f59e0b; color: #fff; border: none; border-radius: 10px; padding: 9px 18px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .btn-feedback:hover { background: #d97706; }
+    .btn-feedback:disabled { background: #fcd34d; cursor: not-allowed; }
+    .filter-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .filter-tab { padding: 7px 16px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--card-bg); font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-muted); transition: all .2s; }
+    .filter-tab.active, .filter-tab:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .stat-icon.amber { background: #fef3c7; color: #92400e; }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <img src="/images/logo.png" alt="InternTrack" onerror="this.style.display='none'">
+    <div class="sidebar-brand-text">
+      <h2>InternTrack</h2>
+      <p data-i18n="supervisor_portal">Supervisor Portal</p>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label" data-i18n="nav_navigation">Navigation</div>
+    <a class="nav-item" href="/">
+      <span class="nav-icon">▦</span> <span data-i18n="nav_public">Public Dashboard</span>
+    </a>
+    <div class="nav-section-label" data-i18n="nav_supervisor">Supervisor</div>
+    <a class="nav-item active" onclick="switchTab('overview')" href="#">
+      <span class="nav-icon">📊</span> <span data-i18n="nav_overview">Overview</span>
+    </a>
+    <a class="nav-item" onclick="switchTab('achievements')" href="#">
+      <span class="nav-icon">🏆</span> <span data-i18n="nav_all_ach">All Achievements</span>
+    </a>
+    <a class="nav-item" onclick="switchTab('feedback')" href="#">
+      <span class="nav-icon">💬</span> <span data-i18n="nav_my_feedback">My Feedback</span>
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar">🎓</div>
+      <div class="user-info">
+        <strong id="supervisorName">Supervisor</strong>
+        <span class="supervisor-badge-pill">👁️ <span data-i18n="badge_supervisor">Supervisor</span></span>
+      </div>
+    </div>
+    <button class="sidebar-login-btn" style="background:#374151;margin-top:8px;" onclick="logout()" data-i18n="btn_signout">Sign Out</button>
+  </div>
+</aside>
+
+<div class="main" id="mainLayout">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+      <span class="topbar-title" id="topbarTitle">Overview</span>
+    </div>
+    <div class="topbar-right">
+      <button class="lang-btn" onclick="toggleLang()" id="langBtn">عربي</button>
+      <span class="topbar-badge" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;">🎓 <span data-i18n="badge_supervisor">Supervisor</span></span>
+    </div>
+  </header>
+
+  <div class="page-content" id="pageContent">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+
+  <footer class="footer">
+    <p data-i18n="footer">© 2026 InternTrack — Supervisor Portal. All rights reserved.</p>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── I18N ──────────────────────────────────────────────────────────────────────
+let currentLang = localStorage.getItem('interntrack_lang') || 'en';
+
+const T = {
+  en: {
+    supervisor_portal: 'Supervisor Portal',
+    nav_navigation: 'Navigation',
+    nav_public: 'Public Dashboard',
+    nav_supervisor: 'Supervisor',
+    nav_overview: 'Overview',
+    nav_all_ach: 'All Achievements',
+    nav_my_feedback: 'My Feedback',
+    btn_signout: 'Sign Out',
+    badge_supervisor: 'Supervisor',
+    loading: 'Loading…',
+    footer: '© 2026 InternTrack — Supervisor Portal. All rights reserved.',
+    // Overview
+    tb_overview: 'Overview',
+    tb_achievements: 'All Achievements',
+    tb_feedback: 'My Feedback',
+    welcome: 'Welcome,',
+    lbl_total_ach: 'Total Achievements',
+    lbl_published: 'Published',
+    lbl_teams: 'Teams',
+    lbl_feedback_given: 'Feedback Given',
+    h_private_note: '🔒 Private Supervisor Feedback',
+    private_note_desc: 'Your feedback is private — only team members (leaders and students) can see it, not the public.',
+    // Achievements tab
+    h_all_ach: 'All Achievements',
+    all_teams_opt: 'All Teams',
+    filter_all: 'All',
+    filter_published: 'Published',
+    filter_pending: 'Pending',
+    filter_rejected: 'Rejected',
+    search_ph: 'Search achievements…',
+    no_ach_found: 'No achievements found',
+    adjust_search: 'Try adjusting your search or filter.',
+    by: 'by',
+    general: 'General',
+    // Feedback section inside achievement
+    lbl_supervisor_feedback: '🔒 Supervisor Feedback (Private)',
+    lbl_feedback_ph: 'Write private feedback for the team…\n\nThis is only visible to team leaders and students — not to the public.',
+    btn_post_feedback: '💬 Post Feedback',
+    posting: 'Posting…',
+    feedback_posted: '✅ Feedback posted!',
+    feedback_fail: 'Failed to post feedback',
+    no_feedback: 'No supervisor feedback yet.',
+    // My feedback tab
+    h_my_feedback: 'My Feedback',
+    my_feedback_desc: 'Feedback you have given across all achievements',
+    no_my_feedback: 'You have not given any feedback yet.',
+    on_achievement: 'On:',
+    // Status
+    badge_published: '📢 Published',
+    badge_pending: '⏳ Pending',
+    badge_draft: '📝 Draft',
+    badge_rejected: '❌ Rejected',
+    // Errors
+    err_data: 'Could not load data',
+    err_server: 'Make sure the server is running.',
+    toast_error: 'Error',
+    load_fail: 'Failed to load',
+    click_expand: 'Click to expand',
+    collapse: 'Collapse',
+  },
+  ar: {
+    supervisor_portal: 'بوابة المشرف',
+    nav_navigation: 'التنقل',
+    nav_public: 'اللوحة العامة',
+    nav_supervisor: 'المشرف',
+    nav_overview: 'نظرة عامة',
+    nav_all_ach: 'جميع الإنجازات',
+    nav_my_feedback: 'ملاحظاتي',
+    btn_signout: 'تسجيل الخروج',
+    badge_supervisor: 'مشرف',
+    loading: 'جارٍ التحميل…',
+    footer: '© 2026 InternTrack — بوابة المشرف. جميع الحقوق محفوظة.',
+    tb_overview: 'نظرة عامة',
+    tb_achievements: 'جميع الإنجازات',
+    tb_feedback: 'ملاحظاتي',
+    welcome: 'مرحباً،',
+    lbl_total_ach: 'إجمالي الإنجازات',
+    lbl_published: 'منشور',
+    lbl_teams: 'الفرق',
+    lbl_feedback_given: 'ملاحظات مُعطاة',
+    h_private_note: '🔒 ملاحظات المشرف الخاصة',
+    private_note_desc: 'ملاحظاتك خاصة — يمكن لأعضاء الفريق فقط رؤيتها (قادة الفريق والطلاب)، وليست مرئية للعموم.',
+    h_all_ach: 'جميع الإنجازات',
+    all_teams_opt: 'جميع الفرق',
+    filter_all: 'الكل',
+    filter_published: 'منشور',
+    filter_pending: 'قيد الانتظار',
+    filter_rejected: 'مرفوض',
+    search_ph: 'ابحث عن الإنجازات…',
+    no_ach_found: 'لا توجد إنجازات',
+    adjust_search: 'حاول تعديل البحث أو الفلتر.',
+    by: 'بواسطة',
+    general: 'عام',
+    lbl_supervisor_feedback: '🔒 ملاحظات المشرف (خاصة)',
+    lbl_feedback_ph: 'اكتب ملاحظات خاصة للفريق…\n\nهذا مرئي فقط لقادة الفريق والطلاب — وليس للعموم.',
+    btn_post_feedback: '💬 نشر الملاحظة',
+    posting: 'جارٍ النشر…',
+    feedback_posted: '✅ تم نشر الملاحظة!',
+    feedback_fail: 'فشل نشر الملاحظة',
+    no_feedback: 'لا توجد ملاحظات من المشرف بعد.',
+    h_my_feedback: 'ملاحظاتي',
+    my_feedback_desc: 'الملاحظات التي أعطيتها لجميع الإنجازات',
+    no_my_feedback: 'لم تعطِ أي ملاحظات بعد.',
+    on_achievement: 'على:',
+    badge_published: '📢 منشور',
+    badge_pending: '⏳ قيد الانتظار',
+    badge_draft: '📝 مسودة',
+    badge_rejected: '❌ مرفوض',
+    err_data: 'تعذر تحميل البيانات',
+    err_server: 'تأكد من أن الخادم يعمل.',
+    toast_error: 'خطأ',
+    load_fail: 'فشل التحميل',
+    click_expand: 'انقر للتوسيع',
+    collapse: 'طي',
+  }
+};
+
+function t(k) { return T[currentLang]?.[k] ?? T.en[k] ?? k; }
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('interntrack_lang', lang);
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  const btn = document.getElementById('langBtn');
+  if (btn) btn.textContent = lang === 'ar' ? 'English' : 'عربي';
+  applyTranslations();
+  switchTab(currentTabName);
+}
+
+function toggleLang() { setLang(currentLang === 'en' ? 'ar' : 'en'); }
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+}
+
+// ── CORE ──────────────────────────────────────────────────────────────────────
+const token = (() => {
+  const c = document.cookie.split(';').find(c => c.trim().startsWith('token='));
+  return c ? c.trim().slice(6) : localStorage.getItem('token');
+})();
+
+if (!token) { window.location.href = '/supervisor-login.html'; }
+
+let currentUser = null;
+let allAchievements = [];
+let currentTabName = 'overview';
+let activeFilter = 'all';
+let activeTeamFilter = '';
+
+function getHeaders(json = true) {
+  const h = { Authorization: 'Bearer ' + token };
+  if (json) h['Content-Type'] = 'application/json';
+  return h;
+}
+
+function escHtml(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function fmtDate(d) {
+  if (!d) return '—';
+  const s = String(d).replace(' ', 'T');
+  const dt = new Date(s);
+  const locale = currentLang === 'ar' ? 'ar-AE' : 'en-US';
+  return isNaN(dt) ? d : dt.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function showToast(msg, type = 'info') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast show ' + type;
+  clearTimeout(el._t); el._t = setTimeout(() => el.className = 'toast', 3500);
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+  document.getElementById('mainLayout').classList.toggle('expanded');
+}
+
+async function logout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  document.cookie = 'token=;max-age=0;path=/';
+  localStorage.removeItem('token');
+  window.location.href = '/supervisor-login.html';
+}
+
+function statusBadge(status) {
+  const map = {
+    published: `<span class="badge badge-green">${t('badge_published')}</span>`,
+    pending: `<span class="badge" style="background:#fef3c7;color:#92400e;">${t('badge_pending')}</span>`,
+    draft: `<span class="badge badge-amber">${t('badge_draft')}</span>`,
+    rejected: `<span class="badge" style="background:#fee2e2;color:#991b1b;">${t('badge_rejected')}</span>`
+  };
+  return map[status] || status;
+}
+
+function switchTab(tab) {
+  currentTabName = tab;
+  document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
+  const navItems = document.querySelectorAll('.sidebar-nav .nav-item');
+  const idx = { overview: 1, achievements: 2, feedback: 3 };
+  navItems[idx[tab]]?.classList.add('active');
+  const titles = { overview: t('tb_overview'), achievements: t('tb_achievements'), feedback: t('tb_feedback') };
+  document.getElementById('topbarTitle').textContent = titles[tab] || tab;
+  const el = document.getElementById('pageContent');
+  switch (tab) {
+    case 'overview': renderOverview(el); break;
+    case 'achievements': renderAchievements(el); break;
+    case 'feedback': renderMyFeedback(el); break;
+  }
+}
+
+// ── OVERVIEW ──────────────────────────────────────────────────────────────────
+async function renderOverview(el) {
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const [stats, achievements] = await Promise.all([
+      fetch('/api/statistics').then(r => r.json()),
+      fetch('/api/supervisor/achievements', { headers: getHeaders() }).then(r => r.json())
+    ]);
+    allAchievements = achievements;
+    const myFeedbackCount = achievements.reduce((sum, a) => sum + (a.supervisorFeedbackCount || 0), 0);
+
+    el.innerHTML = `
+      <div class="page-header">
+        <div>
+          <h2>${t('welcome')} ${escHtml(currentUser?.Name || 'Supervisor')}! 👁️</h2>
+          <p style="color:var(--text-muted);font-size:14px;">${t('h_private_note')}</p>
+        </div>
+      </div>
+
+      <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1.5px solid #f59e0b;border-radius:14px;padding:18px 22px;margin-bottom:24px;display:flex;align-items:flex-start;gap:14px;">
+        <span style="font-size:28px;">🔒</span>
+        <div>
+          <strong style="font-size:15px;color:#92400e;">${t('h_private_note')}</strong>
+          <p style="color:#78350f;font-size:13px;margin-top:4px;">${t('private_note_desc')}</p>
+        </div>
+      </div>
+
+      <div class="stats-row" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-card">
+          <div class="stat-icon gold">🏆</div>
+          <div class="stat-info"><h3>${achievements.length}</h3><p>${t('lbl_total_ach')}</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">📢</div>
+          <div class="stat-info"><h3>${achievements.filter(a=>a.Status==='published').length}</h3><p>${t('lbl_published')}</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">👥</div>
+          <div class="stat-info"><h3>${stats.totalTeams || 0}</h3><p>${t('lbl_teams')}</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon amber">💬</div>
+          <div class="stat-info"><h3>${myFeedbackCount}</h3><p>${t('lbl_feedback_given')}</p></div>
+        </div>
+      </div>
+
+      <div class="full-panel">
+        <div class="panel-header">
+          <h3>${t('h_all_ach')}</h3>
+          <a onclick="switchTab('achievements')" href="#">${t('nav_all_ach')} →</a>
+        </div>
+        ${achievements.slice(0, 5).map(a => renderAchievementRow(a, false)).join('') || `<div class="empty-state"><p>${t('no_ach_found')}</p></div>`}
+      </div>`;
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('err_data')}</h3><p>${t('err_server')}</p></div>`;
+  }
+}
+
+// ── ACHIEVEMENTS ──────────────────────────────────────────────────────────────
+async function renderAchievements(el) {
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const [achievements, teams] = await Promise.all([
+      fetch('/api/supervisor/achievements', { headers: getHeaders() }).then(r => r.json()),
+      fetch('/api/teams').then(r => r.json())
+    ]);
+    allAchievements = achievements;
+
+    const teamOptions = teams.map(t =>
+      `<option value="${t.TeamID}">${escHtml(t.TeamName)}</option>`
+    ).join('');
+
+    el.innerHTML = `
+      <div class="page-header">
+        <div><h2>${t('h_all_ach')}</h2></div>
+      </div>
+      <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1.5px solid #f59e0b;border-radius:12px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#78350f;display:flex;gap:8px;align-items:center;">
+        🔒 ${t('private_note_desc')}
+      </div>
+      <div class="search-filters" style="margin-bottom:14px;">
+        <input class="search-input" id="searchInput" placeholder="${t('search_ph')}" oninput="filterAndRender()">
+        <select class="filter-select" id="teamFilter" onchange="filterAndRender()">
+          <option value="">${t('all_teams_opt')}</option>
+          ${teamOptions}
+        </select>
+      </div>
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="setFilter('all',this)">${t('filter_all')}</button>
+        <button class="filter-tab" onclick="setFilter('published',this)">${t('filter_published')}</button>
+        <button class="filter-tab" onclick="setFilter('pending',this)">${t('filter_pending')}</button>
+        <button class="filter-tab" onclick="setFilter('rejected',this)">${t('filter_rejected')}</button>
+      </div>
+      <div id="achievementsList"></div>`;
+
+    filterAndRender();
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('err_data')}</h3></div>`;
+  }
+}
+
+function setFilter(f, btn) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterAndRender();
+}
+
+function filterAndRender() {
+  const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  const tid = document.getElementById('teamFilter')?.value;
+  let filtered = allAchievements;
+  if (activeFilter !== 'all') filtered = filtered.filter(a => a.Status === activeFilter);
+  if (q) filtered = filtered.filter(a => a.Title.toLowerCase().includes(q) || (a.Description || '').toLowerCase().includes(q));
+  if (tid) filtered = filtered.filter(a => String(a.TeamID) === tid);
+
+  const list = document.getElementById('achievementsList');
+  if (!list) return;
+  if (!filtered.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">🏆</div><h3>${t('no_ach_found')}</h3><p>${t('adjust_search')}</p></div>`;
+    return;
+  }
+  list.innerHTML = filtered.map(a => `<div class="achievement-expand" id="aexp-${a.AchievementID}">${renderAchievementRow(a, true)}</div>`).join('');
+}
+
+function renderAchievementRow(a, expandable) {
+  if (!expandable) {
+    return `
+      <div class="achievement-item" onclick="switchTab('achievements')">
+        ${a.FirstImage ? `<img src="${escHtml(a.FirstImage)}" class="achievement-thumb" onerror="this.style.display='none'">` : '<div class="achievement-thumb-placeholder"></div>'}
+        <div class="achievement-info">
+          <h4>${escHtml(a.Title)}</h4>
+          <p>${escHtml(a.TeamName || t('general'))} · ${t('by')} ${escHtml(a.CreatorName || '')}</p>
+        </div>
+        ${statusBadge(a.Status)}
+      </div>`;
+  }
+
+  return `
+    <div class="achievement-expand-header" onclick="toggleExpand(${a.AchievementID})">
+      <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+        ${a.FirstImage ? `<img src="${escHtml(a.FirstImage)}" style="width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">` : ''}
+        <div style="min-width:0;">
+          <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(a.Title)}</div>
+          <div style="font-size:12px;color:var(--text-muted);">${escHtml(a.TeamName || t('general'))} · ${t('by')} ${escHtml(a.CreatorName || '')} · ${fmtDate(a.CreatedAt)}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+        ${statusBadge(a.Status)}
+        ${a.supervisorFeedbackCount ? `<span style="background:#fef3c7;color:#92400e;border-radius:12px;padding:2px 10px;font-size:11px;font-weight:700;">💬 ${a.supervisorFeedbackCount}</span>` : ''}
+        <span style="color:var(--text-muted);font-size:18px;" id="expand-icon-${a.AchievementID}">▼</span>
+      </div>
+    </div>
+    <div class="achievement-expand-body" id="expand-body-${a.AchievementID}"></div>`;
+}
+
+async function toggleExpand(id) {
+  const body = document.getElementById(`expand-body-${id}`);
+  const icon = document.getElementById(`expand-icon-${id}`);
+  if (!body) return;
+  if (body.classList.contains('open')) {
+    body.classList.remove('open');
+    icon.textContent = '▼';
+    return;
+  }
+  body.classList.add('open');
+  icon.textContent = '▲';
+  body.innerHTML = '<div class="loading" style="padding:16px;"><div class="spinner"></div></div>';
+  try {
+    const a = await fetch('/api/achievements/' + id).then(r => r.json());
+    const feedback = await fetch('/api/supervisor/achievements/' + id + '/feedback', { headers: getHeaders() }).then(r => r.json());
+
+    const existingFeedback = feedback.length
+      ? feedback.map(f => `
+          <div class="private-feedback-item">
+            <div class="feedback-meta">🎓 ${escHtml(f.AuthorName)} · ${fmtDate(f.CreatedAt)}</div>
+            <div class="feedback-text">${escHtml(f.Content)}</div>
+          </div>`).join('')
+      : `<p style="color:var(--text-muted);font-size:13px;font-style:italic;">${t('no_feedback')}</p>`;
+
+    body.innerHTML = `
+      <div style="margin-bottom:12px;">
+        <p style="font-size:14px;line-height:1.7;color:var(--text);margin-bottom:10px;">${escHtml(a.Description)}</p>
+        ${a.images?.length ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">${a.images.map(img=>`<img src="${escHtml(img.ImageURL)}" style="height:80px;border-radius:8px;object-fit:cover;cursor:pointer;" onclick="window.open(this.src)">`).join('')}</div>` : ''}
+      </div>
+
+      <div class="private-feedback-box">
+        <div class="feedback-header">
+          <span>🔒</span> ${t('lbl_supervisor_feedback')}
+        </div>
+        <div id="feedback-list-${id}">${existingFeedback}</div>
+        <div class="feedback-form-area" style="margin-top:12px;">
+          <textarea id="feedback-input-${id}" placeholder="${t('lbl_feedback_ph')}"></textarea>
+          <div style="margin-top:8px;">
+            <button class="btn-feedback" onclick="postFeedback(${id})" id="feedback-btn-${id}">${t('btn_post_feedback')}</button>
+          </div>
+        </div>
+      </div>`;
+  } catch (e) {
+    body.innerHTML = `<p style="color:#ef4444;padding:10px;">${t('load_fail')}</p>`;
+  }
+}
+
+async function postFeedback(achievementId) {
+  const input = document.getElementById(`feedback-input-${achievementId}`);
+  const btn = document.getElementById(`feedback-btn-${achievementId}`);
+  const content = input?.value?.trim();
+  if (!content) return;
+
+  btn.disabled = true; btn.textContent = t('posting');
+  try {
+    const r = await fetch(`/api/supervisor/achievements/${achievementId}/feedback`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ content })
+    });
+    if (r.ok) {
+      showToast(t('feedback_posted'), 'success');
+      input.value = '';
+      // Reload feedback list
+      const feedback = await fetch('/api/supervisor/achievements/' + achievementId + '/feedback', { headers: getHeaders() }).then(r => r.json());
+      const list = document.getElementById(`feedback-list-${achievementId}`);
+      if (list) {
+        list.innerHTML = feedback.length
+          ? feedback.map(f => `
+              <div class="private-feedback-item">
+                <div class="feedback-meta">🎓 ${escHtml(f.AuthorName)} · ${fmtDate(f.CreatedAt)}</div>
+                <div class="feedback-text">${escHtml(f.Content)}</div>
+              </div>`).join('')
+          : `<p style="color:var(--text-muted);font-size:13px;">${t('no_feedback')}</p>`;
+      }
+      // Update badge
+      const exp = document.querySelector(`#aexp-${achievementId} [id^="expand-icon"]`);
+      const badgeEl = exp?.parentElement?.querySelector('span[style*="fef3c7"]');
+      if (badgeEl) {
+        const curr = parseInt(badgeEl.textContent.replace(/\D/g,'')) || 0;
+        badgeEl.textContent = `💬 ${curr + 1}`;
+      }
+    } else {
+      showToast(t('feedback_fail'), 'error');
+    }
+  } catch (e) { showToast(t('toast_error'), 'error'); }
+  finally { btn.disabled = false; btn.textContent = t('btn_post_feedback'); }
+}
+
+// ── MY FEEDBACK ───────────────────────────────────────────────────────────────
+async function renderMyFeedback(el) {
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const myFeedback = await fetch('/api/supervisor/my-feedback', { headers: getHeaders() }).then(r => r.json());
+    el.innerHTML = `
+      <div class="page-header">
+        <div><h2>${t('h_my_feedback')}</h2><p>${t('my_feedback_desc')}</p></div>
+      </div>
+      <div class="full-panel">
+        ${myFeedback.length ? myFeedback.map(f => `
+          <div style="padding:16px 0;border-bottom:1px solid var(--border);">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">${t('on_achievement')} <strong>${escHtml(f.AchievementTitle)}</strong> · ${escHtml(f.TeamName || '')} · ${fmtDate(f.CreatedAt)}</div>
+            <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;">
+              <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:4px;">🔒 ${t('lbl_supervisor_feedback')}</div>
+              <div style="font-size:14px;color:#374151;">${escHtml(f.Content)}</div>
+            </div>
+          </div>`).join('') + '<style>div[style*="border-bottom"]:last-child{border-bottom:none;}</style>'
+        : `<div class="empty-state"><div class="empty-icon">💬</div><h3>${t('no_my_feedback')}</h3></div>`}
+      </div>`;
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('err_data')}</h3></div>`;
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+(async () => {
+  const savedLang = localStorage.getItem('interntrack_lang') || 'en';
+  currentLang = savedLang;
+  document.getElementById('langBtn').textContent = savedLang === 'ar' ? 'English' : 'عربي';
+  applyTranslations();
+
+  try {
+    const r = await fetch('/api/auth/me', { headers: getHeaders() });
+    if (!r.ok) throw new Error('auth');
+    currentUser = await r.json();
+    // Handle both capitalizations (Role from DB, role from token fallback)
+    const userRole = currentUser.Role || currentUser.role;
+    if (userRole !== 'Supervisor') {
+      window.location.href = '/supervisor-login.html';
+      return;
+    }
+    document.getElementById('supervisorName').textContent = currentUser.Name || currentUser.name || 'Supervisor';
+  } catch (e) {
+    window.location.href = '/supervisor-login.html';
+    return;
+  }
+  switchTab('overview');
+})();
+</script>
+</body>
+</html>

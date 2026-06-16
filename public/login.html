@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login – InternTrack</title>
+
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <script>
+    (function () {
+      const lang = localStorage.getItem('interntrack_lang') || 'en';
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    })();
+  </script>
+
+<style>
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'Inter','Plus Jakarta Sans',Arial,sans-serif;
+    background:
+      radial-gradient(circle at top left, rgba(37,99,235,.25), transparent 35%),
+      linear-gradient(135deg,#081326 0%,#102542 48%,#07111f 100%);
+    overflow-y:auto;
+    overflow-x:hidden;
+    padding:20px;
+  }
+
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    background:repeating-linear-gradient(
+      135deg,
+      rgba(255,255,255,.03) 0px,
+      rgba(255,255,255,.03) 1px,
+      transparent 1px,
+      transparent 42px
+    );
+    pointer-events:none;
+  }
+
+  .lang-toggle{
+    position:fixed;
+    top:14px;
+    right:18px;
+    z-index:10;
+  }
+
+  [dir="rtl"] .lang-toggle{
+    right:auto;
+    left:18px;
+  }
+
+  .lang-btn{
+    padding:7px 15px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,.25);
+    background:rgba(255,255,255,.12);
+    color:#fff;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+  }
+
+  .login-shell{
+    position:relative;
+    z-index:2;
+    width:min(900px,100%);
+    min-height:560px;
+    display:grid;
+    grid-template-columns:.9fr 1fr;
+    background:#fff;
+    border-radius:28px;
+    box-shadow:0 24px 70px rgba(0,0,0,.35);
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,.5);
+  }
+
+  .brand-panel{
+    position:relative;
+    padding:42px 32px;
+    color:#fff;
+    background:linear-gradient(145deg,#2456d6,#0f8bd8);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:46px;
+    min-height:560px;
+    overflow:hidden;
+  }
+
+  .brand-panel::before{
+    content:"";
+    position:absolute;
+    width:270px;
+    height:270px;
+    border-radius:50%;
+    background:rgba(255,255,255,.12);
+    right:-95px;
+    top:-75px;
+  }
+
+  .brand-panel::after{
+    content:"";
+    position:absolute;
+    width:210px;
+    height:210px;
+    border-radius:50%;
+    background:rgba(255,255,255,.09);
+    left:-90px;
+    bottom:-70px;
+  }
+
+  .brand-content{
+    position:relative;
+    z-index:1;
+  }
+
+  .brand-panel h2{
+    font-size:31px;
+    line-height:1.18;
+    margin:0 0 18px;
+    letter-spacing:-.7px;
+  }
+
+  .brand-panel p{
+    margin:0;
+    max-width:360px;
+    color:rgba(255,255,255,.88);
+    line-height:1.65;
+    font-size:14px;
+  }
+
+  .feature-list{
+    position:relative;
+    z-index:1;
+    display:grid;
+    gap:12px;
+    margin-top:0;
+  }
+
+  .feature-item{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:13px 14px;
+    border-radius:16px;
+    background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.20);
+    font-size:13.5px;
+    font-weight:750;
+  }
+
+  .feature-item i{
+    min-width:32px;
+    width:32px;
+    height:32px;
+    border-radius:11px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,.22);
+    font-size:13px;
+  }
+
+  .login-panel{
+    padding:30px 42px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    background:#fff;
+  }
+
+  .login-top{
+    text-align:center;
+    margin-bottom:20px;
+  }
+
+ .login-icon{
+    width:150px;
+    height:150px;
+    margin:0 auto 0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:transparent;
+}
+
+.login-icon img{
+    width:135px;
+    height:135px;
+    object-fit:contain;
+}
+
+  .login-top h1{
+    margin:0;
+    font-size:30px;
+    color:#0f172a;
+    letter-spacing:-.5px;
+  }
+
+  .login-top p{
+    margin:5px 0 0;
+    color:#64748b;
+    font-size:14px;
+  }
+
+  .form-group{
+    margin-bottom:14px;
+  }
+
+  .form-label{
+    display:block;
+    font-size:13.5px;
+    font-weight:800;
+    color:#334155;
+    margin-bottom:7px;
+  }
+
+  .input-wrap{
+    position:relative;
+  }
+
+  .input-wrap i{
+    position:absolute;
+    top:50%;
+    left:15px;
+    transform:translateY(-50%);
+    color:#64748b;
+    font-size:14px;
+  }
+
+  [dir="rtl"] .input-wrap i{
+    left:auto;
+    right:15px;
+  }
+
+  .form-input{
+  width:100%;
+  height:47px;
+  padding:0 50px 0 43px;
+  border:1.5px solid #dbe3ef;
+  border-radius:15px;
+  outline:none;
+  font-size:14.5px;
+  color:#0f172a;
+  background:#f8fafc;
+  transition:.2s;
+}
+
+.input-wrap .password-eye{
+  position:absolute;
+  top:50%;
+  right:14px;
+  left:auto;
+  transform:translateY(-50%);
+  width:34px;
+  height:34px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:0;
+  background:transparent;
+  color:#64748b;
+  cursor:pointer;
+  z-index:10;
+  padding:0;
+}
+
+.input-wrap .password-eye i{
+  position:static;
+  transform:none;
+  font-size:14px;
+  color:#64748b;
+}
+
+[dir="rtl"] .input-wrap .password-eye{
+  right:auto;
+  left:14px;
+}
+
+[dir="rtl"] .form-input{
+  padding:0 43px 0 50px;
+}
+  .row-options{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin:2px 0 14px;
+    font-size:13px;
+    color:#64748b;
+  }
+
+  .remember{
+    display:flex;
+    align-items:center;
+    gap:7px;
+  }
+
+  .remember input{
+    width:15px;
+    height:15px;
+    accent-color:#2563eb;
+  }
+
+  .forgot{
+    color:#2563eb;
+    font-weight:800;
+    text-decoration:none;
+    cursor:pointer;
+  }
+
+  .error-msg{
+    min-height:17px;
+    margin:0 0 8px;
+    color:#ef4444;
+    font-size:13px;
+    font-weight:800;
+  }
+
+  .btn-login{
+    width:100%;
+    height:50px;
+    border:none;
+    border-radius:16px;
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:#fff;
+    font-size:15px;
+    font-weight:900;
+    cursor:pointer;
+    box-shadow:0 12px 22px rgba(37,99,235,.25);
+    transition:.2s;
+  }
+
+  .btn-login:hover{
+    transform:translateY(-1px);
+    box-shadow:0 16px 26px rgba(37,99,235,.32);
+  }
+
+  .btn-login:disabled{
+    opacity:.65;
+    cursor:not-allowed;
+    transform:none;
+  }
+
+  .help-link{
+    margin-top:18px;
+    padding-top:16px;
+    border-top:1px solid #e5e7eb;
+    text-align:center;
+    color:#64748b;
+    font-size:13px;
+  }
+
+  .help-link span{
+    color:#2563eb;
+    font-weight:900;
+  }
+
+  @media(max-width:900px){
+    body{
+      padding:18px;
+      align-items:flex-start;
+    }
+
+    .login-shell{
+      grid-template-columns:1fr;
+      max-width:500px;
+      min-height:auto;
+    }
+
+    .brand-panel{
+      display:none;
+    }
+
+    .login-panel{
+      padding:36px 28px;
+    }
+  }
+
+  @media(max-width:480px){
+    body{
+      padding:14px 10px;
+    }
+
+    .login-shell{
+      border-radius:22px;
+    }
+
+    .login-panel{
+      padding:32px 20px;
+    }
+
+    .login-top h1{
+      font-size:26px;
+    }
+
+    .row-options{
+      flex-direction:column;
+      align-items:flex-start;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<div class="lang-toggle">
+  <button class="lang-btn" onclick="toggleLang()" id="langBtn">عربي</button>
+</div>
+
+<main class="login-shell">
+  <section class="brand-panel">
+    <div class="brand-content">
+      </div>
+
+      <h2 id="brand_title">Internship Management Platform</h2>
+
+<p id="brand_desc">
+  Track internship activities, monitor progress,
+  manage achievements, and receive supervisor reviews.
+</p>
+    </div>
+
+    <div class="feature-list">
+      <div class="feature-item">
+        <i class="fa-solid fa-user-check"></i>
+        <span id="feat_1">Internship Tracking</span>
+      </div>
+      <div class="feature-item">
+        <i class="fa-solid fa-chart-line"></i>
+        <span id="feat_2">Progress Monitoring</span>
+      </div>
+      <div class="feature-item">
+        <i class="fa-solid fa-comments"></i>
+        <span id="feat_3">Reviews & Feedback</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="login-panel">
+   <div class="login-top">
+  <div class="login-icon">
+    <img src="/images/logo.png" alt="Logo">
+  </div>
+
+  <h1>InternTrack</h1>
+  <p id="lbl_portal">Access Your Internship Portal</p>
+</div>
+
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label class="form-label" id="lbl_email">Email Address</label>
+        <div class="input-wrap">
+          <i class="fa-regular fa-envelope"></i>
+          <input type="email" id="loginEmail" class="form-input" placeholder="Enter your email" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" id="lbl_pass">Password</label>
+        <div class="input-wrap">
+          <i class="fa-solid fa-lock"></i>
+<input type="password" id="loginPassword" class="form-input password-input" placeholder="Enter your password" required>
+          <button type="button" class="password-eye" onclick="togglePassword()" aria-label="Show password">
+            <i class="fa-regular fa-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="row-options">
+        <label class="remember">
+          <input type="checkbox" id="rememberMe">
+          <span id="lbl_remember">Remember me</span>
+        </label>
+        <a class="forgot" id="lbl_forgot" onclick="forgotPassword()">Forgot Password?</a>
+      </div>
+
+      <p class="error-msg" id="loginError"></p>
+
+      <button type="submit" class="btn-login" id="loginBtn">
+        <i class="fa-solid fa-right-to-bracket"></i>
+        <span id="btnText">Sign In</span>
+      </button>
+    </form>
+
+    <div class="help-link">
+      <i class="fa-solid fa-shield-halved"></i>
+      <span id="lbl_need">Need help?</span>
+      <span id="lbl_contact">Contact Administrator</span>
+    </div>
+  </section>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyD_-yWpUgTnxis_ngDIVz-3NmKcLpHKPMc",
+  authDomain: "interntrack-d.firebaseapp.com",
+  projectId: "interntrack-d",
+  storageBucket: "interntrack-d.firebasestorage.app",
+  messagingSenderId: "926551364573",
+  appId: "1:926551364573:web:5c4df4ea01ea809c6bdc34"
+};
+
+firebase.initializeApp(firebaseConfig);
+const fbAuth = firebase.auth();
+
+const T = {
+  en: {
+  brandTitle: 'Internship Management Platform',
+brandDesc: 'Track internship activities, monitor progress, manage achievements, and receive supervisor reviews.',
+feat1: 'Internship Tracking',
+feat2: 'Progress Monitoring',
+feat3: 'Reviews & Feedback',
+   portal: 'Access Your Internship Portal',
+    email: 'Email Address',
+    pass: 'Password',
+    remember: 'Remember me',
+    forgot: 'Forgot Password?',
+    signin: 'Sign In',
+    signing: 'Signing in…',
+    need: 'Need help?',
+    contact: 'Contact Administrator',
+    err_not_found: 'No account found with this email.',
+    err_wrong_pw: 'Incorrect password. Please try again.',
+    err_invalid: 'Invalid email or password.',
+    err_email_required: 'Please enter your email first.',
+    reset_sent: 'Password reset email sent.',
+    err_generic: 'Login failed. Please try again.'
+  },
+  ar: {
+    brandTitle: 'منصة إدارة التدريب',
+brandDesc: 'تابع أنشطة التدريب وراقب التقدم والإنجازات واستلم تقييمات وملاحظات المشرفين.',
+feat1: 'متابعة التدريب',
+feat2: 'مراقبة التقدم',
+feat3: 'التقييمات والملاحظات',
+   portal: 'الدخول إلى بوابة التدريب',
+    email: 'البريد الإلكتروني',
+    pass: 'كلمة المرور',
+    remember: 'تذكرني',
+    forgot: 'نسيت كلمة المرور؟',
+    signin: 'دخول',
+    signing: 'جارٍ تسجيل الدخول…',
+    need: 'تحتاج مساعدة؟',
+    contact: 'تواصل مع المسؤول',
+    err_not_found: 'لا يوجد حساب بهذا البريد الإلكتروني.',
+    err_wrong_pw: 'كلمة المرور غير صحيحة.',
+    err_invalid: 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
+    err_email_required: 'اكتبي البريد الإلكتروني أولاً.',
+    reset_sent: 'تم إرسال رابط إعادة تعيين كلمة المرور.',
+    err_generic: 'فشل تسجيل الدخول. حاول مرة أخرى.'
+  }
+};
+
+let currentLang = localStorage.getItem('interntrack_lang') || 'en';
+applyTranslations();
+
+function applyTranslations(){
+  const l = T[currentLang] || T.en;
+
+ 
+  document.getElementById('brand_title').textContent = l.brandTitle;
+  document.getElementById('brand_desc').textContent = l.brandDesc;
+  document.getElementById('feat_1').textContent = l.feat1;
+  document.getElementById('feat_2').textContent = l.feat2;
+  document.getElementById('feat_3').textContent = l.feat3;
+
+  document.getElementById('lbl_portal').textContent = l.portal;
+  document.getElementById('lbl_email').textContent = l.email;
+  document.getElementById('lbl_pass').textContent = l.pass;
+  document.getElementById('lbl_remember').textContent = l.remember;
+  document.getElementById('lbl_forgot').textContent = l.forgot;
+  document.getElementById('btnText').textContent = l.signin;
+  document.getElementById('lbl_need').textContent = l.need;
+  document.getElementById('lbl_contact').textContent = l.contact;
+
+  document.getElementById('langBtn').textContent = currentLang === 'ar' ? 'English' : 'عربي';
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+}
+
+function toggleLang(){
+  currentLang = currentLang === 'en' ? 'ar' : 'en';
+  localStorage.setItem('interntrack_lang', currentLang);
+  applyTranslations();
+}
+
+function togglePassword(){
+  const input = document.getElementById('loginPassword');
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+async function forgotPassword(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const errEl = document.getElementById('loginError');
+  const l = T[currentLang] || T.en;
+
+  if(!email){
+    errEl.style.color = '#ef4444';
+    errEl.textContent = l.err_email_required;
+    return;
+  }
+
+  try{
+    await fbAuth.sendPasswordResetEmail(email);
+    errEl.style.color = '#16a34a';
+    errEl.textContent = l.reset_sent;
+  }catch(err){
+    errEl.style.color = '#ef4444';
+    errEl.textContent = l.err_generic;
+  }
+}
+
+async function handleLogin(e){
+  e.preventDefault();
+
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const btn = document.getElementById('loginBtn');
+  const btnText = document.getElementById('btnText');
+  const errEl = document.getElementById('loginError');
+  const l = T[currentLang] || T.en;
+
+  errEl.style.color = '#ef4444';
+  errEl.textContent = '';
+  btn.disabled = true;
+  btnText.textContent = l.signing;
+
+  try{
+    const credential = await fbAuth.signInWithEmailAndPassword(email, password);
+    const idToken = await credential.user.getIdToken(true);
+
+    const r = await fetch('/api/auth/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken })
+    });
+
+    const data = await r.json();
+
+    if(!r.ok){
+      throw new Error(data.error || 'Login failed');
+    }
+
+    document.cookie = `token=${idToken};path=/;max-age=3600;sameSite=lax`;
+    localStorage.setItem('token', idToken);
+
+    window.location.href = data.redirectUrl || '/student-dashboard.html';
+
+  }catch(err){
+    const firebaseErrors = {
+      'auth/user-not-found': l.err_not_found,
+      'auth/wrong-password': l.err_wrong_pw,
+      'auth/invalid-credential': l.err_invalid,
+      'auth/invalid-email': l.err_invalid
+    };
+
+    errEl.textContent = firebaseErrors[err.code] || l.err_generic;
+    btn.disabled = false;
+    btnText.textContent = l.signin;
+  }
+}
+</script>
+
+</body>
+</html>

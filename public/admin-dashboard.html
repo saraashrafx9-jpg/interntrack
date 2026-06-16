@@ -1,0 +1,1964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard – InternTrack</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script>
+    (function() {
+      const lang = localStorage.getItem('interntrack_lang') || 'en';
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    })();
+  </script>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <img src="/images/logo.png" alt="InternTrack" onerror="this.style.display='none'">
+    <div class="sidebar-brand-text">
+      <h2>InternTrack</h2>
+      <p data-i18n="admin_dashboard">Admin Portal</p>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label" data-i18n="nav_admin">Admin</div>
+
+    <a class="nav-item active" onclick="switchTab('dashboard')" href="#">
+      <span class="nav-icon">📊</span>
+      <span data-i18n="nav_dashboard">Dashboard</span>
+    </a>
+
+    <a class="nav-item" onclick="switchTab('users')" href="#">
+  <span class="nav-icon">👤</span>
+  <span data-i18n="nav_users">User Management</span>
+</a>
+
+<a class="nav-item" onclick="switchTab('teams')" href="#">
+  <span class="nav-icon">👥</span>
+  <span data-i18n="nav_teams">Teams</span>
+</a>
+
+    <a class="nav-item" onclick="switchTab('reports')" href="#">
+      <span class="nav-icon">📄</span>
+      <span data-i18n="nav_reports">Reports</span>
+    </a>
+
+    <a class="nav-item" onclick="switchTab('settings')" href="#">
+      <span class="nav-icon">⚙️</span>
+      <span data-i18n="nav_settings">Settings</span>
+    </a>
+  </nav>
+    <div class="sidebar-user" onclick="toggleAdminMenu(event)">
+ <div class="admin-avatar">
+    <i class="fa-solid fa-user"></i>
+  </div>
+  <div class="admin-info">
+    <h4 id="adminName">Admin</h4>
+    <p>System Administrator</p>
+  </div>
+
+  <span class="admin-arrow">▼</span>
+</div>
+
+<div id="adminDropdown" class="sidebar-admin-menu">
+  <a href="#" onclick="openAdminProfileFromMenu(event)">
+    👤 Profile
+  </a>
+
+  <div class="language-menu">
+    <a href="#" onclick="toggleLanguageMenu(event)">
+      🌐 Language ▶
+    </a>
+
+    <div id="languageDropdown" class="language-dropdown">
+      <a href="#" onclick="setLang('en')">English</a>
+      <a href="#" onclick="setLang('ar')">Arabic</a>
+    </div>
+  </div>
+
+  <a href="#" onclick="logout()">
+    🚪 Sign Out
+  </a>
+</div>
+</aside>
+
+<div class="main" id="mainLayout">
+ <header class="topbar">
+  <div class="topbar-left">
+    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+    <span class="topbar-title" id="topbarTitle">Dashboard</span>
+  </div>
+
+  <div class="topbar-right notification-wrapper">
+
+    <button class="notif-btn" onclick="toggleNotifications(event)">
+      🔔 <span>3</span>
+    </button>
+
+   <div id="notificationsBox" class="notifications-box">
+  <div class="empty-notifications">
+    No notifications
+  </div>
+</div>
+
+  </div>
+</header>
+
+  <div class="page-content" id="pageContent">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+
+  <footer class="footer">
+    <p data-i18n="footer">© 2026 InternTrack — Admin Panel. All rights reserved.</p>
+  </footer>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="teamModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="teamModalTitle" data-i18n="modal_create_team">Create Team</h3>
+      <button class="modal-close" onclick="closeModal('teamModal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="lbl_team_name">Team Name *</label>
+      <input type="text" id="teamName" class="form-input" placeholder="e.g. IT Team 1">
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="lbl_description">Description</label>
+      <textarea id="teamDesc" class="form-textarea" style="min-height:80px;"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeModal('teamModal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTeam()" data-i18n="btn_save_team">Save Team</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="leaderModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="leaderModalTitle" data-i18n="modal_create_leader">Create Leader</h3>
+      <button class="modal-close" onclick="closeModal('leaderModal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="lbl_full_name">Full Name *</label>
+      <input type="text" id="leaderName" class="form-input" placeholder="e.g. Sara Ali">
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="lbl_email">Email *</label>
+      <input type="email" id="leaderEmail" class="form-input" placeholder="sara@example.com">
+    </div>
+    <div class="form-group" id="leaderPasswordGroup">
+      <label class="form-label" data-i18n="lbl_password">Password *</label>
+      <input type="password" id="leaderPassword" class="form-input" placeholder="Min 6 characters">
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="lbl_assign_team">Assign to Team</label>
+      <select id="leaderTeam" class="form-input"><option value=""></option></select>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeModal('leaderModal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLeader()" data-i18n="btn_save_leader">Save Leader</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="assignModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 data-i18n="modal_assign_leader">Assign Leader to Team</h3>
+      <button class="modal-close" onclick="closeModal('assignModal')">✕</button>
+    </div>
+    <p class="text-muted mb-2"><span data-i18n="lbl_assigning_to">Assigning to:</span> <strong id="assignTeamName"></strong></p>
+    <div class="form-group">
+      <label class="form-label" data-i18n="lbl_select_leader">Select Leader</label>
+      <select id="assignLeaderSelect" class="form-input"><option value=""></option></select>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeModal('assignModal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAssignment()" data-i18n="btn_assign">Assign</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="studentModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="studentModalTitle" data-i18n="modal_create_student">Create Student</h3>
+      <button class="modal-close" onclick="closeModal('studentModal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="lbl_full_name">Full Name *</label>
+      <input type="text" id="stuName" class="form-input" placeholder="e.g. Ahmed Mohammed">
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="lbl_email">Email *</label>
+      <input type="email" id="stuEmail" class="form-input" placeholder="ahmed@example.com">
+    </div>
+    <div class="form-group" id="stuPasswordGroup">
+      <label class="form-label" data-i18n="lbl_password">Password *</label>
+      <input type="password" id="stuPassword" class="form-input" placeholder="Min 6 characters">
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="lbl_assign_team">Assign to Team</label>
+      <select id="stuTeam" class="form-input"><option value=""></option></select>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeModal('studentModal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveStudent()" data-i18n="btn_save_student">Save Student</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUPERVISOR MODAL -->
+<div class="modal-overlay" id="supervisorModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="supervisorModalTitle" data-i18n="modal_add_supervisor">Add Supervisor</h3>
+      <button class="modal-close" onclick="closeModal('supervisorModal')">✕</button>
+    </div>
+    <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#92400e;">
+      🔒 <strong data-i18n="supervisor_modal_note">Supervisors can give private feedback on achievements — visible only to team members, not the public.</strong>
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="lbl_full_name">Full Name *</label>
+      <input type="text" id="supName" class="form-input" placeholder="e.g. Dr. Sara Ahmed">
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="lbl_email">Email *</label>
+      <input type="email" id="supEmail" class="form-input" placeholder="supervisor@example.com">
+    </div>
+    <div class="form-group" id="supPasswordGroup">
+      <label class="form-label" data-i18n="lbl_password">Password *</label>
+      <input type="password" id="supPassword" class="form-input" placeholder="Min 6 characters">
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeModal('supervisorModal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSupervisor()" data-i18n="btn_save_supervisor">Save Supervisor</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── I18N ──────────────────────────────────────────────────────────────────────
+let currentLang = localStorage.getItem('interntrack_lang') || 'en';
+const savedSettings =
+  JSON.parse(localStorage.getItem("admin_settings")) || {};
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  if(savedSettings.adminName){
+
+    const topbarName =
+      document.getElementById("topbarAdminName");
+
+    if(topbarName){
+      topbarName.textContent =
+        savedSettings.adminName;
+    }
+
+  }
+
+});
+
+const T = {
+  en: {
+    admin_dashboard: 'Admin Dashboard',
+    nav_navigation: 'Navigation',
+    nav_public: 'Public Dashboard',
+    nav_admin: 'Admin',
+    nav_dashboard: 'Dashboard',
+    nav_users: 'Users',
+    nav_reports: 'Reports',
+    nav_settings: 'Settings',
+    nav_overview: 'Overview',
+    nav_teams: 'Teams',
+    nav_leaders: 'Leaders',
+    nav_students: 'Students',
+    nav_achievements: 'Achievements',
+    lbl_administrator: 'Administrator',
+    btn_signout: 'Sign Out',
+    badge_admin: '⚙️ Admin',
+    footer: '© 2026 InternTrack — Admin Panel. All rights reserved.',
+    modal_create_team: 'Create Team',
+    modal_edit_team: 'Edit Team',
+    lbl_team_name: 'Team Name *',
+    lbl_description: 'Description',
+    btn_cancel: 'Cancel',
+    btn_save_team: 'Save Team',
+    modal_create_leader: 'Create Leader',
+    modal_edit_leader: 'Edit Leader',
+    lbl_full_name: 'Full Name *',
+    lbl_email: 'Email *',
+    lbl_password: 'Password *',
+    lbl_assign_team: 'Assign to Team',
+    btn_save_leader: 'Save Leader',
+    modal_assign_leader: 'Assign Leader to Team',
+    lbl_assigning_to: 'Assigning to:',
+    lbl_select_leader: 'Select Leader',
+    btn_assign: 'Assign',
+    modal_create_student: 'Create Student',
+    modal_edit_student: 'Edit Student',
+    modal_add_student: 'Add Student',
+    btn_save_student: 'Save Student',
+    // Tabs
+    tb_dashboard: 'Dashboard',
+    tb_users: 'Users',
+    tb_reports: 'Reports',
+    tb_settings: 'Settings',
+    tb_overview: 'Overview',
+    tb_teams: 'Teams',
+    tb_leaders: 'Leaders',
+    tb_students: 'Students',
+    tb_all_ach: 'All Achievements',
+    // Overview
+    h_overview: 'Admin Overview',
+    sub_overview: 'Full system summary',
+    lbl_teams: 'Teams',
+    lbl_leaders: 'Leaders',
+    lbl_students: 'Students',
+    lbl_published: 'Published',
+    lbl_pending: 'Pending',
+    lbl_awaiting: 'Awaiting leader review',
+    h_teams_panel: 'Teams',
+    h_recent_leaders: 'Recent Leaders',
+    manage_arrow: 'Manage →',
+    th_team: 'Team',
+    th_leader: 'Leader',
+    th_students: 'Students',
+    th_posts: 'Posts',
+    th_description: 'Description',
+    th_actions: 'Actions',
+    th_name: 'Name',
+    th_email: 'Email',
+    th_status: 'Status',
+    th_date: 'Date',
+    th_author: 'Author',
+    no_team: 'None',
+    unassigned: 'Unassigned',
+    no_teams: 'No teams yet.',
+    no_leaders: 'No leaders yet.',
+    // Teams tab
+    h_teams: 'Teams',
+    btn_new_team: '+ New Team',
+    btn_assign: 'Assign',
+    // Leaders tab
+    h_leaders: 'Leaders',
+    btn_new_leader: '+ New Leader',
+    // Students tab
+    h_students: 'Students',
+    btn_add_student: '+ Add Student',
+    no_students: 'No students yet',
+    no_students_sub: 'Add students so they can submit achievements for review.',
+    btn_add_first: '+ Add First Student',
+    // Supervisors tab
+    nav_supervisors: 'Supervisors',
+    tb_supervisors: 'Supervisors',
+    h_supervisors: 'Supervisors',
+    sub_supervisors: 'Supervisors can give private feedback visible only to team members.',
+    btn_add_supervisor: 'Add Supervisor',
+    no_supervisors: 'No supervisors yet',
+    no_supervisors_sub: 'Add supervisors so they can give private feedback on achievements.',
+    modal_add_supervisor: 'Add Supervisor',
+    modal_edit_supervisor: 'Edit Supervisor',
+    btn_save_supervisor: 'Save Supervisor',
+    supervisor_modal_note: 'Supervisors can give private feedback on achievements — visible only to team members, not the public.',
+    confirm_delete_supervisor: 'Delete this supervisor?',
+    // Achievements tab
+    h_all_ach: 'All Achievements',
+    lbl_total: 'total',
+    lbl_pending_count: 'pending',
+    h_pending: '⏳ Pending Approval',
+    pending_note: 'These are student submissions waiting for a leader to review them.',
+    h_all_posts: 'All Posts',
+    // Toasts
+    toast_team_created: 'Team created!',
+    toast_team_updated: 'Team updated!',
+    toast_deleted: 'Deleted',
+    toast_assigned: 'Leader assigned!',
+    toast_created: 'Created!',
+    toast_updated: 'Updated!',
+    toast_student_updated: 'Student updated!',
+    toast_student_added: 'Student added!',
+    toast_failed: 'Failed',
+    toast_fail_delete: 'Failed to delete',
+    toast_fail_generic: 'Failed',
+    err_team_name: 'Team name is required',
+    err_name_email: 'Name and email required',
+    err_password: 'Password required',
+    confirm_delete_team: 'Delete this team?',
+    confirm_delete_leader: 'Delete this leader?',
+    confirm_delete_student: 'Delete this student?',
+    confirm_delete_ach: 'Delete this achievement?',
+    no_data: 'No data yet.',
+    err_load: 'Error loading data',
+    no_team_label: 'No team',
+  },
+  ar: {
+    admin_dashboard: 'لوحة المشرف',
+    nav_navigation: 'التنقل',
+    nav_public: 'اللوحة الرئيسية',
+    nav_admin: 'المشرف',
+    nav_dashboard: 'لوحة التحكم',
+    nav_users: 'المستخدمون',
+    nav_reports: 'التقارير',
+    nav_settings: 'الإعدادات',
+    nav_overview: 'نظرة عامة',
+    nav_teams: 'الفرق',
+    nav_leaders: 'القادة',
+    nav_students: 'الطلاب',
+    nav_achievements: 'الإنجازات',
+    lbl_administrator: 'مسؤول',
+    btn_signout: 'تسجيل الخروج',
+    badge_admin: '⚙️ مسؤول',
+    footer: '© 2026 InternTrack — لوحة الإدارة. جميع الحقوق محفوظة.',
+    modal_create_team: 'إنشاء فريق',
+    modal_edit_team: 'تعديل الفريق',
+    lbl_team_name: 'اسم الفريق *',
+    lbl_description: 'الوصف',
+    btn_cancel: 'إلغاء',
+    btn_save_team: 'حفظ الفريق',
+    modal_create_leader: 'إنشاء قائد',
+    modal_edit_leader: 'تعديل القائد',
+    lbl_full_name: 'الاسم الكامل *',
+    lbl_email: 'البريد الإلكتروني *',
+    lbl_password: 'كلمة المرور *',
+    lbl_assign_team: 'تعيين إلى فريق',
+    btn_save_leader: 'حفظ القائد',
+    modal_assign_leader: 'تعيين قائد للفريق',
+    lbl_assigning_to: 'التعيين إلى:',
+    lbl_select_leader: 'اختر القائد',
+    btn_assign: 'تعيين',
+    modal_create_student: 'إضافة طالب',
+    modal_edit_student: 'تعديل الطالب',
+    modal_add_student: 'إضافة طالب',
+    btn_save_student: 'حفظ الطالب',
+    tb_dashboard: 'لوحة التحكم',
+    tb_users: 'المستخدمون',
+    tb_reports: 'التقارير',
+    tb_settings: 'الإعدادات',
+    tb_overview: 'نظرة عامة',
+    tb_teams: 'الفرق',
+    tb_leaders: 'القادة',
+    tb_students: 'الطلاب',
+    tb_all_ach: 'جميع الإنجازات',
+    h_overview: 'نظرة عامة للمشرف',
+    sub_overview: 'ملخص النظام الكامل',
+    lbl_teams: 'الفرق',
+    lbl_leaders: 'القادة',
+    lbl_students: 'الطلاب',
+    lbl_published: 'منشورة',
+    lbl_pending: 'قيد الانتظار',
+    lbl_awaiting: 'بانتظار مراجعة القائد',
+    h_teams_panel: 'الفرق',
+    h_recent_leaders: 'القادة الأخيرون',
+    manage_arrow: 'إدارة ←',
+    th_team: 'الفريق',
+    th_leader: 'القائد',
+    th_students: 'الطلاب',
+    th_posts: 'المنشورات',
+    th_description: 'الوصف',
+    th_actions: 'الإجراءات',
+    th_name: 'الاسم',
+    th_email: 'البريد',
+    th_status: 'الحالة',
+    th_date: 'التاريخ',
+    th_author: 'الكاتب',
+    no_team: 'لا يوجد',
+    unassigned: 'غير معين',
+    no_teams: 'لا توجد فرق بعد.',
+    no_leaders: 'لا يوجد قادة بعد.',
+    h_teams: 'الفرق',
+    btn_new_team: '+ فريق جديد',
+    btn_assign: 'تعيين',
+    h_leaders: 'القادة',
+    btn_new_leader: '+ قائد جديد',
+    h_students: 'الطلاب',
+    btn_add_student: '+ إضافة طالب',
+    no_students: 'لا يوجد طلاب بعد',
+    no_students_sub: 'أضف طلاباً حتى يتمكنوا من تقديم الإنجازات.',
+    btn_add_first: '+ إضافة أول طالب',
+    nav_supervisors: 'المشرفون',
+    tb_supervisors: 'المشرفون',
+    h_supervisors: 'المشرفون',
+    sub_supervisors: 'يمكن للمشرفين إعطاء ملاحظات خاصة مرئية فقط لأعضاء الفريق.',
+    btn_add_supervisor: 'إضافة مشرف',
+    no_supervisors: 'لا يوجد مشرفون بعد',
+    no_supervisors_sub: 'أضف مشرفين حتى يتمكنوا من إعطاء ملاحظات خاصة على الإنجازات.',
+    modal_add_supervisor: 'إضافة مشرف',
+    modal_edit_supervisor: 'تعديل مشرف',
+    btn_save_supervisor: 'حفظ المشرف',
+    supervisor_modal_note: 'يمكن للمشرفين إعطاء ملاحظات خاصة على الإنجازات — مرئية فقط لأعضاء الفريق وليس للعموم.',
+    confirm_delete_supervisor: 'حذف هذا المشرف؟',
+    h_all_ach: 'جميع الإنجازات',
+    lbl_total: 'المجموع',
+    lbl_pending_count: 'قيد الانتظار',
+    h_pending: '⏳ بانتظار الموافقة',
+    pending_note: 'هذه تقديمات الطلاب بانتظار مراجعة القائد.',
+    h_all_posts: 'جميع المنشورات',
+    toast_team_created: 'تم إنشاء الفريق!',
+    toast_team_updated: 'تم تحديث الفريق!',
+    toast_deleted: 'تم الحذف',
+    toast_assigned: 'تم تعيين القائد!',
+    toast_created: 'تم الإنشاء!',
+    toast_updated: 'تم التحديث!',
+    toast_student_updated: 'تم تحديث الطالب!',
+    toast_student_added: 'تم إضافة الطالب!',
+    toast_failed: 'فشل',
+    toast_fail_delete: 'فشل في الحذف',
+    toast_fail_generic: 'فشلت العملية',
+    err_team_name: 'اسم الفريق مطلوب',
+    err_name_email: 'الاسم والبريد مطلوبان',
+    err_password: 'كلمة المرور مطلوبة',
+    confirm_delete_team: 'حذف هذا الفريق؟',
+    confirm_delete_leader: 'حذف هذا القائد؟',
+    confirm_delete_student: 'حذف هذا الطالب؟',
+    confirm_delete_ach: 'حذف هذا الإنجاز؟',
+    no_data: 'لا توجد بيانات بعد.',
+    err_load: 'خطأ في تحميل البيانات',
+    no_team_label: 'بدون فريق',
+  }
+};
+
+function t(k) { return T[currentLang]?.[k] ?? T.en[k] ?? k; }
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('interntrack_lang', lang);
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  const btn = document.getElementById('langBtn');
+  if (btn) btn.textContent = lang === 'ar' ? 'English' : 'عربي';
+  applyTranslations();
+  loadTab(currentTab);
+}
+
+function toggleLang() { setLang(currentLang === 'en' ? 'ar' : 'en'); }
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  // Update modal option labels
+  const leaderTeamFirst = document.getElementById('leaderTeam')?.options[0];
+  if (leaderTeamFirst) leaderTeamFirst.text = t('no_team_label');
+  const stuTeamFirst = document.getElementById('stuTeam')?.options[0];
+  if (stuTeamFirst) stuTeamFirst.text = t('no_team_label');
+  const assignFirst = document.getElementById('assignLeaderSelect')?.options[0];
+  if (assignFirst) assignFirst.text = t('no_team');
+}
+
+// ── CORE ──────────────────────────────────────────────────────────────────────
+const token = (() => {
+  const c = document.cookie.split(';').find(c => c.trim().startsWith('token='));
+  return c ? c.trim().slice(6) : localStorage.getItem('token');
+})();
+
+if (!token) {
+  document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;"><div style="text-align:center;"><h1>Not Authenticated</h1><a href="/" style="color:var(--primary);">Go to Login</a></div></div>';
+}
+
+let allTeams = [], allLeaders = [], allStudents = [], allSupervisors = [], editingTeamId = null, editingLeaderId = null, editingStudentId = null, editingSupervisorId = null, assigningTeamId = null;
+let currentTab = 'dashboard';
+
+function getHeaders() { return { 'Content-Type':'application/json', Authorization:'Bearer '+token }; }
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(d) {
+  if (!d) return '—';
+  const s = String(d).replace(' ', 'T');
+  const dt = new Date(s);
+  const locale = currentLang === 'ar' ? 'ar-AE' : 'en-US';
+  return isNaN(dt) ? String(d) : dt.toLocaleDateString(locale, {month:'short',day:'numeric',year:'numeric'});
+}
+
+function showToast(msg, type='info') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast show ' + type;
+  clearTimeout(el._t); el._t = setTimeout(() => el.className = 'toast', 3000);
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+  document.getElementById('mainLayout').classList.toggle('expanded');
+}
+
+async function logout() {
+  await fetch('/api/auth/logout', { method:'POST' });
+  document.cookie = 'token=;max-age=0;path=/';
+  localStorage.removeItem('token');
+  window.location.href = '/';
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  const idx = {
+    dashboard: 0,
+    users: 1,
+    teams: 2,
+    reports: 3,
+    settings: 4
+  };
+
+  document.querySelectorAll('.sidebar-nav .nav-item')[idx[tab]]?.classList.add('active');
+
+  const titles = {
+    dashboard: t('tb_dashboard'),
+    users: t('tb_users'),
+    teams: t('tb_teams'),
+    reports: t('tb_reports'),
+    settings: t('tb_settings')
+  };
+
+  document.getElementById('topbarTitle').textContent = titles[tab] || t('tb_dashboard');
+  loadTab(tab);
+}
+
+function statusBadge(status) {
+  const map = {
+    published: `<span class="badge badge-green">${t('lbl_published')}</span>`,
+    pending:   `<span class="badge" style="background:#fef3c7;color:#92400e;">${t('lbl_pending')}</span>`,
+    draft:     `<span class="badge badge-amber">Draft</span>`,
+    rejected:  `<span class="badge" style="background:#fee2e2;color:#991b1b;">Rejected</span>`
+  };
+  return map[status] || `<span class="badge">${status}</span>`;
+}
+
+async function loadData() {
+  const [stats, teams, users] = await Promise.all([
+    fetch('/api/admin/statistics', {headers:getHeaders()}).then(r=>r.json()),
+    fetch('/api/teams').then(r=>r.json()),
+    fetch('/api/admin/users', {headers:getHeaders()}).then(r=>r.json())
+  ]);
+  allTeams = teams;
+  allLeaders = users.leaders || [];
+  allStudents = users.students || [];
+  allSupervisors = users.supervisors || [];
+  return { stats, teams, users };
+}
+
+async function loadTab(tab) {
+  const el = document.getElementById('pageContent');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+  try {
+    const data = await loadData();
+
+    switch(tab) {
+      case 'dashboard':
+        renderOverview(el, data);
+        break;
+
+      case 'users':
+        renderUsers(el, data);
+        break;
+
+      case 'teams':
+        renderTeams(el, data);
+        break;
+
+      case 'reports':
+        renderReports(el, data);
+        break;
+
+      case 'settings':
+        renderSettings(el);
+        break;
+
+      default:
+        renderOverview(el, data);
+    }
+
+  } catch(e) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('err_load')}</h3><p>${e.message}</p></div>`;
+  }
+}
+
+// ── OVERVIEW ──────────────────────────────────────────────────────────────────
+function renderOverview(el, {stats, teams, users}) {
+  const leaders = users.leaders || [];
+  const announcements =
+    JSON.parse(localStorage.getItem("announcements")) || [
+      {
+        title: "Weekly Report Reminder",
+        message: "Submit before Friday",
+        date: "Today"
+      },
+      {
+        title: "Internship Policy Update",
+        message: "Please review the updated internship policy.",
+        date: "2d ago"
+      }
+    ];
+
+  const events =
+    JSON.parse(localStorage.getItem("calendarEvents")) || [
+      {
+        title: "Weekly Report Due",
+        date: "2026-06-20",
+        time: "11:59 PM"
+      },
+      {
+        title: "Supervisor Meeting",
+        date: "2026-06-22",
+        time: "10:00 AM"
+      },
+      {
+        title: "Project Deadline",
+        date: "2026-06-26",
+        time: "11:59 PM"
+      }
+    ];
+
+  el.innerHTML = `
+    <div class="page-header">
+      <div>
+        <h2>Admin Overview</h2>
+        <p>Full system summary</p>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon blue">👥</div>
+        <div class="stat-info">
+          <h3>${stats.totalTeams || 0}</h3>
+          <p>Teams</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon purple">👤</div>
+        <div class="stat-info">
+          <h3>${stats.totalLeaders || 0}</h3>
+          <p>Leaders</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon green">🎓</div>
+        <div class="stat-info">
+          <h3>${stats.totalStudents || 0}</h3>
+          <p>Students</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon gold">🏆</div>
+        <div class="stat-info">
+          <h3>${stats.totalAchievements || 0}</h3>
+          <p>Published</p>
+        </div>
+      </div>
+    </div>
+
+   <div class="dashboard-two-columns">
+
+  <div class="panel">
+    <div class="panel-header">
+      <h3>Teams</h3>
+      <a onclick="switchTab('teams')">Manage →</a>
+    </div>
+
+    ${teams.length ? `
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>TEAM</th>
+              <th>LEADER</th>
+              <th>STUDENTS</th>
+              <th>POSTS</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            ${teams.map(tm => `
+              <tr>
+                <td><strong>${escHtml(tm.TeamName)}</strong></td>
+                <td>
+  ${
+    tm.LeaderName
+      ? `<span class="badge badge-green">${escHtml(tm.LeaderName)}</span>`
+      : (() => {
+         const leader = leaders.find(l => l.TeamID === tm.TeamID);
+          return leader
+            ? `<span class="badge badge-green">${escHtml(leader.Name)}</span>`
+            : `<span style="color:#f59e0b;">None</span>`;
+        })()
+  }
+</td>
+                <td>${allStudents.filter(s => s.TeamID === tm.TeamID).length}</td>
+                <td><span class="badge badge-blue">${tm.AchievementCount || 0}</span></td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    ` : `<div class="empty-state"><p>No teams yet.</p></div>`}
+
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h3>📢 Recent Announcements</h3>
+      <button class="btn btn-sm btn-primary" onclick="openAnnouncementModal()">+ Add</button>
+    </div>
+
+    <div class="announcement-list">
+      ${announcements.map((a, index) => `
+        <div class="announcement-item">
+          <div class="announcement-icon">📢</div>
+
+          <div class="announcement-text">
+            <h4>${escHtml(a.title)}</h4>
+            <p>${escHtml(a.message)}</p>
+            <small>${escHtml(a.date)}</small>
+          </div>
+
+          <button class="mini-delete" onclick="deleteAnnouncement(${index})">🗑️</button>
+        </div>
+      `).join("")}
+    </div>
+  </div>
+
+</div>
+    <div class="panel calendar-wide-card">
+      <div class="panel-header">
+        <h3>📅 Internship Calendar</h3>
+        <button class="btn btn-sm btn-primary" onclick="openEventModal()">+ Add</button>
+      </div>
+
+      <div class="calendar-list">
+        ${events.map((ev, index) => {
+          const d = new Date(ev.date);
+          const day = isNaN(d) ? "--" : d.getDate();
+          const month = isNaN(d) ? "---" : d.toLocaleString("en-US", { month: "short" }).toUpperCase();
+
+          return `
+            <div class="calendar-row">
+              <div class="calendar-date">
+                <strong>${day}</strong>
+                <span>${month}</span>
+              </div>
+
+              <div class="calendar-info">
+                <h4>${escHtml(ev.title)}</h4>
+                <p>${escHtml(ev.date)} • ${escHtml(ev.time)}</p>
+              </div>
+
+              <button class="mini-delete" onclick="deleteEvent(${index})">🗑️</button>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="announcementModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>Add Announcement</h3>
+          <button class="modal-close" onclick="closeModal('announcementModal')">✕</button>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Title</label>
+          <input id="announcementTitle" class="form-input" placeholder="Weekly Report Reminder">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Message</label>
+          <textarea id="announcementMessage" class="form-textarea" placeholder="Write announcement..."></textarea>
+        </div>
+
+        <button class="btn btn-primary" onclick="saveAnnouncement()">Save Announcement</button>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="eventModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>Add Calendar Event</h3>
+          <button class="modal-close" onclick="closeModal('eventModal')">✕</button>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Event Title</label>
+          <input id="eventTitle" class="form-input" placeholder="Supervisor Meeting">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input id="eventDate" type="date" class="form-input">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Time</label>
+          <input id="eventTime" type="time" class="form-input">
+        </div>
+
+        <button class="btn btn-primary" onclick="saveEvent()">Save Event</button>
+      </div>
+    </div>
+  `;
+}
+// ── TEAMS ─────────────────────────────────────────────────────────────────────
+function renderTeams(el, {teams}) {
+  el.innerHTML = `
+    <div class="page-header">
+      <div><h2>${t('h_teams')}</h2><p>${teams.length} ${t('lbl_total')}</p></div>
+      <button class="btn btn-primary" onclick="openCreateTeam()">${t('btn_new_team')}</button>
+    </div>
+    <div class="full-panel">
+      ${teams.length ? `<div class="table-wrapper"><table>
+        <thead><tr><th>${t('th_team')}</th><th>${t('th_description')}</th><th>${t('th_leader')}</th><th>${t('th_students')}</th><th>${t('th_posts')}</th><th>${t('th_actions')}</th></tr></thead>
+        <tbody>${teams.map(tm=>`
+          <tr>
+            <td><strong>${escHtml(tm.TeamName)}</strong></td>
+            <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(tm.Description||'—')}</td>
+          <td>
+  ${
+    tm.LeaderName
+      ? `<span class="badge badge-green">${escHtml(tm.LeaderName)}</span>`
+      : (() => {
+          const leader = allLeaders.find(l => l.TeamID === tm.TeamID);
+          return leader
+            ? `<span class="badge badge-green">${escHtml(leader.Name)}</span>`
+            : `<span style="color:#f59e0b;font-size:12px;">No leader</span>`;
+        })()
+  }
+</td>
+            <td>${allStudents.filter(s=>s.TeamID===tm.TeamID).length}</td>
+            <td><span class="badge badge-blue">${tm.AchievementCount||0}</span></td>
+            <td>
+  <div style="display:flex;gap:6px;">
+    <button class="btn btn-sm btn-ghost"
+      onclick="openEditTeam(${tm.TeamID},'${escHtml(tm.TeamName)}','${escHtml(tm.Description||'')}')">
+      ✏️
+    </button>
+
+    <button class="btn btn-sm btn-danger"
+      onclick="deleteTeam(${tm.TeamID})">
+      🗑️
+    </button>
+  </div>
+</td></td>
+          </tr>`).join('')}</tbody>
+      </table></div>` : `<div class="empty-state"><div class="empty-icon">👥</div><h3>${t('no_teams')}</h3></div>`}
+    </div>`;
+}
+
+// ── LEADERS ───────────────────────────────────────────────────────────────────
+function renderLeaders(el, {teams, users}) {
+  const leaders = users.leaders || [];
+  const teamOptions = teams.map(tm=>`<option value="${tm.TeamID}">${escHtml(tm.TeamName)}</option>`).join('');
+  document.getElementById('leaderTeam').innerHTML = `<option value="">${t('no_team_label')}</option>` + teamOptions;
+  document.getElementById('assignLeaderSelect').innerHTML = `<option value="">${t('no_team')}</option>` + leaders.map(l=>`<option value="${l.UserID}">${escHtml(l.Name)}</option>`).join('');
+
+  el.innerHTML = `
+    <div class="page-header">
+      <div><h2>${t('h_leaders')}</h2><p>${leaders.length} ${t('lbl_total')}</p></div>
+      <button class="btn btn-primary" onclick="openCreateLeader()">${t('btn_new_leader')}</button>
+    </div>
+    <div class="full-panel">
+      ${leaders.length ? `<div class="table-wrapper"><table>
+        <thead><tr><th>${t('th_name')}</th><th>${t('th_email')}</th><th>${t('th_team')}</th><th>${t('th_actions')}</th></tr></thead>
+        <tbody>${leaders.map(l=>`
+          <tr>
+            <td><strong>${escHtml(l.Name)}</strong></td>
+            <td style="color:var(--text-muted);">${escHtml(l.Email)}</td>
+            <td>${l.TeamName?`<span class="badge badge-blue">${escHtml(l.TeamName)}</span>`:`<span style="color:#f59e0b;font-size:12px;">${t('unassigned')}</span>`}</td>
+            <td><div style="display:flex;gap:6px;">
+              <button class="btn btn-sm btn-ghost" onclick="openEditLeader(${l.UserID},'${escHtml(l.Name)}','${escHtml(l.Email)}',${l.TeamID||'null'})">✏️</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteLeader(${l.UserID})">🗑️</button>
+            </div></td>
+          </tr>`).join('')}</tbody>
+      </table></div>` : `<div class="empty-state"><div class="empty-icon">👤</div><h3>${t('no_leaders')}</h3></div>`}
+    </div>`;
+}
+
+// ── STUDENTS ──────────────────────────────────────────────────────────────────
+function renderStudents(el, {teams, users}) {
+  const students = users.students || [];
+  const teamOptions = teams.map(tm=>`<option value="${tm.TeamID}">${escHtml(tm.TeamName)}</option>`).join('');
+  document.getElementById('stuTeam').innerHTML = `<option value="">${t('no_team_label')}</option>` + teamOptions;
+
+  el.innerHTML = `
+    <div class="page-header">
+      <div><h2>${t('h_students')}</h2><p>${students.length} ${t('lbl_total')}</p></div>
+      <button class="btn btn-primary" onclick="openCreateStudent()">${t('btn_add_student')}</button>
+    </div>
+    <div class="full-panel">
+      ${students.length ? `<div class="table-wrapper"><table>
+        <thead><tr><th>${t('th_name')}</th><th>${t('th_email')}</th><th>${t('th_team')}</th><th>${t('th_actions')}</th></tr></thead>
+        <tbody>${students.map(s=>`
+          <tr>
+            <td><strong>${escHtml(s.Name)}</strong></td>
+            <td style="color:var(--text-muted);">${escHtml(s.Email)}</td>
+            <td>${s.TeamName?`<span class="badge badge-blue">${escHtml(s.TeamName)}</span>`:`<span style="color:#f59e0b;font-size:12px;">${t('unassigned')}</span>`}</td>
+            <td><div style="display:flex;gap:6px;">
+              <button class="btn btn-sm btn-ghost" onclick="openEditStudent(${s.UserID},'${escHtml(s.Name)}','${escHtml(s.Email)}',${s.TeamID||'null'})">✏️</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteStudent(${s.UserID})">🗑️</button>
+            </div></td>
+          </tr>`).join('')}</tbody>
+      </table></div>` : `<div class="empty-state"><div class="empty-icon">🎓</div><h3>${t('no_students')}</h3><p>${t('no_students_sub')}</p><button class="btn btn-primary" style="margin-top:14px;" onclick="openCreateStudent()">${t('btn_add_first')}</button></div>`}
+    </div>`;
+}
+function toggleAdminMenu(event) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  document
+    .getElementById("adminDropdown")
+    .classList.toggle("show");
+}
+function openAdminProfileFromMenu(event) {
+  event.preventDefault();
+
+  switchTab("settings");
+
+  setTimeout(() => {
+    openSettingsModal("adminProfile");
+  }, 1000);
+}
+function toggleLanguageMenu(event){
+
+    event.preventDefault();
+  event.stopPropagation();
+
+  document
+    .getElementById("languageDropdown")
+    .classList.toggle("show");
+}
+
+window.onclick = function(e) {
+  const adminDropdown = document.getElementById("adminDropdown");
+  const languageDropdown = document.getElementById("languageDropdown");
+
+  if (!e.target.closest(".admin-menu") && adminDropdown) {
+    adminDropdown.classList.remove("show");
+  }
+
+  if (!e.target.closest(".language-menu") && languageDropdown) {
+    languageDropdown.classList.remove("show");
+  }
+};
+
+// ── ACHIEVEMENTS ──────────────────────────────────────────────────────────────
+async function renderAchievements(el) {
+  const achievements = await fetch('/api/admin/achievements', {headers:getHeaders()}).then(r=>r.json());
+  const pending = achievements.filter(a => a.Status === 'pending');
+
+  el.innerHTML = `
+    <div class="page-header">
+      <div><h2>${t('h_all_ach')}</h2><p>${achievements.length} ${t('lbl_total')} · ${pending.length} ${t('lbl_pending_count')}</p></div>
+    </div>
+    ${pending.length ? `
+    <div class="full-panel" style="border-left:4px solid #f59e0b;margin-bottom:20px;">
+      <div class="panel-header"><h3>${t('h_pending')} (${pending.length})</h3></div>
+      <p class="text-muted" style="margin-bottom:12px;">${t('pending_note')}</p>
+      <div class="table-wrapper"><table>
+        <thead><tr><th>${t('th_team')}</th><th>${t('th_students')}</th><th>${t('th_team')}</th><th>${t('th_date')}</th></tr></thead>
+        <tbody>${pending.map(a=>`
+          <tr>
+            <td><strong>${escHtml(a.Title)}</strong></td>
+            <td>${escHtml(a.CreatorName||'—')}</td>
+            <td><span class="badge badge-blue">${escHtml(a.TeamName||'—')}</span></td>
+            <td style="color:var(--text-muted);font-size:12px;">${fmtDate(a.CreatedAt)}</td>
+          </tr>`).join('')}</tbody>
+      </table></div>
+    </div>` : ''}
+    <div class="full-panel">
+      <div class="panel-header"><h3>${t('h_all_posts')}</h3></div>
+      <div class="table-wrapper"><table>
+        <thead><tr><th>${t('th_team')}</th><th>${t('th_team')}</th><th>${t('th_author')}</th><th>${t('th_status')}</th><th>${t('th_date')}</th><th>${t('th_actions')}</th></tr></thead>
+        <tbody>${achievements.map(a=>`
+          <tr>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><strong>${escHtml(a.Title)}</strong></td>
+            <td><span class="badge badge-blue">${escHtml(a.TeamName||'—')}</span></td>
+            <td>${escHtml(a.CreatorName||'—')}</td>
+            <td>${statusBadge(a.Status)}</td>
+            <td style="color:var(--text-muted);font-size:12px;">${fmtDate(a.CreatedAt)}</td>
+            <td><button class="btn btn-sm btn-danger" onclick="deleteAchievement(${a.AchievementID})">🗑️</button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table></div>
+    </div>`;
+}
+
+
+// ── USERS ─────────────────────────────────────────────────────────────────────
+function renderUsers(el, {teams, users}) {
+  const leaders = users.leaders || [];
+  const students = users.students || [];
+  const supervisors = users.supervisors || [];
+
+  const allUsers = [
+    ...students.map(u => ({...u, Role:'Student'})),
+    ...leaders.map(u => ({...u, Role:'Leader'})),
+    ...supervisors.map(u => ({...u, Role:'Supervisor'}))
+  ];
+
+  el.innerHTML = `
+    <div class="page-header">
+      <div>
+        <h2>Users</h2>
+        <p>Manage students, leaders, and supervisors in one place</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+<div class="add-user-wrap">
+  <button class="btn btn-primary add-user-btn" onclick="toggleAddUserMenu(event)">
+    + Add User ▾
+  </button>
+
+  <div id="addUserMenu" class="add-user-menu">
+    <button onclick="openCreateStudent()"> Add Student</button>
+    <button onclick="openCreateLeader()"> Add Leader</button>
+    <button onclick="openCreateSupervisor()"> Add Supervisor</button>
+  </div>
+</div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon blue">👥</div>
+        <div class="stat-info"><h3>${allUsers.length}</h3><p>Total Users</p></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">🎓</div>
+        <div class="stat-info"><h3>${students.length}</h3><p>Students</p></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple">👤</div>
+        <div class="stat-info"><h3>${leaders.length}</h3><p>Leaders</p></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon gold">👁️</div>
+        <div class="stat-info"><h3>${supervisors.length}</h3><p>Supervisors</p></div>
+      </div>
+    </div>
+
+   <div class="full-panel">
+
+  <div class="panel-header">
+    <h3>All Users</h3>
+  </div>
+
+  <div class="users-tools">
+    <input
+      type="text"
+      id="userSearch"
+      class="users-search"
+      placeholder="Search users..."
+      onkeyup="filterUsersTable()">
+
+    <select id="roleFilter"
+      class="users-filter"
+      onchange="filterUsersTable()">
+      <option value="">All Roles</option>
+      <option value="Student">Students</option>
+      <option value="Leader">Leaders</option>
+      <option value="Supervisor">Supervisors</option>
+    </select>
+
+    <select id="teamFilter"
+      class="users-filter"
+      onchange="filterUsersTable()">
+      <option value="">All Teams</option>
+      ${teams.map(t => `
+      <option value="${escHtml(t.TeamName)}">
+        ${escHtml(t.TeamName)}
+      </option>`).join('')}
+    </select>
+
+  </div>
+
+
+      ${allUsers.length ? `
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Team</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${allUsers.map(u => `
+<tr class="user-row"
+data-role="${u.Role}"
+data-team="${u.TeamName || '—'}"
+onclick="openUserPanel('${escHtml(u.Name)}','${escHtml(u.Email)}','${u.Role}','${u.TeamName || '—'}')">
+
+  <td><strong>${escHtml(u.Name)}</strong></td>
+
+  <td style="color:var(--text-muted);">
+    ${escHtml(u.Email)}
+  </td>
+
+  <td>
+    <span class="badge badge-blue">${u.Role}</span>
+  </td>
+
+  <td>${u.TeamName || '—'}</td>
+
+  <td>
+    <div style="display:flex;gap:6px;">
+
+      ${u.Role === 'Student' ? `
+        <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openEditStudent(${u.UserID},'${escHtml(u.Name)}','${escHtml(u.Email)}',${u.TeamID||'null'})">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteStudent(${u.UserID})">🗑️</button>
+      ` : ''}
+
+      ${u.Role === 'Leader' ? `
+        <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openEditLeader(${u.UserID},'${escHtml(u.Name)}','${escHtml(u.Email)}',${u.TeamID||'null'})">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteLeader(${u.UserID})">🗑️</button>
+      ` : ''}
+
+      ${u.Role === 'Supervisor' ? `
+        <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openEditSupervisor(${u.UserID},'${escHtml(u.Name)}','${escHtml(u.Email)}')">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteSupervisor(${u.UserID})">🗑️</button>
+      ` : ''}
+
+    </div>
+  </td>
+</tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      ` : `<div class="empty-state"><div class="empty-icon">👥</div><h3>No users yet</h3></div>`}
+    </div>
+
+    <div id="userSidePanel" class="user-side-panel">
+      <button class="close-panel" onclick="closeUserPanel()">✕</button>
+      <div class="panel-avatar">
+  <i class="fa-solid fa-user"></i>
+</div>
+      <h2 id="panelUserName"></h2>
+      <p id="panelUserEmail"></p>
+
+      <div class="panel-info">
+        <p><strong>Role:</strong> <span id="panelUserRole"></span></p>
+        <p><strong>Team:</strong> <span id="panelUserTeam"></span></p>
+        <p><strong>Status:</strong> Active</p>
+      </div>
+    </div>
+  `;
+  
+}
+
+// ── REPORTS ───────────────────────────────────────────────────────────────────
+function renderReports(el, {stats, teams, users}) {
+  el.innerHTML = `
+    <div class="page-header">
+      <div>
+        <h2>Reports</h2>
+        <p>View internship summaries and system reports</p>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="panel">
+        <div class="panel-header"><h3>Internship Progress Report</h3></div>
+        <p class="text-muted">Track overall internship progress, pending reviews, and completed achievements.</p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><h3>Students Performance Report</h3></div>
+        <p class="text-muted">Review students, submitted work, and achievement activity.</p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><h3>Teams Report</h3></div>
+        <p class="text-muted">Monitor team members, leaders, and group activity.</p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><h3>Achievements Report</h3></div>
+        <p class="text-muted">View published, pending, and reviewed achievements.</p>
+      </div>
+    </div>
+  `;
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
+function renderSettings(el) {
+  const settings = JSON.parse(localStorage.getItem("admin_settings")) || {
+    systemName: "InternTrack",
+    language: currentLang === "ar" ? "Arabic" : "English / Arabic",
+    duration: "16",
+    appearance: "Light Mode",
+    notifications: "Enabled",
+    adminName: document.getElementById("adminName")?.textContent || "Admin",
+    adminEmail: "admin@interntrack.com"
+  };
+
+  el.innerHTML = `
+    <div class="page-header">
+      <div>
+        <h2>${currentLang === "ar" ? "الإعدادات" : "Settings"}</h2>
+        <p>${currentLang === "ar" ? "إدارة إعدادات النظام والصلاحيات" : "Manage system settings and permissions"}</p>
+      </div>
+    </div>
+
+    <div class="settings-grid">
+
+      <div class="settings-section">
+        <h3>${currentLang === "ar" ? "الإعدادات العامة" : "General Settings"}</h3>
+
+        <div class="setting-item">
+          <div>
+            <h4>${currentLang === "ar" ? "اسم النظام" : "System Name"}</h4>
+            <p>${currentLang === "ar" ? "تغيير اسم الموقع" : "Change platform display name"}</p>
+          </div>
+          <span id="settingSystemName">${settings.systemName}</span>
+          <button class="btn btn-sm btn-ghost" onclick="openSettingsModal('systemName')">${currentLang === "ar" ? "تعديل" : "Edit"}</button>
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <h4>${currentLang === "ar" ? "اللغة الافتراضية" : "Default Language"}</h4>
+            <p>${currentLang === "ar" ? "اختيار لغة واجهة النظام" : "Choose system interface language"}</p>
+          </div>
+          <span id="settingLanguage">${settings.language}</span>
+          <button class="btn btn-sm btn-ghost" onclick="openSettingsModal('language')">${currentLang === "ar" ? "إدارة" : "Manage"}</button>
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <h4>${currentLang === "ar" ? "مدة البرنامج" : "Program Duration"}</h4>
+            <p>${currentLang === "ar" ? "مدة التدريب بالأسابيع" : "Internship duration in weeks"}</p>
+          </div>
+          <span id="settingDuration">${settings.duration} ${currentLang === "ar" ? "أسبوع" : "Weeks"}</span>
+          <button class="btn btn-sm btn-ghost" onclick="openSettingsModal('duration')">${currentLang === "ar" ? "تعديل" : "Edit"}</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>${currentLang === "ar" ? "الصلاحيات والأمان" : "Access & Security"}</h3>
+
+        <div class="setting-item">
+          <div>
+            <h4>${currentLang === "ar" ? "صلاحيات الأدوار" : "Role Permissions"}</h4>
+            <p>${currentLang === "ar" ? "صلاحيات المشرف والطالب" : "Supervisor and Student permissions"}</p>
+          </div>
+          <span class="badge badge-green">${currentLang === "ar" ? "مفعلة" : "Enabled"}</span>
+          <button class="btn btn-sm btn-ghost" onclick="openSettingsModal('permissions')">${currentLang === "ar" ? "عرض" : "View"}</button>
+        </div>
+
+
+        <div class="setting-item">
+          <div>
+            <h4>${currentLang === "ar" ? "ملف الأدمن" : "Admin Profile"}</h4>
+            <p>${currentLang === "ar" ? "بيانات حساب المسؤول" : "Administrator account details"}</p>
+          </div>
+          <span id="settingAdminName">${settings.adminName}</span>
+          <button class="btn btn-sm btn-ghost" onclick="openSettingsModal('adminProfile')">${currentLang === "ar" ? "تحديث" : "Update"}</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>${currentLang === "ar" ? "تفضيلات النظام" : "System Preferences"}</h3>
+
+        <div class="setting-item">
+          <div>
+            <h4>${currentLang === "ar" ? "المظهر" : "Appearance"}</h4>
+            <p>${currentLang === "ar" ? "الوضع الفاتح أو الداكن" : "Light or dark mode"}</p>
+          </div>
+          <span id="settingAppearance">${settings.appearance}</span>
+          <button class="btn btn-sm btn-ghost" onclick="openSettingsModal('appearance')">${currentLang === "ar" ? "تخصيص" : "Customize"}</button>
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <h4>${currentLang === "ar" ? "الإشعارات" : "Notifications"}</h4>
+            <p>${currentLang === "ar" ? "تشغيل أو إيقاف التنبيهات" : "Enable or disable alerts"}</p>
+          </div>
+          <span id="settingNotifications">${settings.notifications}</span>
+          <button class="btn btn-sm btn-ghost" onclick="openSettingsModal('notifications')">${currentLang === "ar" ? "إدارة" : "Manage"}</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div id="settingsModal" class="settings-modal">
+      <div class="settings-modal-box">
+        <div class="modal-header">
+          <h3 id="settingsModalTitle"></h3>
+          <button class="modal-close" onclick="closeSettingsModal()">✕</button>
+        </div>
+        <div id="settingsModalBody"></div>
+      </div>
+    </div>
+  `;
+}
+function getAdminSettings() {
+  return JSON.parse(localStorage.getItem("admin_settings")) || {
+    systemName: "InternTrack",
+    language: "English / Arabic",
+    duration: "16",
+    appearance: "Light Mode",
+    notifications: "Enabled",
+    adminName: document.getElementById("adminName")?.textContent || "Admin",
+    adminEmail: "admin@interntrack.com"
+  };
+}
+
+function saveAdminSettings(settings) {
+  localStorage.setItem("admin_settings", JSON.stringify(settings));
+}
+
+function openSettingsModal(type) {
+  const modal = document.getElementById("settingsModal");
+  const title = document.getElementById("settingsModalTitle");
+  const body = document.getElementById("settingsModalBody");
+  const settings = getAdminSettings();
+
+  modal.classList.add("open");
+
+  if (type === "systemName") {
+    title.textContent = currentLang === "ar" ? "تعديل اسم النظام" : "Edit System Name";
+    body.innerHTML = `
+      <label>${currentLang === "ar" ? "اسم النظام" : "System Name"}</label>
+      <input id="systemNameInput" class="form-input" value="${settings.systemName}">
+      <button class="btn btn-primary" onclick="saveSettingValue('systemName')">${currentLang === "ar" ? "حفظ" : "Save"}</button>
+    `;
+  }
+
+  if (type === "language") {
+    title.textContent = currentLang === "ar" ? "اللغة الافتراضية" : "Default Language";
+    body.innerHTML = `
+      <label>${currentLang === "ar" ? "اختر اللغة" : "Choose Language"}</label>
+      <select id="languageInput" class="form-input">
+        <option ${settings.language === "English / Arabic" ? "selected" : ""}>English / Arabic</option>
+        <option ${settings.language === "English" ? "selected" : ""}>English</option>
+        <option ${settings.language === "Arabic" ? "selected" : ""}>Arabic</option>
+      </select>
+      <button class="btn btn-primary" onclick="saveSettingValue('language')">${currentLang === "ar" ? "حفظ" : "Save"}</button>
+    `;
+  }
+
+  if (type === "duration") {
+    title.textContent = currentLang === "ar" ? "مدة البرنامج" : "Program Duration";
+    body.innerHTML = `
+      <label>${currentLang === "ar" ? "عدد الأسابيع" : "Number of Weeks"}</label>
+      <input id="durationInput" type="number" class="form-input" value="${settings.duration}">
+      <button class="btn btn-primary" onclick="saveSettingValue('duration')">${currentLang === "ar" ? "حفظ" : "Save"}</button>
+    `;
+  }
+
+  if (type === "permissions") {
+    title.textContent = currentLang === "ar" ? "صلاحيات الأدوار" : "Role Permissions";
+    body.innerHTML = `
+      <table class="permission-table">
+        <thead>
+          <tr>
+            <th>${currentLang === "ar" ? "الصلاحية" : "Permission"}</th>
+            <th>${currentLang === "ar" ? "المشرف" : "Supervisor"}</th>
+            <th>${currentLang === "ar" ? "الطالب" : "Student"}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${permissionRow(currentLang === "ar" ? "عرض لوحة التحكم" : "View Dashboard", true, true)}
+          ${permissionRow(currentLang === "ar" ? "مراجعة الإنجازات" : "Review Achievements", true, false)}
+          ${permissionRow(currentLang === "ar" ? "قبول / رفض المهام" : "Approve / Reject Tasks", true, false)}
+          ${permissionRow(currentLang === "ar" ? "إضافة ملاحظات" : "Add Feedback", true, false)}
+          ${permissionRow(currentLang === "ar" ? "رفع إنجاز" : "Submit Achievement", false, true)}
+          ${permissionRow(currentLang === "ar" ? "عرض الملاحظات" : "View Feedback", true, true)}
+          ${permissionRow(currentLang === "ar" ? "عرض التقارير" : "View Reports", true, false)}
+          ${permissionRow(currentLang === "ar" ? "تعديل الملف الشخصي" : "Edit Profile", true, true)}
+        </tbody>
+      </table>
+      <button class="btn btn-primary" style="margin-top:15px;" onclick="savePermissions()">
+        ${currentLang === "ar" ? "حفظ التعديلات" : "Save Changes"}
+      </button>
+    `;
+  }
+
+ if (type === "adminProfile") {
+  title.textContent =
+    currentLang === "ar"
+      ? "تعديل اسم الأدمن"
+      : "Edit Admin Name";
+
+  body.innerHTML = `
+    <label>
+      ${currentLang === "ar" ? "اسم الأدمن" : "Admin Name"}
+    </label>
+
+    <input
+  id="adminNameInput"
+  class="form-input"
+  type="text"
+  name="not_login_admin_name"
+  autocomplete="new-password"
+  autocorrect="off"
+  spellcheck="false"
+  value="${settings.adminName}"
+>
+
+    <button
+      class="btn btn-primary"
+      onclick="saveSettingValue('adminProfile')"
+    >
+      ${currentLang === "ar" ? "حفظ" : "Save"}
+    </button>
+  `;
+}
+
+  if (type === "appearance") {
+    title.textContent = currentLang === "ar" ? "المظهر" : "Appearance";
+    body.innerHTML = `
+      <label>${currentLang === "ar" ? "اختر الوضع" : "Choose Mode"}</label>
+      <select id="appearanceInput" class="form-input">
+        <option ${settings.appearance === "Light Mode" ? "selected" : ""}>Light Mode</option>
+        <option ${settings.appearance === "Dark Mode" ? "selected" : ""}>Dark Mode</option>
+      </select>
+      <button class="btn btn-primary" onclick="saveSettingValue('appearance')">${currentLang === "ar" ? "حفظ" : "Save"}</button>
+    `;
+  }
+
+  if (type === "notifications") {
+    title.textContent = currentLang === "ar" ? "الإشعارات" : "Notifications";
+    body.innerHTML = `
+      <label>${currentLang === "ar" ? "حالة الإشعارات" : "Notification Status"}</label>
+      <select id="notificationsInput" class="form-input">
+        <option ${settings.notifications === "Enabled" ? "selected" : ""}>Enabled</option>
+        <option ${settings.notifications === "Disabled" ? "selected" : ""}>Disabled</option>
+      </select>
+      <button class="btn btn-primary" onclick="saveSettingValue('notifications')">${currentLang === "ar" ? "حفظ" : "Save"}</button>
+    `;
+  }
+}
+
+function permissionRow(name, supervisor, student) {
+  return `
+    <tr>
+      <td>${name}</td>
+      <td><input type="checkbox" ${supervisor ? "checked" : ""}></td>
+      <td><input type="checkbox" ${student ? "checked" : ""}></td>
+    </tr>
+  `;
+}
+
+function closeSettingsModal() {
+  document.getElementById("settingsModal").classList.remove("open");
+}
+
+function saveSettingValue(type) {
+  const settings = getAdminSettings();
+
+  if (type === "systemName") {
+    settings.systemName = document.getElementById("systemNameInput").value;
+
+    const brandName = document.querySelector(".sidebar-brand-text h2");
+    if (brandName) brandName.textContent = settings.systemName;
+  }
+
+  if (type === "language") {
+    settings.language = document.getElementById("languageInput").value;
+
+    if (settings.language === "Arabic") setLang("ar");
+    if (settings.language === "English") setLang("en");
+  }
+
+  if (type === "duration") {
+    settings.duration = document.getElementById("durationInput").value;
+  }
+
+  if (type === "adminProfile") {
+  settings.adminName =
+    document.getElementById("adminNameInput").value.trim() || "Admin";
+
+  const sidebarName = document.getElementById("adminName");
+  if (sidebarName) sidebarName.textContent = settings.adminName;
+
+  const settingName = document.getElementById("settingAdminName");
+  if (settingName) settingName.textContent = settings.adminName;
+
+  const topbarName = document.getElementById("topbarAdminName");
+  if (topbarName) topbarName.textContent = settings.adminName;
+}
+
+  if (type === "appearance") {
+    settings.appearance = document.getElementById("appearanceInput").value;
+    document.body.classList.toggle(
+      "dark-mode",
+      settings.appearance === "Dark Mode"
+    );
+  }
+
+  if (type === "notifications") {
+    settings.notifications =
+      document.getElementById("notificationsInput").value;
+  }
+
+  saveAdminSettings(settings);
+  closeSettingsModal();
+  renderSettings(document.getElementById("pageContent"));
+  showToast(
+    currentLang === "ar" ? "تم حفظ التعديلات" : "Settings saved",
+    "success"
+  );
+}
+
+function savePermissions() {
+  closeSettingsModal();
+  showToast(currentLang === "ar" ? "تم تحديث الصلاحيات" : "Permissions updated", "success");
+}
+
+// ── TEAM CRUD ─────────────────────────────────────────────────────────────────
+function openCreateTeam() {
+  editingTeamId = null;
+  document.getElementById('teamModalTitle').textContent = t('modal_create_team');
+  document.getElementById('teamName').value = '';
+  document.getElementById('teamDesc').value = '';
+  document.getElementById('teamDesc').placeholder = '';
+  openModal('teamModal');
+}
+function openEditTeam(id, name, desc) {
+  editingTeamId = id;
+  document.getElementById('teamModalTitle').textContent = t('modal_edit_team');
+  document.getElementById('teamName').value = name;
+  document.getElementById('teamDesc').value = desc;
+  openModal('teamModal');
+}
+async function saveTeam() {
+  const name = document.getElementById('teamName').value.trim();
+  const desc = document.getElementById('teamDesc').value.trim();
+  if (!name) return showToast(t('err_team_name'), 'error');
+  const method = editingTeamId ? 'PUT' : 'POST';
+  const url = editingTeamId ? '/api/admin/teams/'+editingTeamId : '/api/admin/teams';
+  const r = await fetch(url, { method, headers:getHeaders(), body:JSON.stringify({teamName:name,description:desc}) });
+  if (r.ok) { closeModal('teamModal'); showToast(editingTeamId?t('toast_team_updated'):t('toast_team_created'),'success'); loadTab('teams'); }
+  else { const d=await r.json(); showToast(d.error||t('toast_failed'),'error'); }
+}
+async function deleteTeam(id) {
+  if (!confirm(t('confirm_delete_team'))) return;
+  const r = await fetch('/api/admin/teams/'+id, { method:'DELETE', headers:getHeaders() });
+  if (r.ok) { showToast(t('toast_deleted'),'info'); loadTab('teams'); }
+  else showToast(t('toast_fail_delete'),'error');
+}
+function openAssignLeader(teamId, teamName) {
+  assigningTeamId = teamId;
+  document.getElementById('assignTeamName').textContent = teamName;
+  document.getElementById('assignLeaderSelect').innerHTML = `<option value="">${t('no_team')}</option>` + allLeaders.map(l=>`<option value="${l.UserID}">${escHtml(l.Name)}</option>`).join('');
+  openModal('assignModal');
+}
+async function saveAssignment() {
+  const leaderId = document.getElementById('assignLeaderSelect').value;
+  const r = await fetch('/api/admin/teams/'+assigningTeamId, { method:'PUT', headers:getHeaders(), body:JSON.stringify({leaderId:leaderId?parseInt(leaderId):null}) });
+  if (r.ok) { closeModal('assignModal'); showToast(t('toast_assigned'),'success'); loadTab('teams'); }
+  else showToast(t('toast_failed'),'error');
+}
+
+// ── LEADER CRUD ───────────────────────────────────────────────────────────────
+function openCreateLeader() {
+  editingLeaderId = null;
+  document.getElementById('leaderModalTitle').textContent = t('modal_create_leader');
+  ['leaderName','leaderEmail','leaderPassword'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('leaderPasswordGroup').style.display = 'block';
+  document.getElementById('leaderTeam').innerHTML = `<option value="">${t('no_team_label')}</option>` + allTeams.map(tm=>`<option value="${tm.TeamID}">${escHtml(tm.TeamName)}</option>`).join('');
+  openModal('leaderModal');
+}
+function openEditLeader(id, name, email, teamId) {
+  editingLeaderId = id;
+  document.getElementById('leaderModalTitle').textContent = t('modal_edit_leader');
+  document.getElementById('leaderName').value = name;
+  document.getElementById('leaderEmail').value = email;
+  document.getElementById('leaderPassword').value = '';
+  document.getElementById('leaderPasswordGroup').style.display = 'none';
+  document.getElementById('leaderTeam').innerHTML = `<option value="">${t('no_team_label')}</option>` + allTeams.map(tm=>`<option value="${tm.TeamID}" ${tm.TeamID==teamId?'selected':''}>${escHtml(tm.TeamName)}</option>`).join('');
+  openModal('leaderModal');
+}
+async function saveLeader() {
+  const name=document.getElementById('leaderName').value.trim();
+  const email=document.getElementById('leaderEmail').value.trim();
+  const password=document.getElementById('leaderPassword').value;
+  const teamId=document.getElementById('leaderTeam').value;
+  if (!name||!email) return showToast(t('err_name_email'),'error');
+  if (!editingLeaderId&&!password) return showToast(t('err_password'),'error');
+  let r;
+  if (editingLeaderId) r=await fetch('/api/admin/users/'+editingLeaderId,{method:'PUT',headers:getHeaders(),body:JSON.stringify({name,email,teamId:teamId||null})});
+  else r=await fetch('/api/admin/users',{method:'POST',headers:getHeaders(),body:JSON.stringify({name,email,password,role:'Leader',teamId:teamId||null})});
+  if (r.ok) { closeModal('leaderModal'); showToast(editingLeaderId?t('toast_updated'):t('toast_created'),'success'); loadTab('users'); }
+  else { const d=await r.json(); showToast(d.error||t('toast_failed'),'error'); }
+}
+async function deleteLeader(id) {
+  if (!confirm(t('confirm_delete_leader'))) return;
+  const r=await fetch('/api/admin/users/'+id,{method:'DELETE',headers:getHeaders()});
+  if (r.ok) { showToast(t('toast_deleted'),'info'); loadTab('users'); }
+  else showToast(t('toast_failed'),'error');
+}
+
+// ── STUDENT CRUD ──────────────────────────────────────────────────────────────
+function openCreateStudent() {
+  editingStudentId = null;
+  document.getElementById('studentModalTitle').textContent = t('modal_add_student');
+  ['stuName','stuEmail','stuPassword'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('stuPasswordGroup').style.display = 'block';
+  document.getElementById('stuTeam').innerHTML = `<option value="">${t('no_team_label')}</option>` + allTeams.map(tm=>`<option value="${tm.TeamID}">${escHtml(tm.TeamName)}</option>`).join('');
+  openModal('studentModal');
+}
+function openUserPanel(name,email,role,team){
+  document.getElementById("panelUserName").textContent = name;
+  document.getElementById("panelUserEmail").textContent = email;
+  document.getElementById("panelUserRole").textContent = role;
+  document.getElementById("panelUserTeam").textContent = team;
+
+  document.getElementById("userSidePanel").classList.add("open");
+}
+
+function closeUserPanel(){
+  document.getElementById("userSidePanel").classList.remove("open");
+}
+function openEditStudent(id, name, email, teamId) {
+  editingStudentId = id;
+  document.getElementById('studentModalTitle').textContent = t('modal_edit_student');
+  document.getElementById('stuName').value = name;
+  document.getElementById('stuEmail').value = email;
+  document.getElementById('stuPassword').value = '';
+  document.getElementById('stuPasswordGroup').style.display = 'none';
+  document.getElementById('stuTeam').innerHTML = `<option value="">${t('no_team_label')}</option>` + allTeams.map(tm=>`<option value="${tm.TeamID}" ${tm.TeamID==teamId?'selected':''}>${escHtml(tm.TeamName)}</option>`).join('');
+  openModal('studentModal');
+}
+async function saveStudent() {
+  const name=document.getElementById('stuName').value.trim();
+  const email=document.getElementById('stuEmail').value.trim();
+  const password=document.getElementById('stuPassword').value;
+  const teamId=document.getElementById('stuTeam').value;
+  if (!name||!email) return showToast(t('err_name_email'),'error');
+  if (!editingStudentId&&!password) return showToast(t('err_password'),'error');
+  let r;
+  if (editingStudentId) r=await fetch('/api/admin/users/'+editingStudentId,{method:'PUT',headers:getHeaders(),body:JSON.stringify({name,email,teamId:teamId||null})});
+  else r=await fetch('/api/admin/users',{method:'POST',headers:getHeaders(),body:JSON.stringify({name,email,password,role:'Student',teamId:teamId||null})});
+  if (r.ok) { closeModal('studentModal'); showToast(editingStudentId?t('toast_student_updated'):t('toast_student_added'),'success'); loadTab('users'); }
+  else { const d=await r.json(); showToast(d.error||t('toast_failed'),'error'); }
+}
+async function deleteStudent(id) {
+  if (!confirm(t('confirm_delete_student'))) return;
+  const r=await fetch('/api/admin/users/'+id,{method:'DELETE',headers:getHeaders()});
+  if (r.ok) { showToast(t('toast_deleted'),'info'); loadTab('users'); }
+  else showToast(t('toast_failed'),'error');
+}
+
+// ── SUPERVISORS ───────────────────────────────────────────────────────────────
+function renderSupervisors(el, {users}) {
+  const supervisors = users.supervisors || [];
+  el.innerHTML = `
+    <div class="page-header">
+      <div><h2>${t('h_supervisors')}</h2><p>${t('sub_supervisors')}</p></div>
+      <button class="btn btn-primary" onclick="openCreateSupervisor()">+ ${t('btn_add_supervisor')}</button>
+    </div>
+    <div class="full-panel">
+      ${supervisors.length ? `<div class="table-wrapper"><table>
+        <thead><tr><th>${t('th_name')}</th><th>${t('th_email')}</th><th>${t('th_actions')}</th></tr></thead>
+        <tbody>${supervisors.map(s=>`
+          <tr>
+            <td><div style="display:flex;align-items:center;gap:10px;"><div style="background:#fef3c7;color:#92400e;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🎓</div><strong>${escHtml(s.Name)}</strong></div></td>
+            <td style="color:var(--text-muted);">${escHtml(s.Email)}</td>
+            <td><div style="display:flex;gap:6px;">
+              <button class="btn btn-sm btn-ghost" onclick="openEditSupervisor(${s.UserID},'${escHtml(s.Name)}','${escHtml(s.Email)}')">${t('btn_edit')}</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteSupervisor(${s.UserID})">🗑️</button>
+            </div></td>
+          </tr>`).join('')}</tbody>
+      </table></div>` : `<div class="empty-state"><div class="empty-icon">🎓</div><h3>${t('no_supervisors')}</h3><p>${t('no_supervisors_sub')}</p></div>`}
+    </div>`;
+}
+
+function openCreateSupervisor() {
+  editingSupervisorId = null;
+  document.getElementById('supervisorModalTitle').textContent = t('modal_add_supervisor');
+  ['supName','supEmail','supPassword'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('supPasswordGroup').style.display = 'block';
+  openModal('supervisorModal');
+}
+function openEditSupervisor(id, name, email) {
+  editingSupervisorId = id;
+  document.getElementById('supervisorModalTitle').textContent = t('modal_edit_supervisor');
+  document.getElementById('supName').value = name;
+  document.getElementById('supEmail').value = email;
+  document.getElementById('supPassword').value = '';
+  document.getElementById('supPasswordGroup').style.display = 'none';
+  openModal('supervisorModal');
+}
+async function saveSupervisor() {
+  const name=document.getElementById('supName').value.trim();
+  const email=document.getElementById('supEmail').value.trim();
+  const password=document.getElementById('supPassword').value;
+  if (!name||!email) return showToast(t('err_name_email'),'error');
+  if (!editingSupervisorId&&!password) return showToast(t('err_password'),'error');
+  let r;
+  if (editingSupervisorId) r=await fetch('/api/admin/users/'+editingSupervisorId,{method:'PUT',headers:getHeaders(),body:JSON.stringify({name,email})});
+  else r=await fetch('/api/admin/users',{method:'POST',headers:getHeaders(),body:JSON.stringify({name,email,password,role:'Supervisor'})});
+  if (r.ok) { closeModal('supervisorModal'); showToast(editingSupervisorId?t('toast_updated'):t('toast_created'),'success'); loadTab('users'); }
+  else { const d=await r.json(); showToast(d.error||t('toast_failed'),'error'); }
+}
+async function deleteSupervisor(id) {
+  if (!confirm(t('confirm_delete_supervisor'))) return;
+  const r=await fetch('/api/admin/users/'+id,{method:'DELETE',headers:getHeaders()});
+  if (r.ok) { showToast(t('toast_deleted'),'info'); loadTab('users'); }
+  else showToast(t('toast_failed'),'error');
+}
+
+// ── ACHIEVEMENT DELETE ────────────────────────────────────────────────────────
+async function deleteAchievement(id) {
+  if (!confirm(t('confirm_delete_ach'))) return;
+  const r=await fetch('/api/admin/achievements/'+id,{method:'DELETE',headers:getHeaders()});
+  if (r.ok) { showToast(t('toast_deleted'),'info'); loadTab('achievements'); }
+  else showToast(t('toast_failed'),'error');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+(async () => {
+  const savedLang = localStorage.getItem('interntrack_lang') || 'en';
+  currentLang = savedLang;
+const langBtn = document.getElementById('langBtn');
+
+if (langBtn) {
+  langBtn.textContent = savedLang === 'ar' ? 'English' : 'عربي';
+}
+  applyTranslations();
+
+  try {
+    const me = await fetch('/api/auth/me',{headers:{Authorization:'Bearer '+token}}).then(r=>r.json());
+    document.getElementById('adminName').textContent = me.Name || 'Admin';
+  } catch(e) {}
+  switchTab('dashboard');
+})();
+function toggleAddUserMenu(event){
+  event.preventDefault();
+  event.stopPropagation();
+  document.getElementById("addUserMenu")?.classList.toggle("show");
+}
+
+function toggleNotifications(event){
+  event.preventDefault();
+  event.stopPropagation();
+  document.getElementById("notificationsBox")?.classList.toggle("show");
+}
+
+function filterUsersTable(){
+  const search = document.getElementById("userSearch")?.value.toLowerCase() || "";
+  const role = document.getElementById("roleFilter")?.value || "";
+  const team = document.getElementById("teamFilter")?.value || "";
+
+  document.querySelectorAll(".user-row").forEach(row => {
+    const rowText = row.innerText.toLowerCase();
+    const rowRole = row.dataset.role || "";
+    const rowTeam = row.dataset.team || "";
+
+    const matchSearch = rowText.includes(search);
+    const matchRole = !role || rowRole === role;
+    const matchTeam = !team || rowTeam === team;
+
+    row.style.display = matchSearch && matchRole && matchTeam ? "" : "none";
+  });
+}
+
+document.addEventListener("click", function(e){
+  if (!e.target.closest(".add-user-wrap")) {
+    document.getElementById("addUserMenu")?.classList.remove("show");
+  }
+
+  if (!e.target.closest(".notif-btn") && !e.target.closest(".notifications-box")) {
+    document.getElementById("notificationsBox")?.classList.remove("show");
+  }
+});
+function openAnnouncementModal() {
+  openModal("announcementModal");
+}
+
+function saveAnnouncement() {
+  const title = document.getElementById("announcementTitle").value.trim();
+  const message = document.getElementById("announcementMessage").value.trim();
+
+  if (!title || !message) {
+    showToast("Please fill all fields", "error");
+    return;
+  }
+
+  const announcements =
+    JSON.parse(localStorage.getItem("announcements")) || [];
+
+  announcements.unshift({
+    title,
+    message,
+    date: "Today"
+  });
+
+  localStorage.setItem("announcements", JSON.stringify(announcements));
+
+  closeModal("announcementModal");
+  showToast("Announcement added", "success");
+  loadTab("dashboard");
+}
+
+function deleteAnnouncement(index) {
+  const announcements =
+    JSON.parse(localStorage.getItem("announcements")) || [];
+
+  announcements.splice(index, 1);
+  localStorage.setItem("announcements", JSON.stringify(announcements));
+  loadTab("dashboard");
+}
+
+function openEventModal() {
+  openModal("eventModal");
+}
+
+function saveEvent() {
+  const title = document.getElementById("eventTitle").value.trim();
+  const date = document.getElementById("eventDate").value;
+  const time = document.getElementById("eventTime").value;
+
+  if (!title || !date || !time) {
+    showToast("Please fill all fields", "error");
+    return;
+  }
+
+  const events =
+    JSON.parse(localStorage.getItem("calendarEvents")) || [];
+
+  events.unshift({
+    title,
+    date,
+    time
+  });
+
+  localStorage.setItem("calendarEvents", JSON.stringify(events));
+
+  closeModal("eventModal");
+  showToast("Event added", "success");
+  loadTab("dashboard");
+}
+
+function deleteEvent(index) {
+  const events =
+    JSON.parse(localStorage.getItem("calendarEvents")) || [];
+
+  events.splice(index, 1);
+  localStorage.setItem("calendarEvents", JSON.stringify(events));
+  loadTab("dashboard");
+}
+</script>
+</body>
+</html>

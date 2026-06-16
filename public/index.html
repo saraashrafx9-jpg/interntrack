@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InternTrack – Achievement Portal</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script>
+    (function() {
+      const lang = localStorage.getItem('interntrack_lang') || 'en';
+      document.documentElement.lang = lang;f
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    })();
+  </script>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <img src="/images/logo.png" alt="InternTrack" onerror="this.style.display='none'">
+    <div class="sidebar-brand-text">
+      <h2>InternTrack</h2>
+      <p data-i18n="achievement_portal">Achievement Portal</p>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+
+    <a class="nav-item" onclick="navigate('teams')" href="#">
+      <span class="nav-icon">👥</span> <span data-i18n="nav_groups">Groups</span>
+    </a>
+    <a class="nav-item" onclick="navigate('achievements')" href="#">
+      <span class="nav-icon">🏆</span> <span data-i18n="nav_achievements">Achievements</span>
+    </a>
+
+    <div class="nav-section-label" id="dashboardSection" style="display:none;" data-i18n="nav_manage">Manage</div>
+    <a class="nav-item" id="dashboardNavItem" onclick="goToDashboard()" href="#" style="display:none;">
+      <span class="nav-icon">📊</span> <span data-i18n="nav_my_dashboard">My Dashboard</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div id="sidebarUserCard" class="user-card" style="display:none;" onclick="goToDashboard()">
+      <div class="user-avatar">👤</div>
+      <div class="user-info">
+        <strong id="sidebarUserName">User</strong>
+        <span id="sidebarUserRole">Leader</span>
+      </div>
+      <span style="font-size:12px;color:#64748b;">→</span>
+    </div>
+    <button class="sidebar-login-btn" id="loginSidebarBtn" onclick="navigate('login')" data-i18n="btn_login">
+      Login / Sign In
+    </button>
+    <button class="sidebar-login-btn" id="logoutSidebarBtn" style="display:none;background:#374151;margin-top:8px;" onclick="logout()" data-i18n="btn_signout">
+      Sign Out
+    </button>
+    <a href="/supervisor-login.html" style="display:block;text-align:center;font-size:11px;color:#475569;margin-top:10px;text-decoration:none;" data-i18n="supervisor_login_link">🎓 Supervisor Login</a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main" id="mainLayout">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+      <span class="topbar-title" id="topbarTitle">Dashboard</span>
+    </div>
+    <div class="topbar-right">
+      <button class="lang-btn" onclick="toggleLang()" id="langBtn">عربي</button>
+      <span class="topbar-badge" id="topbarUser" style="display:none;"></span>
+      <span class="topbar-badge">🔔</span>
+    </div>
+  </header>
+
+  <div class="page-content" id="pageContent">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+
+  <footer class="footer">
+    <p data-i18n="footer">© 2026 <span>InternTrack</span> — SGMB Achievement Archive. All rights reserved.</p>
+  </footer>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ACHIEVEMENT DETAIL MODAL -->
+<div class="modal-overlay" id="achievementModal">
+  <div class="modal-box" style="max-width:680px;">
+    <div class="modal-header">
+      <h3 id="modalTitle" data-i18n="ach_modal_title">Achievement</h3>
+      <button class="modal-close" onclick="closeModal('achievementModal')">✕</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- Firebase Web SDK (compat version — works without a bundler) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+<script>
+// ── I18N ──────────────────────────────────────────────────────────────────────
+let currentLang = localStorage.getItem('interntrack_lang') || 'en';
+
+const T = {
+  en: {
+    achievement_portal: 'Achievement Portal',
+    nav_main: 'Main',
+    nav_dashboard: 'Dashboard',
+    nav_groups: 'Groups',
+    nav_achievements: 'Achievements',
+    nav_manage: 'Manage',
+    nav_my_dashboard: 'My Dashboard',
+    btn_login: 'Login / Sign In',
+    btn_signout: 'Sign Out',
+    tb_dashboard: 'Dashboard',
+    tb_groups: 'Groups',
+    tb_achievements: 'Achievements',
+    tb_login: 'Login',
+    hero_title: 'Welcome to InternTrack',
+    hero_sub: 'Monitor internship progress, review weekly achievements, and keep all group work organized in one place.',
+    view_groups: 'View Groups →',
+    browse_achievements: 'Browse Achievements',
+    stat_groups: 'Groups',
+    stat_active: 'Active this month',
+    stat_achievements: 'Achievements',
+    stat_total: 'Total recorded',
+    stat_leaders: 'Team Leaders',
+    stat_across: 'Across all groups',
+    stat_weeks: 'Weeks',
+    stat_duration: 'Program duration',
+    internship_groups: 'Internship Groups',
+    view_all: 'View all',
+    latest_ach: 'Latest Achievements',
+    no_ach: 'No achievements yet.',
+    teams_title: 'Internship Groups',
+    teams_sub: 'Click a group to view its achievements',
+    no_teams_h: 'No groups yet',
+    teams_empty: 'Teams will appear here once created by an admin.',
+    team_default_desc: 'Internship group working on various projects.',
+    no_leader: 'No Leader',
+    ach_title: 'Achievements',
+    total_ach: 'total achievements',
+    search_ph: 'Search achievements…',
+    all_teams_opt: 'All Teams',
+    filtered: '· Filtered:',
+    no_ach_found: 'No achievements found',
+    adjust_search: 'Try adjusting your search or filter.',
+    sign_in: 'Sign in to your account',
+    email_lbl: 'Email Address',
+    email_ph: 'admin@company.com',
+    pass_lbl: 'Password',
+    pass_ph: '••••••••',
+    sign_in_btn: 'Sign In →',
+    signing_in: 'Signing in…',
+    admin_hint: 'Default admin: admin@company.com / admin123',
+    ach_modal_title: 'Achievement',
+    no_comments: 'No comments yet. Be the first!',
+    comments_lbl: 'Comments',
+    name_ph: 'Your name',
+    comment_ph: 'Write a comment…',
+    post_comment: '💬 Post Comment',
+    footer: '© 2026 InternTrack — SGMB Achievement Archive. All rights reserved.',
+    logged_out: 'Logged out',
+    welcome: 'Welcome back!',
+    comment_added: 'Comment added!',
+    comment_fail: 'Failed to add comment',
+    toast_error: 'Error',
+    load_fail: 'Failed to load achievement',
+    err_data: 'Could not load data',
+    err_server: 'Make sure the server is running.',
+    err_teams: 'Error loading teams',
+    err_ach: 'Error loading achievements',
+    fe_not_found: 'No account found with this email.',
+    fe_wrong_pw: 'Incorrect password. Please try again.',
+    fe_invalid: 'Invalid email or password.',
+    fe_bad_email: 'Please enter a valid email address.',
+    fe_too_many: 'Too many failed attempts. Please wait and try again.',
+    fe_disabled: 'This account has been disabled.',
+    fe_network: 'Network error. Check your connection.',
+    fe_generic: 'Login failed. Please try again.',
+    posts: 'posts',
+    general: 'General',
+    by: 'by',
+    err_load_fail: '⚠️',
+    like: 'Like',
+    supervisor_login_link: '🎓 Supervisor Login',
+    role_select_title: 'Sign in as',
+    role_admin: 'Admin',
+    role_leader: 'Team Leader',
+    role_student: 'Student',
+    role_supervisor: 'Supervisor',
+    role_hint_admin: 'Full system management',
+    role_hint_leader: 'Manage your team',
+    role_hint_student: 'Submit achievements',
+    role_hint_supervisor: 'Review all teams',
+  },
+  ar: {
+    achievement_portal: 'بوابة الإنجازات',
+    nav_main: 'الرئيسية',
+    nav_dashboard: 'لوحة التحكم',
+    nav_groups: 'المجموعات',
+    nav_achievements: 'الإنجازات',
+    nav_manage: 'الإدارة',
+    nav_my_dashboard: 'لوحتي',
+    btn_login: 'تسجيل الدخول',
+    btn_signout: 'تسجيل الخروج',
+    tb_dashboard: 'لوحة التحكم',
+    tb_groups: 'المجموعات',
+    tb_achievements: 'الإنجازات',
+    tb_login: 'تسجيل الدخول',
+    hero_title: 'مرحباً بك في InternTrack',
+    hero_sub: 'تابع تقدم التدريب، راجع الإنجازات الأسبوعية، ونظّم عمل جميع المجموعات في مكان واحد.',
+    view_groups: 'عرض المجموعات ←',
+    browse_achievements: 'تصفح الإنجازات',
+    stat_groups: 'المجموعات',
+    stat_active: 'نشطة هذا الشهر',
+    stat_achievements: 'الإنجازات',
+    stat_total: 'إجمالي المسجلة',
+    stat_leaders: 'قادة الفرق',
+    stat_across: 'عبر جميع المجموعات',
+    stat_weeks: 'أسبوعاً',
+    stat_duration: 'مدة البرنامج',
+    internship_groups: 'مجموعات التدريب',
+    view_all: 'عرض الكل',
+    latest_ach: 'آخر الإنجازات',
+    no_ach: 'لا توجد إنجازات بعد.',
+    teams_title: 'مجموعات التدريب',
+    teams_sub: 'انقر على مجموعة لعرض إنجازاتها',
+    no_teams_h: 'لا توجد مجموعات بعد',
+    teams_empty: 'ستظهر الفرق هنا بمجرد إنشائها من قبل المسؤول.',
+    team_default_desc: 'مجموعة تدريب تعمل على مشاريع متنوعة.',
+    no_leader: 'لا يوجد قائد',
+    ach_title: 'الإنجازات',
+    total_ach: 'إجمالي الإنجازات',
+    search_ph: 'ابحث عن الإنجازات…',
+    all_teams_opt: 'جميع الفرق',
+    filtered: '· مصفى:',
+    no_ach_found: 'لا توجد إنجازات',
+    adjust_search: 'حاول تعديل البحث أو الفلتر.',
+    sign_in: 'تسجيل الدخول إلى حسابك',
+    email_lbl: 'البريد الإلكتروني',
+    email_ph: 'admin@company.com',
+    pass_lbl: 'كلمة المرور',
+    pass_ph: '••••••••',
+    sign_in_btn: 'دخول ←',
+    signing_in: 'جارٍ التسجيل…',
+    admin_hint: 'المسؤول الافتراضي: admin@company.com / admin123',
+    ach_modal_title: 'إنجاز',
+    no_comments: 'لا توجد تعليقات بعد. كن الأول!',
+    comments_lbl: 'التعليقات',
+    name_ph: 'اسمك',
+    comment_ph: 'اكتب تعليقاً…',
+    post_comment: '💬 نشر التعليق',
+    footer: '© 2026 InternTrack — أرشيف إنجازات SGMB. جميع الحقوق محفوظة.',
+    logged_out: 'تم تسجيل الخروج',
+    welcome: 'مرحباً بعودتك!',
+    comment_added: 'تم إضافة التعليق!',
+    comment_fail: 'فشل إضافة التعليق',
+    toast_error: 'خطأ',
+    load_fail: 'فشل في تحميل الإنجاز',
+    err_data: 'تعذر تحميل البيانات',
+    err_server: 'تأكد من أن الخادم يعمل.',
+    err_teams: 'خطأ في تحميل الفرق',
+    err_ach: 'خطأ في تحميل الإنجازات',
+    fe_not_found: 'لا يوجد حساب بهذا البريد الإلكتروني.',
+    fe_wrong_pw: 'كلمة المرور غير صحيحة. حاول مرة أخرى.',
+    fe_invalid: 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
+    fe_bad_email: 'الرجاء إدخال بريد إلكتروني صحيح.',
+    fe_too_many: 'محاولات كثيرة. يرجى الانتظار والمحاولة لاحقاً.',
+    fe_disabled: 'تم تعطيل هذا الحساب.',
+    fe_network: 'خطأ في الشبكة. تحقق من الاتصال.',
+    fe_generic: 'فشل تسجيل الدخول. حاول مرة أخرى.',
+    posts: 'منشورات',
+    general: 'عام',
+    by: 'بقلم',
+    err_load_fail: '⚠️',
+    like: 'إعجاب',
+    supervisor_login_link: '🎓 تسجيل دخول المشرف',
+    role_select_title: 'تسجيل الدخول بصفتك',
+    role_admin: 'مسؤول',
+    role_leader: 'قائد فريق',
+    role_student: 'طالب',
+    role_supervisor: 'مشرف',
+    role_hint_admin: 'إدارة النظام الكاملة',
+    role_hint_leader: 'إدارة فريقك',
+    role_hint_student: 'تقديم الإنجازات',
+    role_hint_supervisor: 'مراجعة جميع الفرق',
+  }
+};
+
+function t(k) { return T[currentLang]?.[k] ?? T.en[k] ?? k; }
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('interntrack_lang', lang);
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  const btn = document.getElementById('langBtn');
+  if (btn) btn.textContent = lang === 'ar' ? 'English' : 'عربي';
+  applyTranslations();
+  navigate(currentPage);
+}
+
+function toggleLang() { setLang(currentLang === 'en' ? 'ar' : 'en'); }
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+}
+
+// ── FIREBASE INIT ─────────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey:            "AIzaSyD_-yWpUgTnxis_ngDIVz-3NmKcLpHKPMc",
+  authDomain:        "interntrack-d.firebaseapp.com",
+  projectId:         "interntrack-d",
+  storageBucket:     "interntrack-d.firebasestorage.app",
+  messagingSenderId: "926551364573",
+  appId:             "1:926551364573:web:5c4df4ea01ea809c6bdc34"
+};
+firebase.initializeApp(firebaseConfig);
+const fbAuth = firebase.auth();
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+let currentUser = null;
+let currentPage = 'home';
+let allAchievements = [];
+let allTeams = [];
+
+// ── UTILS ────────────────────────────────────────────────────────────────────
+function getToken() {
+  const c = document.cookie.split(';').find(c => c.trim().startsWith('token='));
+  return c ? c.trim().slice(6) : localStorage.getItem('token');
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.className = 'toast', 3000);
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const s = String(d).replace(' ', 'T');
+  const dt = new Date(s);
+  const locale = currentLang === 'ar' ? 'ar-AE' : 'en-US';
+  return isNaN(dt) ? String(d) : dt.toLocaleDateString(locale, { month:'short', day:'numeric', year:'numeric' });
+}
+
+// ── SIDEBAR / LAYOUT ──────────────────────────────────────────────────────────
+function toggleSidebar() {
+  const s = document.getElementById('sidebar');
+  const m = document.getElementById('mainLayout');
+  s.classList.toggle('collapsed');
+  s.classList.toggle('open');
+  m.classList.toggle('expanded');
+}
+
+function setActiveNav(page) {
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const map = { home: 0, teams: 1, achievements: 2 };
+  const items = document.querySelectorAll('.nav-item');
+  if (page in map) items[map[page]]?.classList.add('active');
+  const titles = {
+    home:         t('tb_dashboard'),
+    teams:        t('tb_groups'),
+    achievements: t('tb_achievements'),
+    login:        t('tb_login')
+  };
+  document.getElementById('topbarTitle').textContent = titles[page] || 'InternTrack';
+}
+
+function updateAuthUI() {
+  const loginBtn    = document.getElementById('loginSidebarBtn');
+  const logoutBtn   = document.getElementById('logoutSidebarBtn');
+  const userCard    = document.getElementById('sidebarUserCard');
+  const dashSection = document.getElementById('dashboardSection');
+  const dashNav     = document.getElementById('dashboardNavItem');
+  const topbarUser  = document.getElementById('topbarUser');
+
+  if (currentUser) {
+    loginBtn.style.display  = 'none';
+    logoutBtn.style.display = 'block';
+    userCard.style.display  = 'flex';
+    document.getElementById('sidebarUserName').textContent = currentUser.Name || currentUser.name || currentUser.email;
+    document.getElementById('sidebarUserRole').textContent = currentUser.Role || currentUser.role;
+    dashSection.style.display = 'block';
+    dashNav.style.display     = 'flex';
+    dashNav.querySelector('.nav-icon').textContent =
+      (currentUser.Role || currentUser.role) === 'Admin' ? '⚙️' : '📊';
+    topbarUser.style.display = 'inline-block';
+    topbarUser.textContent   =
+      (currentUser.Name || currentUser.name || currentUser.email) +
+      ' · ' + (currentUser.Role || currentUser.role);
+  } else {
+    loginBtn.style.display  = 'block';
+    logoutBtn.style.display = 'none';
+    userCard.style.display  = 'none';
+    dashSection.style.display = 'none';
+    dashNav.style.display     = 'none';
+    topbarUser.style.display  = 'none';
+  }
+}
+
+function goToDashboard() {
+  const role = currentUser?.Role || currentUser?.role;
+  if      (role === 'Admin')      window.location.href = '/admin-dashboard.html';
+  else if (role === 'Leader')     window.location.href = '/leader-dashboard.html';
+  else if (role === 'Supervisor') window.location.href = '/supervisor-dashboard.html';
+  else if (role === 'Student')    window.location.href = '/student-dashboard.html';
+}
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+async function checkAuth() {
+  const token = getToken();
+  if (!token) { updateAuthUI(); return; }
+  try {
+    const r = await fetch('/api/auth/me', {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    if (r.ok) {
+      currentUser = await r.json();
+    } else {
+      localStorage.removeItem('token');
+      document.cookie = 'token=;max-age=0;path=/';
+    }
+  } catch(e) {}
+  updateAuthUI();
+}
+
+async function logout() {
+  try { await fbAuth.signOut(); } catch(e) {}
+  await fetch('/api/auth/logout', { method: 'POST' });
+  document.cookie = 'token=;max-age=0;path=/';
+  localStorage.removeItem('token');
+  currentUser = null;
+  updateAuthUI();
+  navigate('home');
+  showToast(t('logged_out'), 'info');
+}
+
+// ── LOGIN HANDLER ─────────────────────────────────────────────────────────────
+async function handleLogin(e) {
+  e.preventDefault();
+  const email    = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const btn      = document.querySelector('#loginForm button[type="submit"]');
+  const errEl    = document.getElementById('loginError');
+
+  errEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = t('signing_in');
+
+  try {
+    const credential = await fbAuth.signInWithEmailAndPassword(email, password);
+    const idToken = await credential.user.getIdToken();
+    const r = await fetch('/api/auth/session', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ idToken })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Session creation failed');
+
+    // If a role tile was selected, verify it matches the actual role
+    const actualRole = data.user?.role;
+    if (selectedLoginRole && actualRole && actualRole !== selectedLoginRole) {
+      await fbAuth.signOut();
+      const roleNames = {
+        Admin: t('role_admin'), Leader: t('role_leader'),
+        Student: t('role_student'), Supervisor: t('role_supervisor')
+      };
+      errEl.textContent = currentLang === 'ar'
+        ? `هذا الحساب مسجل كـ "${roleNames[actualRole] || actualRole}"، وليس كـ "${roleNames[selectedLoginRole] || selectedLoginRole}".`
+        : `This account is registered as "${roleNames[actualRole] || actualRole}", not "${roleNames[selectedLoginRole] || selectedLoginRole}".`;
+      btn.disabled = false;
+      btn.textContent = t('sign_in_btn');
+      return;
+    }
+
+    document.cookie = `token=${idToken};path=/;max-age=3600;sameSite=lax`;
+    localStorage.setItem('token', idToken);
+    currentUser = data.user;
+    updateAuthUI();
+    showToast(t('welcome'), 'success');
+    window.location.href = data.redirectUrl;
+
+  } catch (err) {
+    const firebaseErrors = {
+      'auth/user-not-found':         t('fe_not_found'),
+      'auth/wrong-password':         t('fe_wrong_pw'),
+      'auth/invalid-credential':     t('fe_invalid'),
+      'auth/invalid-email':          t('fe_bad_email'),
+      'auth/too-many-requests':      t('fe_too_many'),
+      'auth/user-disabled':          t('fe_disabled'),
+      'auth/network-request-failed': t('fe_network')
+    };
+    const msg = firebaseErrors[err.code] || err.message || t('fe_generic');
+    errEl.textContent = msg;
+    btn.disabled = false;
+    btn.textContent = t('sign_in_btn');
+  }
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+async function navigate(page) {
+  currentPage = page;
+  setActiveNav(page);
+  const content = document.getElementById('pageContent');
+switch(page) {
+
+  case 'teams':
+    await renderTeams(content);
+    break;
+
+  case 'achievements':
+    await renderAchievements(content);
+    break;
+
+  case 'login':
+    renderLogin(content);
+    break;
+
+  default:
+    renderLogin(content);
+}
+
+// ── HOME PAGE ─────────────────────────────────────────────────────────────────
+async function renderHome(el) {
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const [stats, achievements, teams] = await Promise.all([
+      fetch('/api/statistics').then(r=>r.json()),
+      fetch('/api/achievements?limit=6').then(r=>r.json()),
+      fetch('/api/teams').then(r=>r.json())
+    ]);
+    allTeams = teams;
+    allAchievements = achievements;
+
+    const teamIcons = ['/images/coding.png','/images/IS.png','/images/www.png','/images/data.png','/images/media.png','/images/business.png','/images/atten.png'];
+
+    const groupCards = teams.slice(0,7).map((t,i) => `
+      <div class="group-card" onclick="navigate('teams')">
+        <img src="${teamIcons[i%teamIcons.length]}" alt="${escHtml(t.TeamName)}" onerror="this.style.display='none'">
+        <h4>${escHtml(t.TeamName)}</h4>
+        <p>${t.AchievementCount||0} ${window.t('posts')}</p>
+      </div>`).join('');
+
+    const recentItems = achievements.slice(0,5).map((a,i) => {
+      const cls = ['','b','c'][i%3];
+      const thumb = a.FirstImage
+        ? `<img src="${escHtml(a.FirstImage)}" class="achievement-thumb" onerror="this.outerHTML='<div class=\'achievement-thumb-placeholder ${cls}\'></div>'">`
+        : `<div class="achievement-thumb-placeholder ${cls}"></div>`;
+      return `
+        <div class="achievement-item" onclick="viewAchievement(${a.AchievementID})">
+          ${thumb}
+          <div class="achievement-info">
+            <h4>${escHtml(a.Title)}</h4>
+            <p>${escHtml(a.TeamName||window.t('general'))} · ${window.t('by')} ${escHtml(a.CreatorName||'')}</p>
+          </div>
+          <span class="achievement-date">${fmtDate(a.CreatedAt)}</span>
+        </div>`;
+    }).join('') || `<div class="empty-state"><div class="empty-icon">🏆</div><p>${window.t('no_ach')}</p></div>`;
+
+    el.innerHTML = `
+      <div class="hero-section">
+        <div class="hero-text">
+          <h1>${window.t('hero_title')}</h1>
+          <p>${window.t('hero_sub')}</p>
+          <div class="hero-actions">
+            <button class="btn-hero-primary" onclick="navigate('teams')">${window.t('view_groups')}</button>
+            <button class="btn-hero-secondary" onclick="navigate('achievements')">${window.t('browse_achievements')}</button>
+          </div>
+        </div>
+        <div class="hero-image">
+          <img src="/images/teamwork.png" alt="Team" onerror="this.style.display='none'">
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon blue">👥</div>
+          <div class="stat-info"><h3>${stats.totalTeams||0}</h3><p>${window.t('stat_groups')}</p><small>${window.t('stat_active')}</small></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon gold">🏆</div>
+          <div class="stat-info"><h3>${stats.totalAchievements||0}</h3><p>${window.t('stat_achievements')}</p><small>${window.t('stat_total')}</small></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">👥</div>
+          <div class="stat-info"><h3>${stats.totalLeaders||0}</h3><p>${window.t('stat_leaders')}</p><small>${window.t('stat_across')}</small></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">📅</div>
+          <div class="stat-info"><h3>16</h3><p>${window.t('stat_weeks')}</p><small>${window.t('stat_duration')}</small></div>
+        </div>
+      </div>
+
+      <div class="content-grid">
+        <div class="panel">
+          <div class="panel-header">
+            <h3>${window.t('internship_groups')}</h3>
+            <a onclick="navigate('teams')">${window.t('view_all')}</a>
+          </div>
+          <div class="groups-grid">${groupCards || `<p class="text-muted">${window.t('no_teams_h')}</p>`}</div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h3>${window.t('latest_ach')}</h3>
+            <a onclick="navigate('achievements')">${window.t('view_all')}</a>
+          </div>
+          ${recentItems}
+        </div>
+      </div>`;
+  } catch(e) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${window.t('err_data')}</h3><p>${window.t('err_server')}</p></div>`;
+  }
+}
+
+// ── TEAMS PAGE ────────────────────────────────────────────────────────────────
+async function renderTeams(el) {
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const teams = await fetch('/api/teams').then(r=>r.json());
+    allTeams = teams;
+    const icons = ['/images/coding.png','/images/IS.png','/images/www.png','/images/data.png','/images/media.png','/images/business.png','/images/atten.png'];
+
+    const cards = teams.map((t,i) => `
+      <div class="achievement-card-full" onclick="filterByTeam(${t.TeamID}, '${escHtml(t.TeamName)}')">
+        <div class="card-image" style="background:linear-gradient(135deg,#dbeafe,#3b82f6);">
+          <img src="${icons[i%icons.length]}" style="width:80px;height:80px;object-fit:contain;" onerror="this.parentElement.innerHTML='👥'">
+        </div>
+        <div class="card-body">
+          <div class="card-title">${escHtml(t.TeamName)}</div>
+          <div class="card-desc">${escHtml(t.Description||window.t('team_default_desc'))}</div>
+          <div class="card-meta">
+            <span class="badge badge-blue">👥 ${t.LeaderName||window.t('no_leader')}</span>
+            <span>${t.AchievementCount||0} ${window.t('stat_achievements')}</span>
+          </div>
+        </div>
+      </div>`).join('') || `<div class="empty-state"><div class="empty-icon">👥</div><h3>${window.t('no_teams_h')}</h3><p>${window.t('teams_empty')}</p></div>`;
+
+    el.innerHTML = `
+      <div class="page-header">
+        <div><h2>${window.t('teams_title')}</h2><p>${window.t('teams_sub')}</p></div>
+      </div>
+      <div class="achievement-cards-grid">${cards}</div>`;
+  } catch(e) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${window.t('err_teams')}</h3></div>`;
+  }
+}
+
+async function filterByTeam(teamId, teamName) {
+  currentPage = 'achievements';
+  setActiveNav('achievements');
+  const el = document.getElementById('pageContent');
+  await renderAchievements(el, teamId, teamName);
+}
+
+// ── ACHIEVEMENTS PAGE ─────────────────────────────────────────────────────────
+async function renderAchievements(el, filterTeamId, filterTeamName) {
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const [achievements, teams] = await Promise.all([
+      fetch('/api/achievements').then(r=>r.json()),
+      fetch('/api/teams').then(r=>r.json())
+    ]);
+    allAchievements = achievements;
+    allTeams = teams;
+
+    const teamOptions = teams.map(t =>
+      `<option value="${t.TeamID}" ${filterTeamId==t.TeamID?'selected':''}>${escHtml(t.TeamName)}</option>`
+    ).join('');
+
+    el.innerHTML = `
+      <div class="page-header">
+        <div><h2>${window.t('ach_title')}</h2><p>${achievements.length} ${window.t('total_ach')}${filterTeamName?' '+window.t('filtered')+' '+escHtml(filterTeamName):''}</p></div>
+      </div>
+      <div class="achievements-page">
+        <div class="search-filters">
+          <input class="search-input" id="searchInput" placeholder="${window.t('search_ph')}" oninput="filterAchievements()">
+          <select class="filter-select" id="teamFilter" onchange="filterAchievements()">
+            <option value="">${window.t('all_teams_opt')}</option>
+            ${teamOptions}
+          </select>
+        </div>
+        <div class="achievement-cards-grid" id="achievementsGrid"></div>
+      </div>`;
+
+    if (filterTeamId) document.getElementById('teamFilter').value = filterTeamId;
+    filterAchievements();
+  } catch(e) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${window.t('err_ach')}</h3></div>`;
+  }
+}
+
+function filterAchievements() {
+  const q   = (document.getElementById('searchInput')?.value||'').toLowerCase();
+  const tid = document.getElementById('teamFilter')?.value;
+  let filtered = allAchievements;
+  if (q)   filtered = filtered.filter(a => a.Title.toLowerCase().includes(q) || (a.Description||'').toLowerCase().includes(q) || (a.TeamName||'').toLowerCase().includes(q));
+  if (tid) filtered = filtered.filter(a => String(a.TeamID) === tid);
+
+  const grid = document.getElementById('achievementsGrid');
+  if (!grid) return;
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">🏆</div><h3>${window.t('no_ach_found')}</h3><p>${window.t('adjust_search')}</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(a => `
+    <div class="achievement-card-full" onclick="viewAchievement(${a.AchievementID})">
+      ${a.FirstImage
+        ? `<img class="card-image" src="${escHtml(a.FirstImage)}" style="width:100%;height:180px;object-fit:cover;" onerror="this.outerHTML='<div class=\'card-image\' style=\'background:linear-gradient(135deg,${randomGradient(a.AchievementID)})\'>🏆</div>'">`
+        : `<div class="card-image" style="background:linear-gradient(135deg,${randomGradient(a.AchievementID)});">🏆</div>`}
+      <div class="card-body">
+        <div class="card-title">${escHtml(a.Title)}</div>
+        <div class="card-desc">${escHtml(a.Description)}</div>
+        <div class="card-meta">
+          <span class="badge badge-blue">${escHtml(a.TeamName||window.t('general'))}</span>
+          <span>${fmtDate(a.CreatedAt)}</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function randomGradient(id) {
+  const g = ['#dbeafe,#3b82f6','#fef3c7,#f59e0b','#d1fae5,#10b981','#ede9fe,#8b5cf6','#fce7f3,#ec4899'];
+  return g[id % g.length];
+}
+
+// ── ACHIEVEMENT DETAIL ────────────────────────────────────────────────────────
+async function viewAchievement(id) {
+  try {
+    const a = await fetch('/api/achievements/' + id).then(r=>r.json());
+    document.getElementById('modalTitle').textContent = a.Title;
+
+    const imagesHtml = a.images?.length ? `
+      <div class="detail-image-gallery">
+        ${a.images.map(img => `<img src="${escHtml(img.ImageURL)}" alt="Achievement image" onclick="window.open(this.src)" onerror="this.style.display='none'">`).join('')}
+      </div>` : '';
+
+    const commentsHtml = a.comments?.length
+      ? a.comments.map(c => `
+          <div class="comment-box">
+            <div class="comment-author">${escHtml(c.AuthorName)}</div>
+            <div class="comment-text">${escHtml(c.Content)}</div>
+            <div class="comment-time">${fmtDate(c.CreatedAt)}</div>
+          </div>`).join('')
+      : `<p class="text-muted">${window.t('no_comments')}</p>`;
+
+    document.getElementById('modalBody').innerHTML = `
+      <div class="flex gap-2 items-center mb-2" style="flex-wrap:wrap;">
+        <span class="badge badge-blue">${escHtml(a.TeamName||window.t('general'))}</span>
+        <span class="text-muted">${window.t('by')} ${escHtml(a.CreatorName||'')}</span>
+        <span class="text-muted">${fmtDate(a.CreatedAt)}</span>
+      </div>
+      ${imagesHtml}
+      <div style="white-space:pre-wrap;line-height:1.8;font-size:15px;margin-bottom:20px;">${escHtml(a.Description)}</div>
+      <div class="flex gap-2 mb-2" style="padding-top:14px;border-top:1px solid var(--border);">
+        <button class="btn btn-ghost btn-sm" onclick="toggleLike(${id})">❤️ ${window.t('like')} (${a.likeCount||0})</button>
+      </div>
+      <h4 style="margin-bottom:12px;font-family:'Plus Jakarta Sans',sans-serif;">${window.t('comments_lbl')} (${a.comments?.length||0})</h4>
+      <form id="commentForm" onsubmit="addComment(event,${id})" style="margin-bottom:16px;">
+        <div class="form-group">
+          <input type="text" id="commentAuthor" class="form-input" placeholder="${window.t('name_ph')}" required>
+        </div>
+        <div class="form-group">
+          <textarea id="commentContent" class="form-textarea" style="min-height:80px;" placeholder="${window.t('comment_ph')}" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">${window.t('post_comment')}</button>
+      </form>
+      <div id="commentsList">${commentsHtml}</div>`;
+
+    openModal('achievementModal');
+  } catch(e) {
+    showToast(window.t('load_fail'), 'error');
+  }
+}
+
+async function toggleLike(id) {
+  try {
+    const r = await fetch('/api/achievements/'+id+'/like', { method:'POST', headers:{'Content-Type':'application/json'} });
+    if (r.ok) viewAchievement(id);
+  } catch(e) {}
+}
+
+async function addComment(e, id) {
+  e.preventDefault();
+  const authorName = document.getElementById('commentAuthor').value;
+  const content    = document.getElementById('commentContent').value;
+  try {
+    const r = await fetch('/api/achievements/'+id+'/comments', {
+      method:  'POST',
+      headers: {'Content-Type':'application/json'},
+      body:    JSON.stringify({ authorName, content })
+    });
+    if (r.ok) { showToast(window.t('comment_added'),'success'); viewAchievement(id); }
+    else showToast(window.t('comment_fail'),'error');
+  } catch(e) { showToast(window.t('toast_error'),'error'); }
+}
+
+// ── LOGIN PAGE ────────────────────────────────────────────────────────────────
+let selectedLoginRole = null;
+
+function renderLogin(el) {
+  selectedLoginRole = null;
+  el.innerHTML = `
+    <div style="display:flex;align-items:flex-start;justify-content:center;min-height:calc(100vh - 160px);padding:32px 16px;">
+      <div style="width:100%;max-width:480px;">
+
+        <!-- Role selector card -->
+        <div id="roleSelectCard" style="background:var(--card-bg);border-radius:24px;padding:36px 32px;box-shadow:var(--shadow-lg);border:1px solid var(--border);margin-bottom:16px;">
+          <div style="text-align:center;margin-bottom:24px;">
+            <img src="/images/logo.png" style="width:52px;border-radius:12px;" onerror="this.style.display='none'">
+            <h1 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;margin-top:10px;">InternTrack</h1>
+            <p style="font-size:14px;color:var(--text-muted);margin-top:4px;" id="roleSelectTitle">${window.t('role_select_title')}</p>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="roleGrid">
+            ${[
+              { key:'Admin',      icon:'⚙️', labelKey:'role_admin',      hintKey:'role_hint_admin'      },
+              { key:'Leader',     icon:'👤', labelKey:'role_leader',     hintKey:'role_hint_leader'     },
+              { key:'Student',    icon:'🎓', labelKey:'role_student',    hintKey:'role_hint_student'    },
+              { key:'Supervisor', icon:'👁️', labelKey:'role_supervisor', hintKey:'role_hint_supervisor' }
+            ].map(r => `
+              <button onclick="selectRole('${r.key}')" id="roleBtn_${r.key}"
+                style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 12px;border:2px solid var(--border);border-radius:14px;background:var(--card-bg);cursor:pointer;transition:all .18s;font-family:inherit;">
+                <span style="font-size:26px;">${r.icon}</span>
+                <span style="font-weight:700;font-size:13px;color:var(--text);">${window.t(r.labelKey)}</span>
+                <span style="font-size:11px;color:var(--text-muted);text-align:center;">${window.t(r.hintKey)}</span>
+              </button>`).join('')}
+          </div>
+        </div>
+
+        <!-- Login form — hidden until role selected -->
+        <div id="loginFormCard" style="background:var(--card-bg);border-radius:24px;padding:32px;box-shadow:var(--shadow-lg);border:1px solid var(--border);display:none;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+            <button onclick="resetRoleSelect()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;color:var(--text-muted);">← ${window.t('btn_login').split('/')[0].trim()}</button>
+            <span id="selectedRoleLabel" style="font-weight:700;font-size:15px;"></span>
+          </div>
+
+          <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+              <label class="form-label">${window.t('email_lbl')}</label>
+              <input type="email" id="loginEmail" class="form-input" placeholder="${window.t('email_ph')}" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">${window.t('pass_lbl')}</label>
+              <input type="password" id="loginPassword" class="form-input" placeholder="${window.t('pass_ph')}" required>
+            </div>
+            <p id="loginError" style="color:#ef4444;font-size:13px;margin-bottom:12px;min-height:18px;"></p>
+            <button type="submit" class="btn btn-primary" style="width:100%;padding:13px;font-size:15px;border-radius:12px;justify-content:center;">
+              ${window.t('sign_in_btn')}
+            </button>
+            <p style="text-align:center;font-size:12px;color:var(--text-muted);margin-top:16px;">
+              ${window.t('admin_hint')}
+            </p>
+          </form>
+        </div>
+
+      </div>
+    </div>`;
+}
+
+function selectRole(role) {
+  selectedLoginRole = role;
+  // Highlight selected tile
+  ['Admin','Leader','Student','Supervisor'].forEach(r => {
+    const btn = document.getElementById('roleBtn_' + r);
+    if (!btn) return;
+    if (r === role) {
+      btn.style.borderColor = '#2563eb';
+      btn.style.background = '#eff6ff';
+      btn.style.transform = 'scale(1.03)';
+    } else {
+      btn.style.borderColor = 'var(--border)';
+      btn.style.background = 'var(--card-bg)';
+      btn.style.transform = '';
+    }
+  });
+  // Show form after short delay
+  setTimeout(() => {
+    document.getElementById('roleSelectCard').style.display = 'none';
+    const formCard = document.getElementById('loginFormCard');
+    formCard.style.display = 'block';
+    const roleLabels = {
+      Admin: window.t('role_admin') + ' ⚙️',
+      Leader: window.t('role_leader') + ' 👤',
+      Student: window.t('role_student') + ' 🎓',
+      Supervisor: window.t('role_supervisor') + ' 👁️'
+    };
+    document.getElementById('selectedRoleLabel').textContent = roleLabels[role] || role;
+    document.getElementById('loginEmail').focus();
+  }, 180);
+}
+
+function resetRoleSelect() {
+  selectedLoginRole = null;
+  document.getElementById('loginFormCard').style.display = 'none';
+  document.getElementById('roleSelectCard').style.display = 'block';
+  ['Admin','Leader','Student','Supervisor'].forEach(r => {
+    const btn = document.getElementById('roleBtn_' + r);
+    if (btn) { btn.style.borderColor = 'var(--border)'; btn.style.background = 'var(--card-bg)'; btn.style.transform = ''; }
+  });
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+(async () => {
+  // Apply saved language on load
+  const savedLang = localStorage.getItem('interntrack_lang') || 'en';
+  currentLang = savedLang;
+  document.getElementById('langBtn').textContent = savedLang === 'ar' ? 'English' : 'عربي';
+  applyTranslations();
+
+ await checkAuth();
+
+if (currentUser) {
+  goToDashboard();
+} else {
+  navigate('login');
+}
+})();
+</script>
+</body>
+</html>

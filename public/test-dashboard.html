@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Dashboard</title>
+</head>
+<body>
+    <h1>Test Dashboard</h1>
+    <div id="result"></div>
+    
+    <script>
+        // Get token from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        
+        document.getElementById('result').innerHTML = `
+            <p>URL Token: ${token ? 'YES - ' + token.substring(0, 20) + '...' : 'NO'}</p>
+            <p>localStorage: ${localStorage.getItem('token') ? 'YES' : 'NO'}</p>
+            <p>Cookie: ${document.cookie ? 'YES' : 'NO'}</p>
+            <p>Full URL: ${window.location.href}</p>
+        `;
+        
+        // Try to fetch user info
+        if (token) {
+            fetch('/api/auth/me', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(r => r.json())
+            .then(user => {
+                document.getElementById('result').innerHTML += `<p>User: ${JSON.stringify(user)}</p>`;
+            })
+            .catch(err => {
+                document.getElementById('result').innerHTML += `<p>Error: ${err.message}</p>`;
+            });
+        }
+    </script>
+</body>
+</html>
