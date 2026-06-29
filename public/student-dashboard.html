@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Dashboard – InternTrack</title>
+  <title>InternTrack – SGMB Student Portal</title>
   <link rel="stylesheet" href="/css/style.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script>
@@ -15,7 +15,7 @@
   </script>
 </head>
 <body>
-
+<script>if (localStorage.getItem('interntrack_theme') === 'dark') document.body.classList.add('dark-mode');</script>
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-brand">
     <img src="/images/logo.png" alt="InternTrack" onerror="this.style.display='none'">
@@ -24,31 +24,76 @@
       <p data-i18n="student_portal">Student Portal</p>
     </div>
   </div>
-  <nav class="sidebar-nav">
-    <div class="nav-section-label" data-i18n="nav_navigation">Navigation</div>
-    <a class="nav-item" href="/">
-      <span class="nav-icon">▦</span> <span data-i18n="nav_public">Public Dashboard</span>
-    </a>
-    <div class="nav-section-label" data-i18n="nav_my_work">My Work</div>
-    <a class="nav-item active" onclick="switchTab('overview')" href="#">
-      <span class="nav-icon">📊</span> <span data-i18n="nav_overview">Overview</span>
-    </a>
-    <a class="nav-item" onclick="switchTab('submit')" href="#">
-      <span class="nav-icon">✏️</span> <span data-i18n="nav_submit">Submit Achievement</span>
-    </a>
-    <a class="nav-item" onclick="switchTab('my')" href="#">
-      <span class="nav-icon">📋</span> <span data-i18n="nav_my_subs">My Submissions</span>
-    </a>
-  </nav>
+<nav class="sidebar-nav">
+  <a href="#" class="nav-item active" data-page="overview" onclick="switchTab('overview')">
+    <i class="fa-solid fa-gauge-high"></i>
+    <span data-i18n="nav_overview">Dashboard</span>
+  </a>
+
+  <a href="#" class="nav-item" data-page="submit" onclick="switchTab('submit')">
+    <i class="fa-regular fa-pen-to-square"></i>
+    <span data-i18n="nav_submit">Weekly Summary</span>
+  </a>
+
+  <a href="#" class="nav-item" data-page="my" onclick="switchTab('my')">
+    <i class="fa-solid fa-list-check"></i>
+    <span data-i18n="nav_my_subs">My Submissions</span>
+  </a>
+
+  <a href="#" class="nav-item" data-page="calendar" onclick="switchTab('calendar')">
+    <i class="fa-regular fa-calendar-days"></i>
+    <span data-i18n="nav_calendar">Calendar</span>
+  </a>
+
+  <a href="#" class="nav-item" data-page="settings" onclick="switchTab('settings')">
+    <i class="fa-solid fa-gear"></i>
+    <span data-i18n="nav_settings">Settings</span>
+  </a>
+</nav>
+<div class="help-card">
+  <div class="help-icon">
+    <i class="fa-solid fa-headset"></i>
+  </div>
+
+  <h3 data-i18n="need_help">Need Help?</h3>
+
+  <p data-i18n="contact_admin_short">Contact admin.</p>
+
+  <button class="help-btn" onclick="openHelpModal()" data-i18n="help_center">
+    Help Center
+  </button>
+</div>
+
   <div class="sidebar-footer">
-    <div class="user-card">
-      <div class="user-avatar">🎓</div>
-      <div class="user-info">
-        <strong id="studentName">Student</strong>
-        <span id="studentTeam" data-i18n="loading">Loading…</span>
+    <div class="sidebar-user" onclick="toggleStudentMenu(event)">
+      <div class="admin-avatar" id="sidebarAvatar" style="overflow:hidden;">
+        <i class="fa-solid fa-user-graduate"></i>
       </div>
+
+      <div class="admin-info">
+        <h4 id="studentName">Student</h4>
+        <p id="studentTeam">Loading...</p>
+      </div>
+
+      <span class="admin-arrow">▼</span>
     </div>
-    <button class="sidebar-login-btn" style="background:#374151;margin-top:8px;" onclick="logout()" data-i18n="btn_signout">Sign Out</button>
+
+    <div id="studentDropdown" class="sidebar-admin-menu">
+      <div class="language-menu">
+        <a href="#" onclick="toggleStudentLanguageMenu(event)">
+          <i class="fa-solid fa-globe" style="width:14px;"></i> Language ▶
+        </a>
+
+        <div id="studentLanguageDropdown" class="language-dropdown">
+          <a href="#" onclick="setLang('en')">English</a>
+          <a href="#" onclick="setLang('ar')" data-i18n="lang_arabic">Arabic</a>
+        </div>
+      </div>
+
+      <a href="#" onclick="logout()">
+        <i class="fa-solid fa-right-from-bracket" style="width:14px;"></i> <span data-i18n="btn_signout">Sign Out</span>
+      </a>
+    </div>
   </div>
 </aside>
 
@@ -56,11 +101,10 @@
   <header class="topbar">
     <div class="topbar-left">
       <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-      <span class="topbar-title" id="topbarTitle">Overview</span>
+      <span class="topbar-title" id="topbarTitle" data-i18n="nav_overview">Dashboard</span>
     </div>
     <div class="topbar-right">
-      <button class="lang-btn" onclick="toggleLang()" id="langBtn">عربي</button>
-      <span class="topbar-badge" id="teamBadge" data-i18n="badge_student">🎓 Student</span>
+     
     </div>
   </header>
 
@@ -82,26 +126,24 @@ let currentLang = localStorage.getItem('interntrack_lang') || 'en';
 const T = {
   en: {
     student_portal: 'Student Portal',
-    nav_navigation: 'Navigation',
-    nav_public: 'Public Dashboard',
     nav_my_work: 'My Work',
-    nav_overview: 'Overview',
-    nav_submit: 'Submit Achievement',
+   nav_overview: 'Dashboard',
+    nav_submit: 'Post Weekly Summary',
     nav_my_subs: 'My Submissions',
     btn_signout: 'Sign Out',
     badge_student: '🎓 Student',
     loading: 'Loading…',
-    footer: '© 2026 InternTrack — Student Portal. All rights reserved.',
+    footer: '© 2026 InternTrack — Sharjah Government Media Bureau. All rights reserved.',
     // Tabs
-    tb_overview: 'Overview',
-    tb_submit: 'Submit Achievement',
+    tb_overview: 'Dashboard',
+    tb_submit: 'Post Weekly Summary',
     tb_edit: 'Edit Submission',
     tb_my: 'My Submissions',
     // Overview
     welcome: 'Welcome,',
     lbl_team: 'Team:',
     not_assigned: 'Not assigned yet',
-    btn_submit_ach: '+ Submit Achievement',
+    btn_submit_ach: '+ Weekly Summary',
     lbl_total_sub: 'Total Submitted',
     lbl_published: 'Published',
     lbl_pending: 'Pending Review',
@@ -122,18 +164,23 @@ const T = {
     view_all: 'View all →',
     no_subs: 'No submissions yet. Start by submitting your first achievement!',
     // Submit form
-    h_submit: '✏️ Submit Achievement',
-    h_resubmit: '🔄 Resubmit Achievement',
-    sub_submit: 'Describe what you accomplished — your leader will review it before it goes live',
-    sub_resubmit: 'Update your submission and resubmit for review',
-    lbl_title: 'Achievement Title *',
-    title_ph: 'e.g. Built user authentication module',
+    h_submit: '📋 Weekly Summary',
+    h_resubmit: '🔄 Resubmit Weekly Summary',
+    sub_submit: 'Share what you accomplished this week — your leader will review it before it goes live',
+    sub_resubmit: 'Update your weekly summary and resubmit for review',
+    lbl_title: 'Week Title / Topic *',
+    title_ph: 'e.g. Week 3 — Built authentication module',
     title_hint: 'Keep it clear and specific',
-    lbl_desc: 'Description *',
-    desc_ph: 'Describe your achievement in detail…\n\nSuggestions:\n• What did you build / complete / learn?\n• What tools or methods did you use?\n• What was the impact or outcome?\n• Any challenges you overcame?',
+    lbl_week: 'Week *',
+    week_ph: 'Select week…',
+    lbl_desc: 'Summary of Activities *',
+    desc_ph: 'Describe your week in detail…\n\nSuggestions:\n• What did you build / complete / learn?\n• What tools or methods did you use?\n• What was the impact or outcome?\n• Any challenges you overcame?',
     lbl_images: 'Images (optional, max 5)',
     img_hint: 'Screenshots, diagrams, or photos of your work',
-    info_note: 'Your submission will be sent to your team leader for review before it appears publicly. If rejected, you\'ll be able to see their feedback and resubmit.',
+    lbl_docs: 'Documents (PDF, PowerPoint, Word)',
+    docs_hint: 'Attach reports, presentations, or documents from this week',
+    lbl_current_attachments: 'Current attachments',
+    info_note: 'Your summary will be sent to your team leader for review before it appears publicly. If rejected, you\'ll be able to see their feedback and resubmit.',
     btn_submit: '🚀 Submit for Review',
     btn_cancel: 'Cancel',
     submitting: 'Submitting…',
@@ -152,8 +199,8 @@ const T = {
     btn_delete: '🗑️ Delete',
     // Empty state
     no_subs_title: 'No submissions yet',
-    no_subs_desc: 'Submit your first achievement and get it reviewed by your team leader.',
-    btn_submit_first: '+ Submit Achievement',
+    no_subs_desc: 'Submit your first weekly summary and get it reviewed by your team leader.',
+    btn_submit_first: '+ Weekly Summary',
     // Status badges
     badge_published: '📢 Published',
     badge_pending: '⏳ Pending Review',
@@ -172,27 +219,113 @@ const T = {
     confirm_delete: 'Delete this submission?',
     max_images: 'Max 5 images',
     supervisor_feedback_lbl: '🔒 Supervisor Feedback (Private)',
+    // Sidebar / nav extras
+    nav_calendar: 'Calendar',
+    events_this_month: "This Month's Events",
+    no_events_month: 'No events this month.',
+    tab_events: 'Events',
+    tab_reminders: 'Reminders',
+    no_reminders: 'No reminders yet.',
+    btn_add_reminder: '+ Add Reminder',
+    h_add_reminder: 'Add Reminder',
+    lbl_reminder_title: 'Reminder Title',
+    lbl_description: 'Description',
+    th_date: 'Date',
+    lbl_start_time: 'Start Time',
+    lbl_end_time: 'End Time',
+    btn_save_reminder: 'Save Reminder',
+    confirm_delete_reminder: 'Delete this reminder?',
+    err_reminder_required: 'Title is required',
+    todo_ph: 'Add a task…',
+    btn_add_todo: '+ Add',
+    no_todos: 'No tasks yet.',
+    toast_created: 'Created!',
+    toast_failed: 'Failed',
+    nav_settings: 'Settings',
+    sub_settings: 'Manage your account settings',
+    settings_profile: 'Profile',
+    settings_profile_desc: 'Update your name, email, and phone number',
+    settings_password: 'Password',
+    settings_password_desc: 'Change your account password',
+    settings_language: 'Language',
+    settings_language_desc: 'Switch between English and Arabic',
+    lbl_full_name: 'Full Name',
+    lbl_email: 'Email',
+    lbl_phone: 'Phone Number',
+    lbl_team: 'Team',
+    lbl_role: 'Role',
+    not_set: 'Not set',
+    lbl_new_password: 'New Password',
+    password_hint: 'Min 6 characters',
+    err_name_email: 'Name and email are required',
+    err_password_length: 'Password must be at least 6 characters',
+    toast_updated: 'Updated!',
+    toast_password_updated: 'Password updated!',
+    need_help: 'Need Help?',
+    contact_admin_short: 'Contact admin.',
+    help_center: 'Help Center',
+    lang_arabic: 'Arabic',
+    coming_soon: 'Coming soon...',
+    // Dashboard
+    dash_subtitle: "Here's what's happening with your team today.",
+    h_team_members: 'Team Members',
+    leader_badge: 'Leader',
+    member_badge: 'Member',
+    no_team_members: 'No team members yet.',
+    subtab_overview: 'Overview',
+    subtab_all_posts: 'All Team Posts',
+    no_team_posts: 'No posts yet.',
+    settings_theme: 'Appearance',
+    settings_theme_desc_dark: 'Switch to light mode',
+    settings_theme_desc_light: 'Switch to dark mode',
+    btn_save: 'Save',
+    h_upcoming_deadlines: 'Upcoming Deadlines',
+    h_team_todos: "Team To-Do Lists",
+    h_shared_links: 'Shared Links',
+    no_shared_links: 'No links shared yet.',
+    link_title_ph: 'Title (optional)',
+    link_url_ph: 'Paste a link…',
+    btn_add_link: 'Add',
+    toast_link_added: 'Link added',
+    // Help modal
+    h_contact_admin: 'Contact Admin',
+    h_my_requests: 'My Requests',
+    no_my_requests: "You haven't sent any requests yet.",
+    status_pending: 'Pending',
+    status_done: 'Done',
+    status_rejected: 'Rejected',
+    err_load: 'Failed to load',
+    contact_admin_desc: 'Write your message and admin will receive it.',
+    help_msg_ph: 'Write your message here...',
+    btn_send_message: 'Send Message',
+    alert_msg_required: 'Please write your message.',
+    alert_msg_sent: 'Message sent to admin successfully.',
+    alert_msg_failed: 'Failed to send message.',
+    // Not logged in
+    not_logged_in: 'Not Logged In',
+    please_sign_in: 'Please sign in to access your dashboard.',
+    go_to_login: 'Go to Login',
   },
   ar: {
     student_portal: 'بوابة الطالب',
     nav_navigation: 'التنقل',
     nav_public: 'اللوحة الرئيسية',
     nav_my_work: 'عملي',
-    nav_overview: 'نظرة عامة',
-    nav_submit: 'تقديم إنجاز',
+    nav_overview: 'لوحة التحكم',
+    nav_submit: 'نشر ملخص الأسبوع',
     nav_my_subs: 'تقديماتي',
     btn_signout: 'تسجيل الخروج',
     badge_student: '🎓 طالب',
     loading: 'جارٍ التحميل…',
-    footer: '© 2026 InternTrack — بوابة الطالب. جميع الحقوق محفوظة.',
-    tb_overview: 'نظرة عامة',
-    tb_submit: 'تقديم إنجاز',
+    footer: '© 2026 InternTrack — دائرة الإعلام الحكومي في الشارقة. جميع الحقوق محفوظة.',
+    tb_overview: 'لوحة التحكم',
+    tb_submit: 'نشر ملخص الأسبوع',
     tb_edit: 'تعديل التقديم',
     tb_my: 'تقديماتي',
     welcome: 'مرحباً،',
     lbl_team: 'الفريق:',
     not_assigned: 'غير معين بعد',
-    btn_submit_ach: '+ تقديم إنجاز',
+    btn_submit_ach: '+ ملخص الأسبوع',
     lbl_total_sub: 'إجمالي المقدمة',
     lbl_published: 'منشورة',
     lbl_pending: 'بانتظار المراجعة',
@@ -209,18 +342,23 @@ const T = {
     h_recent: 'آخر التقديمات',
     view_all: 'عرض الكل ←',
     no_subs: 'لا توجد تقديمات بعد. ابدأ بتقديم أول إنجاز لك!',
-    h_submit: '✏️ تقديم إنجاز',
-    h_resubmit: '🔄 إعادة تقديم الإنجاز',
-    sub_submit: 'صف ما حققته — سيراجعه قائدك قبل نشره',
-    sub_resubmit: 'تحديث تقديمك وإعادة إرساله للمراجعة',
-    lbl_title: 'عنوان الإنجاز *',
-    title_ph: 'مثال: بناء وحدة مصادقة المستخدم',
+    h_submit: '📋 ملخص الأسبوع',
+    h_resubmit: '🔄 إعادة تقديم ملخص الأسبوع',
+    sub_submit: 'شارك ما أنجزته هذا الأسبوع — سيراجعه قائدك قبل نشره',
+    sub_resubmit: 'تحديث ملخصك الأسبوعي وإعادة إرساله للمراجعة',
+    lbl_title: 'عنوان الأسبوع / الموضوع *',
+    title_ph: 'مثال: الأسبوع 3 — بناء وحدة المصادقة',
     title_hint: 'اجعله واضحاً ومحدداً',
-    lbl_desc: 'الوصف *',
-    desc_ph: 'صف إنجازك بالتفصيل…\n\nاقتراحات:\n• ماذا بنيت / أكملت / تعلمت؟\n• ما الأدوات أو الأساليب التي استخدمتها؟\n• ما التأثير أو النتيجة؟\n• أي تحديات تغلبت عليها؟',
+    lbl_week: 'الأسبوع *',
+    week_ph: 'اختر الأسبوع…',
+    lbl_desc: 'ملخص الأنشطة *',
+    desc_ph: 'صف أسبوعك بالتفصيل…\n\nاقتراحات:\n• ماذا بنيت / أكملت / تعلمت؟\n• ما الأدوات أو الأساليب التي استخدمتها؟\n• ما التأثير أو النتيجة؟\n• أي تحديات تغلبت عليها؟',
     lbl_images: 'صور (اختياري، بحد أقصى 5)',
     img_hint: 'لقطات شاشة أو مخططات أو صور من عملك',
-    info_note: 'سيُرسَل تقديمك إلى قائد فريقك للمراجعة قبل نشره. في حال الرفض، ستتمكن من رؤية ملاحظاته وإعادة التقديم.',
+    lbl_docs: 'مستندات (PDF، PowerPoint، Word)',
+    docs_hint: 'أرفق تقارير أو عروض تقديمية أو مستندات من هذا الأسبوع',
+    lbl_current_attachments: 'المرفقات الحالية',
+    info_note: 'سيُرسَل ملخصك إلى قائد فريقك للمراجعة قبل نشره. في حال الرفض، ستتمكن من رؤية ملاحظاته وإعادة التقديم.',
     btn_submit: '🚀 تقديم للمراجعة',
     btn_cancel: 'إلغاء',
     submitting: 'جارٍ التقديم…',
@@ -236,8 +374,8 @@ const T = {
     btn_edit: '✏️ تعديل',
     btn_delete: '🗑️ حذف',
     no_subs_title: 'لا توجد تقديمات بعد',
-    no_subs_desc: 'قدّم أول إنجازاتك وانتظر مراجعة قائد فريقك.',
-    btn_submit_first: '+ تقديم إنجاز',
+    no_subs_desc: 'قدّم أول ملخص أسبوعي وانتظر مراجعة قائد فريقك.',
+    btn_submit_first: '+ ملخص الأسبوع',
     badge_published: '📢 منشور',
     badge_pending: '⏳ بانتظار المراجعة',
     badge_draft: '📝 مسودة',
@@ -252,6 +390,88 @@ const T = {
     confirm_delete: 'حذف هذا التقديم؟',
     max_images: 'الحد الأقصى 5 صور',
     supervisor_feedback_lbl: '🔒 ملاحظات المشرف (خاصة)',
+    nav_calendar: 'التقويم',
+    events_this_month: 'فعاليات هذا الشهر',
+    no_events_month: 'لا توجد فعاليات هذا الشهر.',
+    tab_events: 'الفعاليات',
+    tab_reminders: 'التذكيرات',
+    no_reminders: 'لا توجد تذكيرات بعد.',
+    btn_add_reminder: '+ إضافة تذكير',
+    h_add_reminder: 'إضافة تذكير',
+    lbl_reminder_title: 'عنوان التذكير',
+    lbl_description: 'الوصف',
+    th_date: 'التاريخ',
+    lbl_start_time: 'وقت البدء',
+    lbl_end_time: 'وقت الانتهاء',
+    btn_save_reminder: 'حفظ التذكير',
+    confirm_delete_reminder: 'حذف هذا التذكير؟',
+    err_reminder_required: 'العنوان مطلوب',
+    todo_ph: 'أضف مهمة…',
+    btn_add_todo: '+ إضافة',
+    no_todos: 'لا توجد مهام بعد.',
+    toast_created: 'تم الإنشاء!',
+    toast_failed: 'فشل',
+    nav_settings: 'الإعدادات',
+    sub_settings: 'إدارة إعدادات حسابك',
+    settings_profile: 'الملف الشخصي',
+    settings_profile_desc: 'تحديث اسمك وبريدك الإلكتروني ورقم هاتفك',
+    settings_password: 'كلمة المرور',
+    settings_password_desc: 'تغيير كلمة مرور حسابك',
+    settings_language: 'اللغة',
+    settings_language_desc: 'التبديل بين الإنجليزية والعربية',
+    lbl_full_name: 'الاسم الكامل',
+    lbl_email: 'البريد الإلكتروني',
+    lbl_phone: 'رقم الهاتف',
+    lbl_team: 'الفريق',
+    lbl_role: 'الدور',
+    not_set: 'غير محدد',
+    lbl_new_password: 'كلمة المرور الجديدة',
+    password_hint: 'بحد أدنى 6 أحرف',
+    err_name_email: 'الاسم والبريد الإلكتروني مطلوبان',
+    err_password_length: 'يجب أن تكون كلمة المرور 6 أحرف على الأقل',
+    toast_updated: 'تم التحديث!',
+    toast_password_updated: 'تم تحديث كلمة المرور!',
+    need_help: 'تحتاج مساعدة؟',
+    contact_admin_short: 'تواصل مع المسؤول.',
+    help_center: 'مركز المساعدة',
+    lang_arabic: 'العربية',
+    coming_soon: 'قريباً...',
+    dash_subtitle: 'هذا ما يحدث في فريقك اليوم.',
+    h_team_members: 'أعضاء الفريق',
+    leader_badge: 'قائد',
+    member_badge: 'عضو',
+    no_team_members: 'لا يوجد أعضاء في الفريق بعد.',
+    subtab_overview: 'نظرة عامة',
+    subtab_all_posts: 'جميع منشورات الفريق',
+    no_team_posts: 'لا توجد منشورات بعد.',
+    settings_theme: 'المظهر',
+    settings_theme_desc_dark: 'التبديل إلى الوضع الفاتح',
+    settings_theme_desc_light: 'التبديل إلى الوضع الداكن',
+    btn_save: 'حفظ',
+    h_upcoming_deadlines: 'المواعيد القادمة',
+    h_team_todos: 'قوائم مهام الفريق',
+    h_shared_links: 'الروابط المشتركة',
+    no_shared_links: 'لم تتم مشاركة أي روابط بعد.',
+    link_title_ph: 'العنوان (اختياري)',
+    link_url_ph: 'ألصق رابطًا…',
+    btn_add_link: 'إضافة',
+    toast_link_added: 'تمت إضافة الرابط',
+    h_contact_admin: 'تواصل مع المسؤول',
+    h_my_requests: 'طلباتي',
+    no_my_requests: 'لم ترسل أي طلبات بعد.',
+    status_pending: 'قيد الانتظار',
+    status_done: 'منتهي',
+    status_rejected: 'مرفوض',
+    err_load: 'فشل التحميل',
+    contact_admin_desc: 'اكتب رسالتك وسيستلمها المسؤول.',
+    help_msg_ph: 'اكتب رسالتك هنا...',
+    btn_send_message: 'إرسال الرسالة',
+    alert_msg_required: 'يرجى كتابة رسالتك.',
+    alert_msg_sent: 'تم إرسال الرسالة إلى المسؤول بنجاح.',
+    alert_msg_failed: 'فشل إرسال الرسالة.',
+    not_logged_in: 'لم يتم تسجيل الدخول',
+    please_sign_in: 'يرجى تسجيل الدخول للوصول إلى لوحتك.',
+    go_to_login: 'الانتقال لتسجيل الدخول',
   }
 };
 
@@ -274,7 +494,27 @@ function applyTranslations() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     el.textContent = t(el.dataset.i18n);
   });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
 }
+
+new MutationObserver(mutations => {
+  mutations.forEach(m => {
+    m.addedNodes.forEach(node => {
+      if (node.nodeType !== 1) return;
+      if (node.dataset?.i18n) node.textContent = t(node.dataset.i18n);
+      node.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+    });
+  });
+}).observe(document.documentElement, { childList: true, subtree: true });
+
+// Real-time updates
+(function() {
+  const es = new EventSource('/api/events');
+  let _rt;
+  es.onmessage = () => { clearTimeout(_rt); _rt = setTimeout(() => switchTab(currentTabName), 300); };
+})();
 
 // ── CORE ──────────────────────────────────────────────────────────────────────
 const token = (() => {
@@ -283,10 +523,13 @@ const token = (() => {
 })();
 
 if (!token) {
-  document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);"><div style="text-align:center;padding:40px;background:#fff;border-radius:20px;box-shadow:0 10px 40px rgba(0,0,0,.1);"><div style="font-size:48px;margin-bottom:16px;">🔒</div><h1 style="font-family:\'Plus Jakarta Sans\',sans-serif;margin-bottom:8px;">Not Logged In</h1><p style="color:#64748b;margin-bottom:20px;">Please sign in to access your dashboard.</p><a href="/" style="background:#2563eb;color:#fff;padding:11px 24px;border-radius:10px;text-decoration:none;font-weight:600;">Go to Login</a></div></div>';
+  document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);"><div style="text-align:center;padding:40px;background:#fff;border-radius:20px;box-shadow:0 10px 40px rgba(0,0,0,.1);"><div style="font-size:48px;margin-bottom:16px;">🔒</div><h1 style="font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:8px;">${t('not_logged_in')}</h1><p style="color:#64748b;margin-bottom:20px;">${t('please_sign_in')}</p><a href="/" style="background:#4a7099;color:#fff;padding:11px 24px;border-radius:10px;text-decoration:none;font-weight:600;">${t('go_to_login')}</a></div></div>`;
 }
 
-let currentUser = null, myAchievements = [], editingId = null;
+let currentUser = null,
+    myAchievements = [],
+    editingId = null,
+    teamName = '';
 let currentTabName = 'overview';
 
 function getHeaders(json=true) {
@@ -331,126 +574,639 @@ function statusBadge(status) {
   };
   return map[status] || status;
 }
-
 function switchTab(tab) {
   currentTabName = tab;
-  document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
-  const navItems = document.querySelectorAll('.sidebar-nav .nav-item');
-  const idx = { overview: 1, submit: 2, my: 3 };
-  navItems[idx[tab]]?.classList.add('active');
+  localStorage.setItem('studentCurrentTab', tab);
+
+  document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => {
+    n.classList.remove('active');
+  });
+
+  const activeItem = document.querySelector(`.sidebar-nav .nav-item[data-page="${tab}"]`);
+  if (activeItem) activeItem.classList.add('active');
+
   const titles = {
     overview: t('tb_overview'),
-    submit:   editingId ? t('tb_edit') : t('tb_submit'),
-    my:       t('tb_my')
+    submit: editingId ? t('tb_edit') : t('tb_submit'),
+    my: t('tb_my'),
+    calendar: t('nav_calendar'),
+    settings: t('nav_settings')
   };
-  document.getElementById('topbarTitle').textContent = titles[tab] || tab;
+
+  document.getElementById('topbarTitle').textContent = titles[tab] || t('nav_overview');
+
   const el = document.getElementById('pageContent');
+
   switch (tab) {
-    case 'overview': renderOverview(el); break;
-    case 'submit':   renderSubmitForm(el); break;
-    case 'my':       renderMySubmissions(el); break;
+    case 'overview':
+      renderOverview(el);
+      break;
+
+    case 'submit':
+      renderSubmitForm(el);
+      break;
+
+    case 'my':
+      renderMySubmissions(el);
+      break;
+
+    case 'calendar':
+      renderCalendar(el);
+      break;
+
+    case 'settings':
+      renderSettings(el);
+      break;
   }
 }
-
 async function loadMyAchievements() {
   myAchievements = await fetch('/api/student/achievements', { headers: getHeaders() }).then(r => r.json());
   return myAchievements;
 }
 
-// ── OVERVIEW ──────────────────────────────────────────────────────────────────
-async function renderOverview(el) {
+// ── CALENDAR (Events view-only; Reminders/To-do are private to this user) ────
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+
+let calendarViewDate = new Date();
+let calendarEventsCache = [];
+let remindersCache = [];
+let calendarSideTab = 'events';
+
+function calLocale() { return currentLang === 'ar' ? 'ar-AE' : 'en-US'; }
+
+function calDowLabels() {
+  const base = new Date(2024, 0, 1);
+  return [0,1,2,3,4,5,6].map(i => {
+    const d = new Date(base); d.setDate(base.getDate() + i);
+    return d.toLocaleDateString(calLocale(), { weekday: 'short' });
+  });
+}
+
+function calDateKey(y, m, d) { return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+
+async function renderCalendar(el) {
   el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-  const achievements = await loadMyAchievements();
+  try {
+    [calendarEventsCache, remindersCache] = await Promise.all([
+      fetch('/api/calendar-events', { headers: getHeaders() }).then(r => r.json()),
+      fetch('/api/reminders', { headers: getHeaders() }).then(r => r.json())
+    ]);
+  } catch (e) {
+    calendarEventsCache = []; remindersCache = [];
+  }
+  renderCalendarUI(el);
+}
 
-  const published = achievements.filter(a => a.Status === 'published').length;
-  const pending   = achievements.filter(a => a.Status === 'pending').length;
-  const rejected  = achievements.filter(a => a.Status === 'rejected').length;
+function switchCalSideTab(tabKey) {
+  calendarSideTab = tabKey;
+  renderCalendarUI(document.getElementById('pageContent'));
+}
 
-  const recentItems = achievements.slice(0, 5).map((a, i) => `
-    <div class="achievement-item">
-      ${a.FirstImage
-        ? `<img src="${escHtml(a.FirstImage)}" class="achievement-thumb" onerror="this.outerHTML='<div class=\'achievement-thumb-placeholder ${['','b','c'][i%3]}\'></div>'">`
-        : `<div class="achievement-thumb-placeholder ${['','b','c'][i%3]}"></div>`}
-      <div class="achievement-info">
-        <h4>${escHtml(a.Title)}</h4>
-        <p>${statusBadge(a.Status)} · ${fmtDate(a.CreatedAt)}</p>
-        ${a.Status === 'rejected' ? `<small style="color:#ef4444;">${t('check_comments')}</small>` : ''}
+function calSidePanelBody(monthEvents) {
+  if (calendarSideTab === 'reminders') {
+    return `
+      <div style="display:flex;flex-direction:column;gap:10px;max-height:460px;overflow-y:auto;margin-bottom:14px;">
+        ${remindersCache.length ? remindersCache.map(r => `
+          <div style="background:${r.Completed ? '#ebebdf' : '#dce8f5'};border-radius:12px;padding:12px 14px;${r.Completed ? 'opacity:.6;' : ''}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+              <div style="flex:1;min-width:0;">
+                ${r.StartTime ? `<div style="font-size:11px;color:#3d5a7d;font-weight:700;">${escHtml(r.StartTime)}${r.EndTime ? ' - ' + escHtml(r.EndTime) : ''}</div>` : ''}
+                <div style="font-weight:700;font-size:14px;text-decoration:${r.Completed ? 'line-through' : 'none'};">${escHtml(r.Title)}</div>
+                ${r.Description ? `<div style="font-size:12px;color:var(--text-muted);">${escHtml(r.Description)}</div>` : ''}
+                ${r.ReminderDate ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${escHtml(r.ReminderDate)}</div>` : ''}
+              </div>
+              <div style="display:flex;gap:6px;flex-shrink:0;">
+                <button class="btn btn-sm btn-ghost" onclick="toggleReminder(${r.ReminderID},${r.Completed ? 0 : 1})">${r.Completed ? '↺' : '✓'}</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteReminderItem(${r.ReminderID})">🗑️</button>
+              </div>
+            </div>
+          </div>`).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_reminders')}</p>`}
       </div>
-      ${a.Status !== 'published' ? `
-      <div style="display:flex;gap:6px;">
-        ${a.Status === 'rejected' ? `<button class="btn btn-sm btn-primary" onclick="openEdit(${a.AchievementID})">🔄 ${t('btn_resubmit').replace('🔄 ','')}</button>` : ''}
-        ${a.Status === 'pending' ? `<span style="font-size:12px;color:#f59e0b;">${t('awaiting_leader')}</span>` : ''}
-      </div>` : ''}
-    </div>`).join('') || `<div class="empty-state"><div class="empty-icon">🏆</div><p>${t('no_subs')}</p></div>`;
+      <button class="btn btn-primary" style="width:100%;" onclick="openReminderModal()">${t('btn_add_reminder')}</button>`;
+  }
 
-  const teamAssigned = currentUser?.TeamID;
+  return `
+    <div style="display:flex;flex-direction:column;gap:14px;max-height:520px;overflow-y:auto;">
+      ${monthEvents.length ? monthEvents.map(ev => {
+        const d = new Date(ev.EventDate + 'T00:00:00');
+        return `<div style="display:flex;gap:12px;">
+          <div style="flex-shrink:0;background:#dce8f5;color:#3d5a7d;border-radius:10px;padding:8px 6px;text-align:center;width:46px;">
+            <div style="font-weight:800;font-size:15px;">${d.getDate()}</div>
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;">${d.toLocaleDateString(calLocale(), { month: 'short' })}</div>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;font-size:14px;">${escHtml(ev.Title)}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin:2px 0;">${escHtml(ev.EventDate)}${ev.EventTime ? ' • ' + escHtml(ev.EventTime) : ''}</div>
+            ${ev.Description ? `<div style="font-size:12px;color:var(--text-muted);">${escHtml(ev.Description)}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_events_month')}</p>`}
+    </div>`;
+}
+
+function renderCalendarUI(el) {
+  const year = calendarViewDate.getFullYear();
+  const month = calendarViewDate.getMonth();
+  const firstDow = (new Date(year, month, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const eventsByDate = {};
+  calendarEventsCache.forEach(ev => {
+    (eventsByDate[ev.EventDate] = eventsByDate[ev.EventDate] || []).push(ev);
+  });
+
+  const now = new Date();
+  const todayKey = calDateKey(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const cells = [];
+  for (let i = 0; i < firstDow; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+  const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+  const monthEvents = calendarEventsCache
+    .filter(ev => ev.EventDate.startsWith(monthPrefix))
+    .slice()
+    .sort((a, b) => (a.EventDate + (a.EventTime || '')).localeCompare(b.EventDate + (b.EventTime || '')));
 
   el.innerHTML = `
     <div class="page-header">
-      <div>
-        <h2>${t('welcome')} ${escHtml(currentUser?.Name || 'Student')}! 👋</h2>
-        <p>${t('lbl_team')} <strong>${escHtml(currentUser?.TeamName || t('not_assigned'))}</strong></p>
+      <div><h2>${t('nav_calendar')}</h2></div>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:start;">
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+          <button class="btn btn-sm btn-ghost" onclick="changeCalendarMonth(-1)">‹</button>
+          <h3 style="margin:0;text-transform:capitalize;">${calendarViewDate.toLocaleDateString(calLocale(), { month: 'long', year: 'numeric' })}</h3>
+          <button class="btn btn-sm btn-ghost" onclick="changeCalendarMonth(1)">›</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;color:var(--text-muted);font-weight:700;margin-bottom:6px;">
+          ${calDowLabels().map(d => `<div>${d}</div>`).join('')}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">
+          ${cells.map(d => {
+            if (!d) return `<div></div>`;
+            const key = calDateKey(year, month, d);
+            const has = !!eventsByDate[key];
+            const isToday = key === todayKey;
+            return `<div style="text-align:center;padding:10px 0;border-radius:10px;${isToday ? 'background:#dce8f5;' : ''}">
+              <div style="font-size:13px;font-weight:${isToday ? '700' : '500'};">${d}</div>
+              ${has ? `<div style="width:5px;height:5px;border-radius:50%;background:var(--primary);margin:4px auto 0;"></div>` : '<div style="height:9px;"></div>'}
+            </div>`;
+          }).join('')}
+        </div>
       </div>
-      ${teamAssigned ? `<button class="btn btn-primary" onclick="switchTab('submit')">${t('btn_submit_ach')}</button>` : ''}
+
+      <div class="panel">
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <button class="btn btn-sm ${calendarSideTab === 'events' ? 'btn-primary' : 'btn-ghost'}" onclick="switchCalSideTab('events')">${t('tab_events')}</button>
+          <button class="btn btn-sm ${calendarSideTab === 'reminders' ? 'btn-primary' : 'btn-ghost'}" onclick="switchCalSideTab('reminders')">${t('tab_reminders')}</button>
+        </div>
+        ${calSidePanelBody(monthEvents)}
+      </div>
     </div>
 
-    ${!teamAssigned ? `
-    <div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:14px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:16px;">
-      <span style="font-size:32px;">⚠️</span>
-      <div>
-        <strong style="font-size:15px;">${t('no_team_title')}</strong>
-        <p style="color:#92400e;font-size:13px;margin-top:3px;">${t('no_team_desc')}</p>
-      </div>
-    </div>` : ''}
-
-    <div class="stats-row" style="grid-template-columns:repeat(4,1fr);">
-      <div class="stat-card">
-        <div class="stat-icon gold">🏆</div>
-        <div class="stat-info"><h3>${achievements.length}</h3><p>${t('lbl_total_sub')}</p></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon green">📢</div>
-        <div class="stat-info"><h3>${published}</h3><p>${t('lbl_published')}</p></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon blue">⏳</div>
-        <div class="stat-info"><h3 style="${pending>0?'color:#f59e0b':''}">${pending}</h3><p>${t('lbl_pending')}</p></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon purple">❌</div>
-        <div class="stat-info"><h3 style="${rejected>0?'color:#ef4444':''}">${rejected}</h3><p>${t('lbl_rejected')}</p></div>
+    <div class="modal-overlay" id="reminderModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>${t('h_add_reminder')}</h3>
+          <button class="modal-close" onclick="closeModal('reminderModal')">✕</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_reminder_title')}</label>
+          <input id="reminderTitle" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_description')}</label>
+          <textarea id="reminderDescription" class="form-textarea"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('th_date')}</label>
+          <input id="reminderDate" type="date" class="form-input">
+        </div>
+        <div style="display:flex;gap:10px;">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">${t('lbl_start_time')}</label>
+            <input id="reminderStart" type="time" class="form-input">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">${t('lbl_end_time')}</label>
+            <input id="reminderEnd" type="time" class="form-input">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveReminder()">${t('btn_save_reminder')}</button>
       </div>
     </div>
+  `;
+}
 
-    <div class="full-panel" style="margin-bottom:20px;">
-      <div class="panel-header"><h3>${t('h_how')}</h3></div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
-        <div style="text-align:center;padding:16px;">
-          <div style="font-size:36px;margin-bottom:10px;">✍️</div>
-          <strong>${t('step1_title')}</strong>
-          <p style="font-size:13px;color:var(--text-muted);margin-top:4px;">${t('step1_desc')}</p>
+function changeCalendarMonth(delta) {
+  calendarViewDate.setMonth(calendarViewDate.getMonth() + delta);
+  renderCalendarUI(document.getElementById('pageContent'));
+}
+
+function openReminderModal() {
+  document.getElementById('reminderTitle').value = '';
+  document.getElementById('reminderDescription').value = '';
+  const now = new Date();
+  document.getElementById('reminderDate').value = calDateKey(now.getFullYear(), now.getMonth(), now.getDate());
+  document.getElementById('reminderStart').value = '';
+  document.getElementById('reminderEnd').value = '';
+  openModal('reminderModal');
+}
+
+async function saveReminder() {
+  const title = document.getElementById('reminderTitle').value.trim();
+  const description = document.getElementById('reminderDescription').value.trim();
+  const reminderDate = document.getElementById('reminderDate').value;
+  const startTime = document.getElementById('reminderStart').value;
+  const endTime = document.getElementById('reminderEnd').value;
+  if (!title) return showToast(t('err_reminder_required'), 'error');
+
+  const r = await fetch('/api/reminders', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ title, description, reminderDate, startTime, endTime }) });
+  if (r.ok) {
+    closeModal('reminderModal');
+    showToast(t('toast_created'), 'success');
+    renderCalendar(document.getElementById('pageContent'));
+  } else {
+    showToast(t('toast_failed'), 'error');
+  }
+}
+
+async function toggleReminder(id, completed) {
+  await fetch('/api/reminders/' + id + '/toggle', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ completed }) });
+  renderCalendar(document.getElementById('pageContent'));
+}
+
+async function deleteReminderItem(id) {
+  if (!confirm(t('confirm_delete_reminder'))) return;
+  await fetch('/api/reminders/' + id, { method: 'DELETE', headers: getHeaders() });
+  showToast(t('toast_deleted'), 'info');
+  renderCalendar(document.getElementById('pageContent'));
+}
+
+// ── SETTINGS ───────────────────────────────────────────────────────────────────
+function renderSettings(el) {
+  const settingCard = (icon, title, desc, onclick) => `
+    <div class="settings-icon-card" onclick="${onclick}" style="cursor:pointer;border:1px solid var(--border);border-radius:14px;padding:22px 18px;text-align:center;transition:box-shadow .15s,transform .15s;">
+      <div style="width:48px;height:48px;border-radius:50%;background:#dce8f5;color:#3d5a7d;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:18px;">
+        <i class="fa-solid ${icon}"></i>
+      </div>
+      <h4 style="margin:0 0 4px;font-size:14px;">${title}</h4>
+      <p class="text-muted" style="margin:0;font-size:12px;">${desc}</p>
+    </div>`;
+
+  const initial = (currentUser?.Name || 'S').trim().charAt(0).toUpperCase();
+
+  el.innerHTML = `
+    <div class="page-header">
+      <div><h2>${t('nav_settings')}</h2><p>${t('sub_settings')}</p></div>
+    </div>
+
+    <div class="full-panel" style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+      <div style="position:relative;flex-shrink:0;">
+        <div id="profilePreviewAvatar" style="width:88px;height:88px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#4a7099,#355a7d);color:#fff;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;">
+          ${currentUser?.ProfilePicture ? `<img src="${escHtml(currentUser.ProfilePicture)}" style="width:100%;height:100%;object-fit:cover;">` : initial}
         </div>
-        <div style="text-align:center;padding:16px;">
-          <div style="font-size:36px;margin-bottom:10px;">🔍</div>
-          <strong>${t('step2_title')}</strong>
-          <p style="font-size:13px;color:var(--text-muted);margin-top:4px;">${t('step2_desc')}</p>
-        </div>
-        <div style="text-align:center;padding:16px;">
-          <div style="font-size:36px;margin-bottom:10px;">🌍</div>
-          <strong>${t('step3_title')}</strong>
-          <p style="font-size:13px;color:var(--text-muted);margin-top:4px;">${t('step3_desc')}</p>
+      </div>
+      <div style="flex:1;min-width:220px;">
+        <h3 style="margin:0 0 4px;">${escHtml(currentUser?.Name || '')}</h3>
+        <p class="text-muted" style="margin:0 0 14px;font-size:13px;">${escHtml(currentUser?.Email || '')}</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;font-size:13px;">
+          <div><span class="text-muted">${t('lbl_phone')}</span><br><strong>${escHtml(currentUser?.Phone || t('not_set'))}</strong></div>
+          <div><span class="text-muted">${t('lbl_team')}</span><br><strong>${escHtml(teamName || t('not_set'))}</strong></div>
+          <div><span class="text-muted">${t('lbl_role')}</span><br><strong>${escHtml(currentUser?.Role || '')}</strong></div>
         </div>
       </div>
     </div>
 
     <div class="full-panel">
-      <div class="panel-header"><h3>${t('h_recent')}</h3><a onclick="switchTab('my')">${t('view_all')}</a></div>
-      ${recentItems}
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;">
+        ${settingCard('fa-id-card', t('settings_profile'), t('settings_profile_desc'), "openModal('profileModal')")}
+        ${settingCard('fa-lock', t('settings_password'), t('settings_password_desc'), "openModal('passwordModal')")}
+        ${settingCard('fa-globe', t('settings_language'), t('settings_language_desc'), "toggleLang()")}
+        ${settingCard(document.body.classList.contains('dark-mode') ? 'fa-sun' : 'fa-moon', t('settings_theme'), document.body.classList.contains('dark-mode') ? t('settings_theme_desc_dark') : t('settings_theme_desc_light'), "toggleTheme()")}
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="profileModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>${t('settings_profile')}</h3>
+          <button class="modal-close" onclick="closeModal('profileModal')">✕</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_full_name')}</label>
+          <input id="profileName" class="form-input" value="${escHtml(currentUser?.Name || '')}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_email')}</label>
+          <input id="profileEmail" type="email" class="form-input" value="${escHtml(currentUser?.Email || '')}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_phone')}</label>
+          <input id="profilePhone" class="form-input" value="${escHtml(currentUser?.Phone || '')}">
+        </div>
+        <button class="btn btn-primary" onclick="saveProfile()">${t('btn_save')}</button>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="passwordModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>${t('settings_password')}</h3>
+          <button class="modal-close" onclick="closeModal('passwordModal')">✕</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_new_password')}</label>
+          <input id="newPassword" type="password" class="form-input" placeholder="${t('password_hint')}">
+        </div>
+        <button class="btn btn-primary" onclick="savePassword()">${t('btn_save')}</button>
+      </div>
     </div>`;
+}
+
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  localStorage.setItem('interntrack_theme', isDark ? 'dark' : 'light');
+  renderSettings(document.getElementById('pageContent'));
+}
+
+async function saveProfile() {
+  const name = document.getElementById('profileName').value.trim();
+  const email = document.getElementById('profileEmail').value.trim();
+  const phone = document.getElementById('profilePhone').value.trim();
+  if (!name || !email) return showToast(t('err_name_email'), 'error');
+
+  const r = await fetch('/api/profile', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ name, email, phone }) });
+  if (r.ok) {
+    const data = await r.json();
+    currentUser.Name = data.name;
+    currentUser.Email = data.email;
+    currentUser.Phone = data.phone;
+    const nameEl = document.getElementById('studentName');
+    if (nameEl) nameEl.textContent = data.name;
+    closeModal('profileModal');
+    renderSettings(document.getElementById('pageContent'));
+    showToast(t('toast_updated'), 'success');
+  } else {
+    const d = await r.json();
+    showToast(d.error || t('toast_failed'), 'error');
+  }
+}
+
+async function savePassword() {
+  const password = document.getElementById('newPassword').value;
+  if (!password || password.length < 6) return showToast(t('err_password_length'), 'error');
+
+  const r = await fetch('/api/profile', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ password }) });
+  if (r.ok) {
+    document.getElementById('newPassword').value = '';
+    closeModal('passwordModal');
+    showToast(t('toast_password_updated'), 'success');
+  } else {
+    const d = await r.json();
+    showToast(d.error || t('toast_failed'), 'error');
+  }
+}
+
+// ── OVERVIEW (Dashboard) ───────────────────────────────────────────────────────
+function memberAvatarHtml(m, size) {
+  const inner = m.ProfilePicture
+    ? `<img src="${escHtml(m.ProfilePicture)}" style="width:100%;height:100%;object-fit:cover;">`
+    : '<i class="fa-solid fa-user"></i>';
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;background:#dce8f5;color:#3d5a7d;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${inner}</div>`;
+}
+
+let dashboardSubTab = 'overview';
+
+function switchDashboardSubTab(tab) {
+  dashboardSubTab = tab;
+  renderOverview(document.getElementById('pageContent'));
+}
+
+async function renderOverview(el) {
+  el.innerHTML = `
+    <div class="page-header">
+      <div>
+        <h2>${t('welcome')} ${escHtml(currentUser?.Name || 'Student')}! 👋</h2>
+        <p>${t('dash_subtitle')}</p>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn ${dashboardSubTab === 'overview' ? 'active' : ''}" onclick="switchDashboardSubTab('overview')">${t('subtab_overview')}</button>
+      <button class="tab-btn ${dashboardSubTab === 'posts' ? 'active' : ''}" onclick="switchDashboardSubTab('posts')">${t('subtab_all_posts')}</button>
+    </div>
+    <div id="dashboardSubContent"><div class="loading"><div class="spinner"></div></div></div>`;
+
+  const subEl = document.getElementById('dashboardSubContent');
+  if (dashboardSubTab === 'posts') {
+    await renderAllTeamPosts(subEl);
+  } else {
+    await renderOverviewSub(subEl);
+  }
+}
+
+function renderTeamPostCard(a) {
+  return `
+    <div class="achievement-card-full">
+      ${a.FirstImage
+        ? `<img class="card-image" src="${escHtml(a.FirstImage)}" style="width:100%;height:180px;object-fit:cover;" onerror="this.style.display='none'">`
+        : `<div class="card-image">🏆</div>`}
+      <div class="card-body">
+        <div class="card-title">${escHtml(a.Title)}</div>
+        <div class="card-desc">${escHtml(a.Description || '')}</div>
+        <div class="card-meta">
+          <span>${escHtml(a.CreatorName || '')} · ${fmtDate(a.CreatedAt)}</span>
+          ${statusBadge(a.Status)}
+        </div>
+      </div>
+    </div>`;
+}
+
+async function renderAllTeamPosts(el) {
+  if (!currentUser?.TeamID) {
+    el.innerHTML = `<div class="full-panel"><div class="empty-state"><div class="empty-icon">🏆</div><h3>${t('no_team_title')}</h3><p>${t('no_team_desc')}</p></div></div>`;
+    return;
+  }
+  let posts = [];
+  try {
+    posts = await fetch('/api/achievements?teamId=' + currentUser.TeamID + '&limit=50').then(r => r.json());
+  } catch (e) {}
+  el.innerHTML = posts.length
+    ? `<div class="achievement-cards-grid">${posts.map(renderTeamPostCard).join('')}</div>`
+    : `<div class="full-panel"><div class="empty-state"><div class="empty-icon">🏆</div><h3>${t('no_team_posts')}</h3></div></div>`;
+}
+
+async function renderOverviewSub(el) {
+  let members = [], upcomingEvents = [], teamTodos = [], teamLinks = [];
+
+  try {
+    const fetches = [
+      fetch('/api/calendar-events', { headers: getHeaders() }).then(r => r.json()).catch(() => [])
+    ];
+    if (currentUser?.TeamID) {
+      fetches.push(fetch('/api/team-workspace', { headers: getHeaders() }).then(r => r.json()).catch(() => ({})));
+      fetches.push(fetch('/api/team-workspace/todos', { headers: getHeaders() }).then(r => r.json()).catch(() => []));
+      fetches.push(fetch('/api/team-workspace/links', { headers: getHeaders() }).then(r => r.json()).catch(() => []));
+    }
+    const [eventsRes, workspaceRes, todosRes, linksRes] = await Promise.all(fetches);
+    const todayStr = new Date().toISOString().slice(0, 10);
+    upcomingEvents = (eventsRes || []).filter(ev => ev.EventDate >= todayStr).slice(0, 3);
+    members = workspaceRes?.members || [];
+    teamTodos = todosRes || [];
+    teamLinks = linksRes || [];
+  } catch (e) {}
+
+  const todosByUser = {};
+  teamTodos.forEach(td => {
+    (todosByUser[td.UserID] = todosByUser[td.UserID] || []).push(td);
+  });
+
+  const renderTodoCard = (m) => {
+    const isOwn = Number(m.UserID) === Number(currentUser?.UserID);
+    const items = todosByUser[m.UserID] || [];
+    const doneCount = items.filter(td => td.Completed).length;
+    const percent = items.length ? Math.round((doneCount / items.length) * 100) : 0;
+    return `
+      <div class="full-panel">
+        <div style="margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            ${memberAvatarHtml(m, 28)}
+            <h3 style="font-size:14px;margin:0;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(m.Name)}</h3>
+            <span class="badge ${m.Role === 'Leader' ? 'badge-blue' : 'badge-green'}" style="flex-shrink:0;">${m.Role === 'Leader' ? t('leader_badge') : t('member_badge')}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="flex:1;height:6px;background:var(--border);border-radius:99px;overflow:hidden;">
+              <div style="width:${percent}%;height:100%;background:var(--primary);border-radius:99px;"></div>
+            </div>
+            <span style="font-size:11px;color:var(--text-muted);flex-shrink:0;">${percent}%</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:${isOwn ? '12px' : '0'};">
+          ${items.length ? items.map(td => `
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input type="checkbox" ${td.Completed ? 'checked' : ''} ${isOwn ? `onchange="toggleMemberTodo(${td.TodoID},this.checked)"` : 'disabled'}>
+              <span style="flex:1;font-size:13px;${td.Completed ? 'text-decoration:line-through;color:var(--text-muted);' : ''}">${escHtml(td.Title)}</span>
+              ${isOwn ? `<button class="btn btn-sm btn-ghost" onclick="deleteMemberTodo(${td.TodoID})">🗑️</button>` : ''}
+            </div>`).join('') : `<p class="text-muted" style="font-size:12px;margin:0;">${t('no_todos')}</p>`}
+        </div>
+        ${isOwn ? `
+        <div style="display:flex;gap:8px;">
+          <input id="ownTodoInput" class="form-input" placeholder="${t('todo_ph')}" onkeydown="if(event.key==='Enter'){addMemberTodo();}">
+          <button class="btn btn-primary btn-sm" onclick="addMemberTodo()">${t('btn_add_todo')}</button>
+        </div>` : ''}
+      </div>`;
+  };
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+      <div class="full-panel">
+        <div class="panel-header"><h3>${t('h_team_members')}</h3></div>
+        ${members.length ? members.map(m => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+            <div style="display:flex;align-items:center;gap:12px;">
+              ${memberAvatarHtml(m, 40)}
+              <div>
+                <div style="font-weight:700;font-size:14px;">${escHtml(m.Name)}</div>
+                <div style="font-size:11px;color:var(--text-muted);">ID: ${m.UserID}</div>
+              </div>
+            </div>
+            <span class="badge ${m.Role === 'Leader' ? 'badge-blue' : 'badge-green'}">${m.Role === 'Leader' ? t('leader_badge') : t('member_badge')}</span>
+          </div>`).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_team_members')}</p>`}
+      </div>
+
+      <div class="full-panel">
+        <div class="panel-header"><h3>${t('h_upcoming_deadlines')}</h3></div>
+        ${upcomingEvents.length ? upcomingEvents.map(ev => {
+          const d = new Date(ev.EventDate + 'T00:00:00');
+          return `<div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+            <div style="width:36px;height:36px;border-radius:8px;background:#dce8f5;color:#3d5a7d;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-calendar"></i></div>
+            <div>
+              <div style="font-weight:700;font-size:13px;">${escHtml(ev.Title)}</div>
+              <div style="font-size:11px;color:var(--text-muted);">${d.toLocaleDateString(currentLang === 'ar' ? 'ar-AE' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+            </div>
+          </div>`;
+        }).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_events_month')}</p>`}
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:700;margin-bottom:14px;">${t('h_team_todos')}</h3>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;">
+      ${members.length ? members.map(renderTodoCard).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_team_members')}</p>`}
+    </div>
+
+    <div class="full-panel">
+      <div class="panel-header"><h3>${t('h_shared_links')}</h3></div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <input id="teamLinkTitle" class="form-input" placeholder="${t('link_title_ph')}" style="flex:1;" ${currentUser?.TeamID ? '' : 'disabled'}>
+        <input id="teamLinkUrl" class="form-input" placeholder="${t('link_url_ph')}" style="flex:1.5;" onkeydown="if(event.key==='Enter'){addTeamLink();}" ${currentUser?.TeamID ? '' : 'disabled'}>
+        <button class="btn btn-primary btn-sm" onclick="addTeamLink()" ${currentUser?.TeamID ? '' : 'disabled'}>${t('btn_add_link')}</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${teamLinks.length ? teamLinks.map(l => `
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f2f2ea;border-radius:10px;">
+            <i class="fa-solid fa-link" style="font-size:16px;color:#3d5a7d;width:22px;text-align:center;flex-shrink:0;"></i>
+            <div style="flex:1;min-width:0;">
+              <a href="${escHtml(l.URL)}" target="_blank" rel="noopener" style="font-size:13px;font-weight:600;color:var(--text);text-decoration:none;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(l.Title || l.URL)}</a>
+              <div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(l.AdderName || '')} · ${fmtDate(l.CreatedAt)}</div>
+            </div>
+            <button class="btn btn-sm btn-ghost" onclick="deleteTeamLink(${l.LinkID})">🗑️</button>
+          </div>`).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_shared_links')}</p>`}
+      </div>
+    </div>`;
+}
+
+async function addTeamLink() {
+  const titleInput = document.getElementById('teamLinkTitle');
+  const urlInput = document.getElementById('teamLinkUrl');
+  const title = titleInput.value.trim();
+  let url = urlInput.value.trim();
+  if (!url) return;
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  const r = await fetch('/api/team-workspace/links', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ title, url }) });
+  if (r.ok) {
+    showToast(t('toast_link_added'), 'success');
+    renderOverview(document.getElementById('pageContent'));
+  } else {
+    const d = await r.json();
+    showToast(d.error || t('toast_failed'), 'error');
+  }
+}
+
+async function deleteTeamLink(id) {
+  await fetch('/api/team-workspace/links/' + id, { method: 'DELETE', headers: getHeaders() });
+  showToast(t('toast_deleted'), 'info');
+  renderOverview(document.getElementById('pageContent'));
+}
+
+async function addMemberTodo() {
+  const input = document.getElementById('ownTodoInput');
+  const title = input.value.trim();
+  if (!title) return;
+  await fetch('/api/todos', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ title }) });
+  renderOverview(document.getElementById('pageContent'));
+}
+
+async function toggleMemberTodo(id, completed) {
+  await fetch('/api/todos/' + id + '/toggle', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ completed }) });
+  renderOverview(document.getElementById('pageContent'));
+}
+
+async function deleteMemberTodo(id) {
+  await fetch('/api/todos/' + id, { method: 'DELETE', headers: getHeaders() });
+  renderOverview(document.getElementById('pageContent'));
 }
 
 // ── SUBMIT FORM ───────────────────────────────────────────────────────────────
 function renderSubmitForm(el, prefill = {}) {
+  const weekOptions = Array.from({length: 20}, (_, i) => {
+    const n = i + 1;
+    const label = currentLang === 'ar' ? `الأسبوع ${n}` : `Week ${n}`;
+    const sel = prefill.weekLabel === label ? 'selected' : '';
+    return `<option value="${label}" ${sel}>${label}</option>`;
+  }).join('');
+
   el.innerHTML = `
     <div class="page-header">
       <div>
@@ -460,23 +1216,53 @@ function renderSubmitForm(el, prefill = {}) {
     </div>
     <div class="full-panel">
       <form id="submitForm" onsubmit="handleSubmit(event)">
-        <div class="form-group">
-          <label class="form-label">${t('lbl_title')}</label>
-          <input type="text" id="sTitle" class="form-input" placeholder="${t('title_ph')}" value="${escHtml(prefill.title || '')}" required>
-          <small class="text-muted">${t('title_hint')}</small>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">${t('lbl_title')}</label>
+            <input type="text" id="sTitle" class="form-input" placeholder="${t('title_ph')}" value="${escHtml(prefill.title || '')}" required>
+            <small class="text-muted">${t('title_hint')}</small>
+          </div>
+          <div class="form-group" style="margin-bottom:0;min-width:140px;">
+            <label class="form-label">${t('lbl_week')}</label>
+            <select id="sWeek" class="form-input" required>
+              <option value="">${t('week_ph')}</option>
+              ${weekOptions}
+            </select>
+          </div>
         </div>
-        <div class="form-group">
+        <div class="form-group" style="margin-top:16px;">
           <label class="form-label">${t('lbl_desc')}</label>
-          <textarea id="sDesc" class="form-textarea" style="min-height:260px;" placeholder="${t('desc_ph')}" required>${escHtml(prefill.description || '')}</textarea>
+          <textarea id="sDesc" class="form-textarea" style="min-height:220px;" placeholder="${t('desc_ph')}" required>${escHtml(prefill.description || '')}</textarea>
         </div>
-        ${!editingId ? `
+        ${(prefill.existingImages?.length || prefill.existingDocuments?.length) ? `
+        <div class="form-group">
+          <label class="form-label">${t('lbl_current_attachments')}</label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            ${(prefill.existingImages || []).map(img => `<img src="${escHtml(img.ImageURL)}" style="width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0;">`).join('')}
+            ${(prefill.existingDocuments || []).map(d => {
+              const ext = d.FileName.split('.').pop().toLowerCase();
+              const icon = DOC_ICONS[ext] || '📎';
+              return `<a href="${escHtml(d.FilePath)}" target="_blank" style="display:flex;align-items:center;gap:6px;background:#ebebdf;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:13px;text-decoration:none;color:#334155;">${icon} ${escHtml(d.FileName)}</a>`;
+            }).join('')}
+          </div>
+        </div>` : ''}
+        <div class="form-group">
+          <label class="form-label">${t('lbl_docs')}</label>
+          <div id="docDropZone" onclick="document.getElementById('sDocs').click()" style="border:2px dashed #cbd5e1;border-radius:12px;padding:24px;text-align:center;cursor:pointer;background:#f2f2ea;transition:border-color .2s;" onmouseover="this.style.borderColor='#4a7099'" onmouseout="this.style.borderColor='#cbd5e1'">
+            <div style="font-size:32px;margin-bottom:8px;">📎</div>
+            <div style="font-weight:600;color:#334155;margin-bottom:4px;">${t('lbl_docs')}</div>
+            <div style="font-size:12px;color:#94a3b8;">${t('docs_hint')}</div>
+          </div>
+          <input type="file" id="sDocs" style="display:none;" accept=".pdf,.ppt,.pptx,.doc,.docx" multiple onchange="previewDocs(this)">
+          <div id="docPreview" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;"></div>
+        </div>
         <div class="form-group">
           <label class="form-label">${t('lbl_images')}</label>
           <input type="file" id="sImages" class="form-input" accept="image/*" multiple onchange="previewImages(this)">
           <small class="text-muted">${t('img_hint')}</small>
           <div id="imagePreview"></div>
-        </div>` : ''}
-        <div style="background:#eff6ff;border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:13px;color:#1d4ed8;display:flex;gap:10px;align-items:flex-start;">
+        </div>
+        <div style="background:#eef3fa;border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:13px;color:#355a7d;display:flex;gap:10px;align-items:flex-start;">
           <span>ℹ️</span>
           <span>${t('info_note')}</span>
         </div>
@@ -500,11 +1286,27 @@ function previewImages(input) {
   });
 }
 
+const DOC_ICONS = { pdf: '📄', ppt: '📊', pptx: '📊', doc: '📝', docx: '📝' };
+function previewDocs(input) {
+  const preview = document.getElementById('docPreview');
+  preview.innerHTML = '';
+  [...input.files].forEach(f => {
+    const ext = f.name.split('.').pop().toLowerCase();
+    const icon = DOC_ICONS[ext] || '📎';
+    const chip = document.createElement('div');
+    chip.style.cssText = 'display:flex;align-items:center;gap:6px;background:#ebebdf;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:13px;';
+    chip.innerHTML = `${icon} <span style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(f.name)}</span>`;
+    preview.appendChild(chip);
+  });
+}
+
 async function handleSubmit(e) {
   e.preventDefault();
   const title = document.getElementById('sTitle').value.trim();
   const description = document.getElementById('sDesc').value.trim();
+  const weekLabel = document.getElementById('sWeek')?.value || '';
   const imagesInput = document.getElementById('sImages');
+  const docsInput = document.getElementById('sDocs');
   const btn = document.getElementById('submitBtn');
 
   btn.disabled = true; btn.textContent = t('submitting');
@@ -512,14 +1314,21 @@ async function handleSubmit(e) {
   try {
     let r;
     if (editingId) {
+      const fd = new FormData();
+      fd.append('title', title);
+      fd.append('description', description);
+      if (imagesInput?.files) [...imagesInput.files].forEach(f => fd.append('images', f));
+      if (docsInput?.files) [...docsInput.files].forEach(f => fd.append('documents', f));
       r = await fetch('/api/student/achievements/' + editingId, {
-        method: 'PUT', headers: getHeaders(),
-        body: JSON.stringify({ title, description })
+        method: 'PUT', headers: { Authorization: 'Bearer ' + token }, body: fd
       });
     } else {
       const fd = new FormData();
-      fd.append('title', title); fd.append('description', description);
+      fd.append('title', title);
+      fd.append('description', description);
+      if (weekLabel) fd.append('weekLabel', weekLabel);
       if (imagesInput?.files) [...imagesInput.files].forEach(f => fd.append('images', f));
+      if (docsInput?.files) [...docsInput.files].forEach(f => fd.append('documents', f));
       r = await fetch('/api/student/achievements', { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: fd });
     }
 
@@ -540,13 +1349,17 @@ async function renderMySubmissions(el) {
   el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
   const achievements = await loadMyAchievements();
 
-  // Load supervisor feedback for each achievement
-  const supFeedbackMap = {};
+  // Load supervisor feedback and documents for each achievement
+  const supFeedbackMap = {}, docsMap = {};
   await Promise.all(achievements.map(async a => {
     try {
       const fb = await fetch(`/api/team/achievements/${a.AchievementID}/supervisor-feedback`, { headers: getHeaders() }).then(r => r.ok ? r.json() : []);
       supFeedbackMap[a.AchievementID] = fb;
     } catch(e) { supFeedbackMap[a.AchievementID] = []; }
+    try {
+      const docs = await fetch(`/api/achievements/${a.AchievementID}/documents`, { headers: getHeaders() }).then(r => r.ok ? r.json() : []);
+      docsMap[a.AchievementID] = docs;
+    } catch(e) { docsMap[a.AchievementID] = []; }
   }));
 
   el.innerHTML = `
@@ -562,6 +1375,7 @@ async function renderMySubmissions(el) {
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;">
                 <strong style="font-size:15px;">${escHtml(a.Title)}</strong>
                 ${statusBadge(a.Status)}
+                ${a.WeekLabel ? `<span style="background:#dce8f5;color:#3d5a7d;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;">📅 ${escHtml(a.WeekLabel)}</span>` : ''}
               </div>
               <p style="font-size:13px;color:var(--text-muted);margin-bottom:6px;">${t('submitted_on')} ${fmtDate(a.CreatedAt)}</p>
               <p style="font-size:14px;line-height:1.6;color:var(--text);">${escHtml(a.Description).substring(0, 120)}${a.Description.length > 120 ? '…' : ''}</p>
@@ -584,6 +1398,14 @@ async function renderMySubmissions(el) {
                 <strong style="color:#92400e;">${t('pending_title')}</strong>
                 <p style="color:#78350f;margin-top:3px;">${t('pending_note')}</p>
               </div>` : ''}
+              ${docsMap[a.AchievementID]?.length ? `
+              <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;">
+                ${docsMap[a.AchievementID].map(d => {
+                  const ext = d.FileName.split('.').pop().toLowerCase();
+                  const icon = {pdf:'📄',ppt:'📊',pptx:'📊',doc:'📝',docx:'📝'}[ext] || '📎';
+                  return `<a href="${escHtml(d.FilePath)}" target="_blank" download style="display:flex;align-items:center;gap:5px;background:#ebebdf;border:1px solid #e2e8f0;border-radius:8px;padding:4px 10px;font-size:12px;text-decoration:none;color:#334155;">${icon} ${escHtml(d.FileName)}</a>`;
+                }).join('')}
+              </div>` : ''}
             </div>
             <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
               ${a.Status === 'rejected' ? `<button class="btn btn-sm btn-primary" onclick="openEdit(${a.AchievementID})">${t('btn_resubmit')}</button>` : ''}
@@ -600,7 +1422,12 @@ async function openEdit(id) {
   const a = myAchievements.find(a => a.AchievementID === id);
   if (!a) return;
   editingId = id;
-  renderSubmitForm(document.getElementById('pageContent'), { title: a.Title, description: a.Description });
+  let existingImages = [], existingDocuments = [];
+  try {
+    existingImages = await fetch('/api/achievements/' + id, { headers: getHeaders() }).then(r => r.json()).then(d => d.images || []);
+    existingDocuments = await fetch('/api/achievements/' + id + '/documents', { headers: getHeaders() }).then(r => r.json());
+  } catch (e) {}
+  renderSubmitForm(document.getElementById('pageContent'), { title: a.Title, description: a.Description, weekLabel: a.WeekLabel, existingImages, existingDocuments });
   document.getElementById('topbarTitle').textContent = t('tb_edit');
   document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
   document.querySelectorAll('.sidebar-nav .nav-item')[2]?.classList.add('active');
@@ -612,23 +1439,138 @@ async function deleteSubmission(id) {
   if (r.ok) { showToast(t('toast_deleted'), 'info'); switchTab('my'); }
   else showToast(t('toast_fail_delete'), 'error');
 }
+function toggleStudentMenu(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  document.getElementById("studentDropdown")?.classList.toggle("show");
+}
 
+function toggleStudentLanguageMenu(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  document.getElementById("studentLanguageDropdown")?.classList.toggle("show");
+}
+
+document.addEventListener("click", function(e) {
+  if (!e.target.closest(".sidebar-user") && !e.target.closest(".sidebar-admin-menu")) {
+    document.getElementById("studentDropdown")?.classList.remove("show");
+  }
+
+  if (!e.target.closest(".language-menu")) {
+    document.getElementById("studentLanguageDropdown")?.classList.remove("show");
+  }
+});
 // ── INIT ──────────────────────────────────────────────────────────────────────
 (async () => {
   const savedLang = localStorage.getItem('interntrack_lang') || 'en';
   currentLang = savedLang;
-  document.getElementById('langBtn').textContent = savedLang === 'ar' ? 'English' : 'عربي';
   applyTranslations();
 
   try {
     currentUser = await fetch('/api/auth/me', { headers: getHeaders() }).then(r => r.json());
     if (currentUser.Role !== 'Student') { window.location.href = '/'; return; }
     document.getElementById('studentName').textContent = currentUser.Name || 'Student';
-    document.getElementById('studentTeam').textContent = currentUser.TeamName || t('not_assigned');
-    document.getElementById('teamBadge').textContent = (currentUser.TeamName || 'Student') + ' · ' + t('badge_student').replace('🎓 ','');
-  } catch (e) { window.location.href = '/'; }
-  switchTab('overview');
+if (currentUser.ProfilePicture) {
+  document.getElementById('sidebarAvatar').innerHTML = `<img src="${escHtml(currentUser.ProfilePicture)}" style="width:100%;height:100%;object-fit:cover;">`;
+}
+teamName = currentUser.TeamName || '';
+
+if (!teamName && currentUser.TeamID) {
+  try {
+    const teams = await fetch('/api/teams', { headers: getHeaders() }).then(r => r.json());
+    const myTeam = teams.find(t => String(t.TeamID) === String(currentUser.TeamID));
+    teamName = myTeam?.TeamName || '';
+  } catch(e) {}
+}
+
+document.getElementById('studentTeam').textContent =
+currentLang === 'ar' ? 'طالب' : 'Student';
+
+
+  } catch (e) {
+  window.location.href = '/';
+}
+switchTab(localStorage.getItem('studentCurrentTab') || 'overview');
 })();
+function openHelpModal() {
+  document.getElementById('helpModal').classList.add('open');
+  loadMyRequests();
+}
+
+function closeHelpModal() {
+  document.getElementById('helpModal').classList.remove('open');
+}
+
+const REQUEST_STATUS_STYLE = {
+  pending: 'background:#fef3c7;color:#92400e;',
+  done: 'background:#dcfce7;color:#15803d;',
+  rejected: 'background:#fee2e2;color:#991b1b;'
+};
+
+async function loadMyRequests() {
+  const list = document.getElementById('myRequestsList');
+  list.innerHTML = `<p class="text-muted" style="font-size:12px;">${t('loading')}</p>`;
+  try {
+    const requests = await fetch('/api/help-messages/mine', { headers: getHeaders() }).then(r => r.json());
+    list.innerHTML = requests.length ? requests.map(r => `
+      <div style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px;">
+          <span class="badge" style="${REQUEST_STATUS_STYLE[r.Status] || ''}">${t('status_' + r.Status)}</span>
+          <span style="font-size:11px;color:var(--text-muted);flex-shrink:0;">${fmtDate(r.CreatedAt)}</span>
+        </div>
+        <p style="font-size:13px;margin:0;">${escHtml(r.Message)}</p>
+      </div>`).join('') : `<p class="text-muted" style="font-size:12px;">${t('no_my_requests')}</p>`;
+  } catch (e) {
+    list.innerHTML = `<p class="text-muted" style="font-size:12px;">${t('err_load')}</p>`;
+  }
+}
+
+async function sendHelpMessage() {
+  const message = document.getElementById('helpMessage').value.trim();
+
+  if (!message) {
+    showToast(t('alert_msg_required'), 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/help-messages', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ message })
+    });
+
+    if (!res.ok) throw new Error();
+
+    showToast(t('alert_msg_sent'), 'success');
+    document.getElementById('helpMessage').value = '';
+    loadMyRequests();
+
+  } catch (err) {
+    showToast(t('alert_msg_failed'), 'error');
+  }
+}
 </script>
+<div id="helpModal" class="modal-overlay">
+  <div class="modal-box" style="max-width:480px;">
+    <div class="modal-header">
+      <h3 data-i18n="h_contact_admin">Contact Admin</h3>
+      <button class="modal-close" onclick="closeHelpModal()">✕</button>
+    </div>
+
+    <p class="text-muted" style="margin:0 0 14px;" data-i18n="contact_admin_desc">Write your message and admin will receive it.</p>
+
+    <h4 style="margin:0 0 8px;font-size:13px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;" data-i18n="h_my_requests">My Requests</h4>
+    <div id="myRequestsList" style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;margin-bottom:16px;"></div>
+
+    <div class="form-group">
+      <textarea id="helpMessage" class="form-textarea" placeholder="Write your message here..." data-i18n-placeholder="help_msg_ph"></textarea>
+    </div>
+
+    <button class="btn btn-primary" onclick="sendHelpMessage()" data-i18n="btn_send_message">
+      Send Message
+    </button>
+  </div>
+</div>
 </body>
 </html>

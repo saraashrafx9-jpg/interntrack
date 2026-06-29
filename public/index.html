@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>InternTrack – Achievement Portal</title>
+  <title>InternTrack – SGMB Achievement Portal</title>
   <link rel="stylesheet" href="/css/style.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script>
     (function() {
       const lang = localStorage.getItem('interntrack_lang') || 'en';
-      document.documentElement.lang = lang;f
+      document.documentElement.lang = lang;
       document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     })();
   </script>
@@ -22,22 +22,22 @@
     <img src="/images/logo.png" alt="InternTrack" onerror="this.style.display='none'">
     <div class="sidebar-brand-text">
       <h2>InternTrack</h2>
-      <p data-i18n="achievement_portal">Achievement Portal</p>
+      <p data-i18n="achievement_portal">SGMB · Achievement Portal</p>
     </div>
   </div>
 
   <nav class="sidebar-nav">
 
     <a class="nav-item" onclick="navigate('teams')" href="#">
-      <span class="nav-icon">👥</span> <span data-i18n="nav_groups">Groups</span>
+      <span class="nav-icon"><i class="fa-solid fa-users"></i></span> <span data-i18n="nav_groups">Groups</span>
     </a>
     <a class="nav-item" onclick="navigate('achievements')" href="#">
-      <span class="nav-icon">🏆</span> <span data-i18n="nav_achievements">Achievements</span>
+      <span class="nav-icon"><i class="fa-solid fa-trophy"></i></span> <span data-i18n="nav_achievements">Achievements</span>
     </a>
 
     <div class="nav-section-label" id="dashboardSection" style="display:none;" data-i18n="nav_manage">Manage</div>
     <a class="nav-item" id="dashboardNavItem" onclick="goToDashboard()" href="#" style="display:none;">
-      <span class="nav-icon">📊</span> <span data-i18n="nav_my_dashboard">My Dashboard</span>
+      <span class="nav-icon"><i class="fa-solid fa-gauge-high"></i></span> <span data-i18n="nav_my_dashboard">My Dashboard</span>
     </a>
   </nav>
 
@@ -56,7 +56,7 @@
     <button class="sidebar-login-btn" id="logoutSidebarBtn" style="display:none;background:#374151;margin-top:8px;" onclick="logout()" data-i18n="btn_signout">
       Sign Out
     </button>
-    <a href="/supervisor-login.html" style="display:block;text-align:center;font-size:11px;color:#475569;margin-top:10px;text-decoration:none;" data-i18n="supervisor_login_link">🎓 Supervisor Login</a>
+    <a href="/login.html" style="display:block;text-align:center;font-size:11px;color:#475569;margin-top:10px;text-decoration:none;" data-i18n="supervisor_login_link"><i class="fa-solid fa-user-tie" style="font-size:10px;"></i> Supervisor / Admin Login</a>
   </div>
 </aside>
 
@@ -151,19 +151,19 @@ const T = {
     adjust_search: 'Try adjusting your search or filter.',
     sign_in: 'Sign in to your account',
     email_lbl: 'Email Address',
-    email_ph: 'admin@company.com',
+    email_ph: 'Enter your email',
     pass_lbl: 'Password',
-    pass_ph: '••••••••',
+    pass_ph: 'Enter your password',
     sign_in_btn: 'Sign In →',
     signing_in: 'Signing in…',
-    admin_hint: 'Default admin: admin@company.com / admin123',
+   admin_hint: '',
     ach_modal_title: 'Achievement',
     no_comments: 'No comments yet. Be the first!',
     comments_lbl: 'Comments',
     name_ph: 'Your name',
     comment_ph: 'Write a comment…',
     post_comment: '💬 Post Comment',
-    footer: '© 2026 InternTrack — SGMB Achievement Archive. All rights reserved.',
+    footer: '© 2026 InternTrack — Sharjah Government Media Bureau. All rights reserved.',
     logged_out: 'Logged out',
     welcome: 'Welcome back!',
     comment_added: 'Comment added!',
@@ -243,19 +243,19 @@ const T = {
     adjust_search: 'حاول تعديل البحث أو الفلتر.',
     sign_in: 'تسجيل الدخول إلى حسابك',
     email_lbl: 'البريد الإلكتروني',
-    email_ph: 'admin@company.com',
+    email_ph: 'أدخل بريدك الإلكتروني',
     pass_lbl: 'كلمة المرور',
-    pass_ph: '••••••••',
+    pass_ph: 'أدخل كلمة المرور',
     sign_in_btn: 'دخول ←',
     signing_in: 'جارٍ التسجيل…',
-    admin_hint: 'المسؤول الافتراضي: admin@company.com / admin123',
+    admin_hint: '',
     ach_modal_title: 'إنجاز',
     no_comments: 'لا توجد تعليقات بعد. كن الأول!',
     comments_lbl: 'التعليقات',
     name_ph: 'اسمك',
     comment_ph: 'اكتب تعليقاً…',
     post_comment: '💬 نشر التعليق',
-    footer: '© 2026 InternTrack — أرشيف إنجازات SGMB. جميع الحقوق محفوظة.',
+    footer: '© 2026 InternTrack — دائرة الإعلام الحكومي في الشارقة. جميع الحقوق محفوظة.',
     logged_out: 'تم تسجيل الخروج',
     welcome: 'مرحباً بعودتك!',
     comment_added: 'تم إضافة التعليق!',
@@ -312,6 +312,23 @@ function applyTranslations() {
     el.textContent = t(el.dataset.i18n);
   });
 }
+
+new MutationObserver(mutations => {
+  mutations.forEach(m => {
+    m.addedNodes.forEach(node => {
+      if (node.nodeType !== 1) return;
+      if (node.dataset?.i18n) node.textContent = t(node.dataset.i18n);
+      node.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+    });
+  });
+}).observe(document.documentElement, { childList: true, subtree: true });
+
+// Real-time updates
+(function() {
+  const es = new EventSource('/api/events');
+  let _rt;
+  es.onmessage = () => { clearTimeout(_rt); _rt = setTimeout(() => navigate(currentPage), 300); };
+})();
 
 // ── FIREBASE INIT ─────────────────────────────────────────────────────────────
 const firebaseConfig = {
@@ -455,8 +472,8 @@ async function logout() {
 // ── LOGIN HANDLER ─────────────────────────────────────────────────────────────
 async function handleLogin(e) {
   e.preventDefault();
-  const email    = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value;
+  const email    = document.getElementById('userEmail').value.trim();
+const password = document.getElementById('userPassword').value;
   const btn      = document.querySelector('#loginForm button[type="submit"]');
   const errEl    = document.getElementById('loginError');
 
@@ -536,6 +553,7 @@ switch(page) {
 
   default:
     renderLogin(content);
+}
 }
 
 // ── HOME PAGE ─────────────────────────────────────────────────────────────────
@@ -641,7 +659,7 @@ async function renderTeams(el) {
 
     const cards = teams.map((t,i) => `
       <div class="achievement-card-full" onclick="filterByTeam(${t.TeamID}, '${escHtml(t.TeamName)}')">
-        <div class="card-image" style="background:linear-gradient(135deg,#dbeafe,#3b82f6);">
+        <div class="card-image" style="background:linear-gradient(135deg,#dce8f5,#4a7099);">
           <img src="${icons[i%icons.length]}" style="width:80px;height:80px;object-fit:contain;" onerror="this.parentElement.innerHTML='👥'">
         </div>
         <div class="card-body">
@@ -740,7 +758,7 @@ function filterAchievements() {
 }
 
 function randomGradient(id) {
-  const g = ['#dbeafe,#3b82f6','#fef3c7,#f59e0b','#d1fae5,#10b981','#ede9fe,#8b5cf6','#fce7f3,#ec4899'];
+  const g = ['#dce8f5,#4a7099','#fef3c7,#f59e0b','#d1fae5,#10b981','#ede9fe,#8b5cf6','#fce7f3,#ec4899'];
   return g[id % g.length];
 }
 
@@ -854,23 +872,44 @@ function renderLogin(el) {
             <span id="selectedRoleLabel" style="font-weight:700;font-size:15px;"></span>
           </div>
 
-          <form id="loginForm" onsubmit="handleLogin(event)">
-            <div class="form-group">
-              <label class="form-label">${window.t('email_lbl')}</label>
-              <input type="email" id="loginEmail" class="form-input" placeholder="${window.t('email_ph')}" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">${window.t('pass_lbl')}</label>
-              <input type="password" id="loginPassword" class="form-input" placeholder="${window.t('pass_ph')}" required>
-            </div>
-            <p id="loginError" style="color:#ef4444;font-size:13px;margin-bottom:12px;min-height:18px;"></p>
-            <button type="submit" class="btn btn-primary" style="width:100%;padding:13px;font-size:15px;border-radius:12px;justify-content:center;">
-              ${window.t('sign_in_btn')}
-            </button>
-            <p style="text-align:center;font-size:12px;color:var(--text-muted);margin-top:16px;">
-              ${window.t('admin_hint')}
-            </p>
-          </form>
+          <form id="loginForm" onsubmit="handleLogin(event)" autocomplete="off">
+
+  <div class="form-group">
+    <label class="form-label">${window.t('email_lbl')}</label>
+    <input
+      type="email"
+      id="userEmail"
+      name="userEmail"
+      class="form-input"
+      placeholder="${window.t('email_ph')}"
+      autocomplete="off"
+      required>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">${window.t('pass_lbl')}</label>
+    <input
+      type="password"
+      id="userPassword"
+      name="userPassword"
+      class="form-input"
+      placeholder="${window.t('pass_ph')}"
+      autocomplete="new-password"
+      required>
+  </div>
+
+  <p id="loginError" style="color:#ef4444;font-size:13px;margin-bottom:12px;min-height:18px;"></p>
+
+  <button type="submit" class="btn btn-primary"
+    style="width:100%;padding:13px;font-size:15px;border-radius:12px;justify-content:center;">
+    ${window.t('sign_in_btn')}
+  </button>
+
+  <p style="text-align:center;font-size:12px;color:var(--text-muted);margin-top:16px;">
+    ${window.t('admin_hint')}
+  </p>
+
+</form>
         </div>
 
       </div>
@@ -884,8 +923,8 @@ function selectRole(role) {
     const btn = document.getElementById('roleBtn_' + r);
     if (!btn) return;
     if (r === role) {
-      btn.style.borderColor = '#2563eb';
-      btn.style.background = '#eff6ff';
+      btn.style.borderColor = '#4a7099';
+      btn.style.background = '#eef3fa';
       btn.style.transform = 'scale(1.03)';
     } else {
       btn.style.borderColor = 'var(--border)';
@@ -905,7 +944,7 @@ function selectRole(role) {
       Supervisor: window.t('role_supervisor') + ' 👁️'
     };
     document.getElementById('selectedRoleLabel').textContent = roleLabels[role] || role;
-    document.getElementById('loginEmail').focus();
+   document.getElementById('userEmail').focus();
   }, 180);
 }
 

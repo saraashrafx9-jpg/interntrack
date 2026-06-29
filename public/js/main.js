@@ -239,7 +239,7 @@ function createAchievementCard(achievement) {
     if (achievement.FirstImage) {
         imageHtml = `<img src="${achievement.FirstImage}" class="achievement-image" alt="${escapeHtml(achievement.Title)}" style="width: 100%; height: 200px; object-fit: cover;" onerror="this.style.display='none'">`;
     } else if (achievement.ImageCount > 0) {
-        imageHtml = `<div style="height: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 3rem;">
+        imageHtml = `<div style="height: 200px; background: linear-gradient(135deg, #4a7099 0%, #355a7d 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 3rem;">
             <i class="fas fa-image"></i>
         </div>`;
     }
@@ -387,8 +387,8 @@ async function viewAchievement(id) {
                     
                     <div id="commentsList" class="mt-2">
                         ${achievement.comments && achievement.comments.length > 0 ? achievement.comments.map(comment => `
-                            <div class="comment" style="background: #F9FAFB; padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem;">
-                                <div class="comment-author" style="font-weight: 600; color: #4F46E5;">${escapeHtml(comment.AuthorName)}</div>
+                            <div class="comment" style="background: #f4f4ed; padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem;">
+                                <div class="comment-author" style="font-weight: 600; color: #355a7d;">${escapeHtml(comment.AuthorName)}</div>
                                 <div style="margin: 0.5rem 0;">${escapeHtml(comment.Content)}</div>
                                 <div class="comment-date" style="font-size: 0.75rem; color: #6B7280;">
                                     ${new Date(comment.CreatedAt).toLocaleString()}

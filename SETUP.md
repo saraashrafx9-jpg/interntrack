@@ -134,3 +134,51 @@ The `teamId` claim is also set so leaders/students are scoped to their team.
 | Login works but goes to wrong dashboard | Run `node setup-roles.js` to sync roles |
 | "This account is registered as Student, not Leader" | Role mismatch — run `setup-roles.js` again |
 | Supervisor can't see feedback | Make sure their Firebase custom claim is `role: "Supervisor"` |
+
+---
+
+## Deploying to Railway
+
+This app keeps its data in a local SQLite file (`internship_tracker.db`) and uploaded
+images/documents in `public/uploads/`. Railway's filesystem resets on every redeploy
+unless that data lives on a **Volume**, so deployment has two parts: environment
+variables, and a Volume.
+
+### 1. Connect the GitHub repo
+In the [Railway dashboard](https://railway.app) → **New Project** → **Deploy from GitHub repo**
+→ select `robarajap50-bot/InTrack-fixed`. Railway auto-detects the Node app via
+`package.json` (`npm start` → `node server.js`) — no Procfile needed.
+
+### 2. Add a Volume
+In the service → **Settings** → **Volumes** → **Add Volume**. Mount it at `/data`.
+
+### 3. Set environment variables
+Service → **Variables** → add these (values come from your `.env` file, except the two
+new ones marked below):
+
+```
+NODE_ENV=production
+DB_PATH=/data/internship_tracker.db
+UPLOAD_DIR=/data/uploads
+LOCAL_JWT_SECRET=<generate a new random 32+ char string — do NOT reuse the hardcoded fallback>
+FIREBASE_PROJECT_ID=...
+FIREBASE_CLIENT_EMAIL=...
+FIREBASE_PRIVATE_KEY=...
+FIREBASE_API_KEY=...
+FIREBASE_AUTH_DOMAIN=...
+FIREBASE_STORAGE_BUCKET=...
+FIREBASE_MESSAGING_SENDER_ID=...
+FIREBASE_APP_ID=...
+```
+
+Do **not** set `PORT` — Railway injects it automatically and `server.js` already reads
+`process.env.PORT`.
+
+`DB_PATH` and `UPLOAD_DIR` point inside the mounted Volume so the database and uploaded
+files survive redeploys. If you skip the Volume, every redeploy wipes all data back to
+empty.
+
+### 4. Deploy
+Railway deploys automatically on every push to the connected branch. Watch the build logs
+for `Server running on http://localhost:<PORT>` to confirm it started, then open the
+generated `*.up.railway.app` domain.

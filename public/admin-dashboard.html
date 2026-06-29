@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard – InternTrack</title>
+  <title>InternTrack – SGMB Admin Portal</title>
   <link rel="stylesheet" href="/css/style.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script>
@@ -22,34 +22,40 @@
     <img src="/images/logo.png" alt="InternTrack" onerror="this.style.display='none'">
     <div class="sidebar-brand-text">
       <h2>InternTrack</h2>
-      <p data-i18n="admin_dashboard">Admin Portal</p>
+      <p data-i18n="admin_dashboard">SGMB · Admin Portal</p>
     </div>
   </div>
   <nav class="sidebar-nav">
     <div class="nav-section-label" data-i18n="nav_admin">Admin</div>
 
-    <a class="nav-item active" onclick="switchTab('dashboard')" href="#">
-      <span class="nav-icon">📊</span>
+    <a class="nav-item" onclick="switchTab('dashboard')" href="#">
+      <span class="nav-icon"><i class="fa-solid fa-gauge-high"></i></span>
       <span data-i18n="nav_dashboard">Dashboard</span>
     </a>
 
     <a class="nav-item" onclick="switchTab('users')" href="#">
-  <span class="nav-icon">👤</span>
-  <span data-i18n="nav_users">User Management</span>
-</a>
+      <span class="nav-icon"><i class="fa-solid fa-users-gear"></i></span>
+      <span data-i18n="nav_users">User Management</span>
+    </a>
 
-<a class="nav-item" onclick="switchTab('teams')" href="#">
-  <span class="nav-icon">👥</span>
-  <span data-i18n="nav_teams">Teams</span>
-</a>
+    <a class="nav-item" onclick="switchTab('teams')" href="#">
+      <span class="nav-icon"><i class="fa-solid fa-people-group"></i></span>
+      <span data-i18n="nav_teams">Teams</span>
+    </a>
 
-    <a class="nav-item" onclick="switchTab('reports')" href="#">
-      <span class="nav-icon">📄</span>
-      <span data-i18n="nav_reports">Reports</span>
+    <a class="nav-item" onclick="switchTab('calendar')" href="#">
+      <span class="nav-icon"><i class="fa-regular fa-calendar-days"></i></span>
+      <span data-i18n="nav_calendar">Calendar</span>
+    </a>
+
+    <a class="nav-item" onclick="switchTab('requests')" href="#">
+      <span class="nav-icon"><i class="fa-solid fa-envelope"></i></span>
+      <span data-i18n="nav_messages">Requests</span>
+      <span id="requestsBadge" style="display:none;background:#ef4444;color:#fff;border-radius:20px;padding:1px 7px;font-size:11px;margin-left:4px;"></span>
     </a>
 
     <a class="nav-item" onclick="switchTab('settings')" href="#">
-      <span class="nav-icon">⚙️</span>
+      <span class="nav-icon"><i class="fa-solid fa-gear"></i></span>
       <span data-i18n="nav_settings">Settings</span>
     </a>
   </nav>
@@ -59,7 +65,7 @@
   </div>
   <div class="admin-info">
     <h4 id="adminName">Admin</h4>
-    <p>System Administrator</p>
+    <p data-i18n="lbl_system_administrator">System Administrator</p>
   </div>
 
   <span class="admin-arrow">▼</span>
@@ -67,22 +73,22 @@
 
 <div id="adminDropdown" class="sidebar-admin-menu">
   <a href="#" onclick="openAdminProfileFromMenu(event)">
-    👤 Profile
+    <i class="fa-solid fa-user" style="width:14px;"></i> <span data-i18n="lbl_profile">Profile</span>
   </a>
 
   <div class="language-menu">
     <a href="#" onclick="toggleLanguageMenu(event)">
-      🌐 Language ▶
+      <i class="fa-solid fa-globe" style="width:14px;"></i> Language ▶
     </a>
 
     <div id="languageDropdown" class="language-dropdown">
       <a href="#" onclick="setLang('en')">English</a>
-      <a href="#" onclick="setLang('ar')">Arabic</a>
+      <a href="#" onclick="setLang('ar')" data-i18n="lang_arabic">Arabic</a>
     </div>
   </div>
 
   <a href="#" onclick="logout()">
-    🚪 Sign Out
+    <i class="fa-solid fa-right-from-bracket" style="width:14px;"></i> <span data-i18n="btn_signout">Sign Out</span>
   </a>
 </div>
 </aside>
@@ -91,7 +97,7 @@
  <header class="topbar">
   <div class="topbar-left">
     <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-    <span class="topbar-title" id="topbarTitle">Dashboard</span>
+   <span class="topbar-title" id="topbarTitle"></span>
   </div>
 
   <div class="topbar-right notification-wrapper">
@@ -101,7 +107,7 @@
     </button>
 
    <div id="notificationsBox" class="notifications-box">
-  <div class="empty-notifications">
+  <div class="empty-notifications" data-i18n="no_notifications">
     No notifications
   </div>
 </div>
@@ -196,6 +202,20 @@
       <h3 id="studentModalTitle" data-i18n="modal_create_student">Create Student</h3>
       <button class="modal-close" onclick="closeModal('studentModal')">✕</button>
     </div>
+    <div class="form-group" id="stuPhotoGroup" style="display:none;text-align:center;">
+      <div style="position:relative;display:inline-block;">
+        <div id="stuPhotoPreview" style="width:72px;height:72px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#4a7099,#355a7d);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto;">
+          <i class="fa-solid fa-user"></i>
+        </div>
+        <button type="button" onclick="document.getElementById('stuPhotoInput').click()" title="Change photo" style="position:absolute;bottom:-2px;right:-2px;width:26px;height:26px;border-radius:50%;background:var(--primary);color:#fff;border:2px solid #fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;">
+          <i class="fa-solid fa-camera"></i>
+        </button>
+      </div>
+      <input type="file" id="stuPhotoInput" accept="image/*" style="display:none;" onchange="previewStudentPhoto(this.files[0])">
+      <div id="stuPhotoRemoveWrap" style="margin-top:8px;display:none;">
+        <button type="button" class="btn btn-sm btn-ghost" onclick="removeStudentPhoto()" style="color:#dc2626;" data-i18n="btn_remove_photo">Remove Photo</button>
+      </div>
+    </div>
     <div class="form-group">
       <label class="form-label" data-i18n="lbl_full_name">Full Name *</label>
       <input type="text" id="stuName" class="form-input" placeholder="e.g. Ahmed Mohammed">
@@ -207,6 +227,10 @@
     <div class="form-group" id="stuPasswordGroup">
       <label class="form-label" data-i18n="lbl_password">Password *</label>
       <input type="password" id="stuPassword" class="form-input" placeholder="Min 6 characters">
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="lbl_phone">Phone Number</label>
+      <input type="tel" id="stuPhone" class="form-input" placeholder="+971501234567">
     </div>
     <div class="form-group">
       <label class="form-label" data-i18n="lbl_assign_team">Assign to Team</label>
@@ -268,6 +292,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   }
 
+  document.body.classList.toggle("dark-mode", savedSettings.appearance === "Dark Mode");
+
 });
 
 const T = {
@@ -278,7 +304,6 @@ const T = {
     nav_admin: 'Admin',
     nav_dashboard: 'Dashboard',
     nav_users: 'Users',
-    nav_reports: 'Reports',
     nav_settings: 'Settings',
     nav_overview: 'Overview',
     nav_teams: 'Teams',
@@ -288,7 +313,7 @@ const T = {
     lbl_administrator: 'Administrator',
     btn_signout: 'Sign Out',
     badge_admin: '⚙️ Admin',
-    footer: '© 2026 InternTrack — Admin Panel. All rights reserved.',
+    footer: '© 2026 InternTrack — Sharjah Government Media Bureau. All rights reserved.',
     modal_create_team: 'Create Team',
     modal_edit_team: 'Edit Team',
     lbl_team_name: 'Team Name *',
@@ -300,6 +325,7 @@ const T = {
     lbl_full_name: 'Full Name *',
     lbl_email: 'Email *',
     lbl_password: 'Password *',
+    lbl_phone: 'Phone Number',
     lbl_assign_team: 'Assign to Team',
     btn_save_leader: 'Save Leader',
     modal_assign_leader: 'Assign Leader to Team',
@@ -310,10 +336,11 @@ const T = {
     modal_edit_student: 'Edit Student',
     modal_add_student: 'Add Student',
     btn_save_student: 'Save Student',
+    btn_remove_photo: 'Remove Photo',
+    toast_photo_removed: 'Profile picture removed',
     // Tabs
     tb_dashboard: 'Dashboard',
     tb_users: 'Users',
-    tb_reports: 'Reports',
     tb_settings: 'Settings',
     tb_overview: 'Overview',
     tb_teams: 'Teams',
@@ -402,6 +429,81 @@ const T = {
     no_data: 'No data yet.',
     err_load: 'Error loading data',
     no_team_label: 'No team',
+    h_announcements: '📢 Recent Announcements',
+    btn_add: '+ Add',
+    h_calendar: '📅 Internship Calendar',
+    h_add_announcement: 'Add Announcement',
+    lbl_title: 'Title',
+    lbl_message: 'Message',
+    btn_save_announcement: 'Save Announcement',
+    h_add_event: 'Add Calendar Event',
+    h_edit_event: 'Edit Event',
+    lbl_event_title: 'Event Title',
+    lbl_time: 'Time',
+    btn_save_event: 'Save Event',
+    btn_add_event: '+ Add Event',
+    nav_calendar: 'Calendar',
+    no_events_day: 'No events on this day.',
+    events_this_month: "This Month's Events",
+    no_events_month: 'No events this month.',
+    tab_events: 'Events',
+    tab_reminders: 'Reminders',
+    no_reminders: 'No reminders yet.',
+    btn_add_reminder: '+ Add Reminder',
+    h_add_reminder: 'Add Reminder',
+    lbl_reminder_title: 'Reminder Title',
+    lbl_start_time: 'Start Time',
+    lbl_end_time: 'End Time',
+    btn_save_reminder: 'Save Reminder',
+    confirm_delete_reminder: 'Delete this reminder?',
+    err_reminder_required: 'Title is required',
+    confirm_delete_event: 'Delete this event?',
+    err_event_required: 'Title and date are required',
+    err_announcement_required: 'Title and message are required',
+    view_all_events: 'View all →',
+    lbl_role: 'Role',
+    lbl_active: 'Active',
+    no_users: 'No users yet',
+    h_users: 'Users',
+    sub_users: 'Manage students, leaders, and supervisors in one place',
+    btn_add_user: '+ Add User ▾',
+    lbl_total_users: 'Total Users',
+    h_all_users: 'All Users',
+    ph_search_users: 'Search users...',
+    lbl_all_roles: 'All Roles',
+    lbl_all_teams: 'All Teams',
+    role_student: 'Student',
+    role_leader: 'Leader',
+    role_supervisor: 'Supervisor',
+    role_admin: 'Admin',
+    lbl_members: 'Members',
+    lbl_members_breakdown: (l, s) => `${l} Leaders · ${s} Students`,
+    nav_messages: 'Requests',
+    sub_requests: 'Help requests sent in by students, leaders, and supervisors',
+    no_requests: 'No requests yet.',
+    status_pending: 'Pending',
+    status_done: 'Done',
+    status_rejected: 'Rejected',
+    confirm_delete_request: 'Delete this request?',
+    lbl_system_administrator: 'System Administrator',
+    lbl_profile: 'Profile',
+    lang_arabic: 'Arabic',
+    no_notifications: 'No notifications',
+    badge_draft: 'Draft',
+    badge_rejected: 'Rejected',
+    lbl_users_card: 'Users',
+    lbl_interns: 'Interns',
+    no_leader: 'No leader',
+    view_all_teams: 'View all teams →',
+    not_authenticated: 'Not Authenticated',
+    go_to_login: 'Go to Login',
+    th_title: 'Title',
+    no_posts_yet: 'No posts yet.',
+    view_team: 'View Team →',
+    btn_back_to_teams: '← Back to Teams',
+    lbl_change_cover: 'Change cover image',
+    toast_cover_updated: 'Cover image updated!',
+    toast_cover_failed: 'Failed to update cover image',
   },
   ar: {
     admin_dashboard: 'لوحة المشرف',
@@ -410,7 +512,6 @@ const T = {
     nav_admin: 'المشرف',
     nav_dashboard: 'لوحة التحكم',
     nav_users: 'المستخدمون',
-    nav_reports: 'التقارير',
     nav_settings: 'الإعدادات',
     nav_overview: 'نظرة عامة',
     nav_teams: 'الفرق',
@@ -420,7 +521,7 @@ const T = {
     lbl_administrator: 'مسؤول',
     btn_signout: 'تسجيل الخروج',
     badge_admin: '⚙️ مسؤول',
-    footer: '© 2026 InternTrack — لوحة الإدارة. جميع الحقوق محفوظة.',
+    footer: '© 2026 InternTrack — دائرة الإعلام الحكومي في الشارقة. جميع الحقوق محفوظة.',
     modal_create_team: 'إنشاء فريق',
     modal_edit_team: 'تعديل الفريق',
     lbl_team_name: 'اسم الفريق *',
@@ -432,6 +533,7 @@ const T = {
     lbl_full_name: 'الاسم الكامل *',
     lbl_email: 'البريد الإلكتروني *',
     lbl_password: 'كلمة المرور *',
+    lbl_phone: 'رقم الهاتف',
     lbl_assign_team: 'تعيين إلى فريق',
     btn_save_leader: 'حفظ القائد',
     modal_assign_leader: 'تعيين قائد للفريق',
@@ -442,9 +544,10 @@ const T = {
     modal_edit_student: 'تعديل الطالب',
     modal_add_student: 'إضافة طالب',
     btn_save_student: 'حفظ الطالب',
+    btn_remove_photo: 'إزالة الصورة',
+    toast_photo_removed: 'تمت إزالة الصورة الشخصية',
     tb_dashboard: 'لوحة التحكم',
     tb_users: 'المستخدمون',
-    tb_reports: 'التقارير',
     tb_settings: 'الإعدادات',
     tb_overview: 'نظرة عامة',
     tb_teams: 'الفرق',
@@ -526,6 +629,81 @@ const T = {
     no_data: 'لا توجد بيانات بعد.',
     err_load: 'خطأ في تحميل البيانات',
     no_team_label: 'بدون فريق',
+    h_announcements: '📢 آخر الإعلانات',
+    btn_add: '+ إضافة',
+    h_calendar: '📅 تقويم التدريب',
+    h_add_announcement: 'إضافة إعلان',
+    lbl_title: 'العنوان',
+    lbl_message: 'الرسالة',
+    btn_save_announcement: 'حفظ الإعلان',
+    h_add_event: 'إضافة حدث',
+    h_edit_event: 'تعديل الحدث',
+    lbl_event_title: 'عنوان الحدث',
+    lbl_time: 'الوقت',
+    btn_save_event: 'حفظ الحدث',
+    btn_add_event: '+ إضافة حدث',
+    nav_calendar: 'التقويم',
+    no_events_day: 'لا توجد فعاليات في هذا اليوم.',
+    events_this_month: 'فعاليات هذا الشهر',
+    no_events_month: 'لا توجد فعاليات هذا الشهر.',
+    tab_events: 'الفعاليات',
+    tab_reminders: 'التذكيرات',
+    no_reminders: 'لا توجد تذكيرات بعد.',
+    btn_add_reminder: '+ إضافة تذكير',
+    h_add_reminder: 'إضافة تذكير',
+    lbl_reminder_title: 'عنوان التذكير',
+    lbl_start_time: 'وقت البدء',
+    lbl_end_time: 'وقت الانتهاء',
+    btn_save_reminder: 'حفظ التذكير',
+    confirm_delete_reminder: 'حذف هذا التذكير؟',
+    err_reminder_required: 'العنوان مطلوب',
+    confirm_delete_event: 'حذف هذا الحدث؟',
+    err_event_required: 'العنوان والتاريخ مطلوبان',
+    err_announcement_required: 'العنوان والرسالة مطلوبان',
+    view_all_events: 'عرض الكل ←',
+    lbl_role: 'الدور',
+    lbl_active: 'نشط',
+    no_users: 'لا يوجد مستخدمون بعد',
+    h_users: 'المستخدمون',
+    sub_users: 'إدارة الطلاب والقادة والمشرفين في مكان واحد',
+    btn_add_user: '+ إضافة مستخدم ▾',
+    lbl_total_users: 'إجمالي المستخدمين',
+    h_all_users: 'جميع المستخدمين',
+    ph_search_users: 'بحث عن مستخدم...',
+    lbl_all_roles: 'جميع الأدوار',
+    lbl_all_teams: 'جميع الفرق',
+    role_student: 'طالب',
+    role_leader: 'قائد',
+    role_supervisor: 'مشرف',
+    role_admin: 'مسؤول',
+    lbl_members: 'الأعضاء',
+    lbl_members_breakdown: (l, s) => `${l} قادة · ${s} طلاب`,
+    nav_messages: 'الطلبات',
+    sub_requests: 'طلبات المساعدة المرسلة من الطلاب والقادة والمشرفين',
+    no_requests: 'لا توجد طلبات بعد.',
+    status_pending: 'قيد الانتظار',
+    status_done: 'منتهي',
+    status_rejected: 'مرفوض',
+    confirm_delete_request: 'حذف هذا الطلب؟',
+    lbl_system_administrator: 'مسؤول النظام',
+    lbl_profile: 'الملف الشخصي',
+    lang_arabic: 'العربية',
+    no_notifications: 'لا توجد إشعارات',
+    badge_draft: 'مسودة',
+    badge_rejected: 'مرفوض',
+    lbl_users_card: 'المستخدمون',
+    lbl_interns: 'المتدربون',
+    no_leader: 'لا يوجد قائد',
+    view_all_teams: 'عرض جميع الفرق ←',
+    not_authenticated: 'غير مصادق عليه',
+    go_to_login: 'الانتقال لتسجيل الدخول',
+    th_title: 'العنوان',
+    no_posts_yet: 'لا توجد منشورات بعد.',
+    view_team: 'عرض الفريق ←',
+    btn_back_to_teams: 'الرجوع إلى الفرق →',
+    lbl_change_cover: 'تغيير صورة الغلاف',
+    toast_cover_updated: 'تم تحديث صورة الغلاف!',
+    toast_cover_failed: 'فشل تحديث صورة الغلاف',
   }
 };
 
@@ -557,6 +735,23 @@ function applyTranslations() {
   if (assignFirst) assignFirst.text = t('no_team');
 }
 
+new MutationObserver(mutations => {
+  mutations.forEach(m => {
+    m.addedNodes.forEach(node => {
+      if (node.nodeType !== 1) return;
+      if (node.dataset?.i18n) node.textContent = t(node.dataset.i18n);
+      node.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+    });
+  });
+}).observe(document.documentElement, { childList: true, subtree: true });
+
+// Real-time updates: reload current tab when server broadcasts a change
+(function() {
+  const es = new EventSource('/api/events');
+  let _rt;
+  es.onmessage = () => { clearTimeout(_rt); _rt = setTimeout(() => { viewingTeamId ? viewTeamDetail(viewingTeamId) : loadTab(currentTab); refreshRequestsBadge(); }, 300); };
+})();
+
 // ── CORE ──────────────────────────────────────────────────────────────────────
 const token = (() => {
   const c = document.cookie.split(';').find(c => c.trim().startsWith('token='));
@@ -564,11 +759,11 @@ const token = (() => {
 })();
 
 if (!token) {
-  document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;"><div style="text-align:center;"><h1>Not Authenticated</h1><a href="/" style="color:var(--primary);">Go to Login</a></div></div>';
+  document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;"><div style="text-align:center;"><h1>${t('not_authenticated')}</h1><a href="/" style="color:var(--primary);">${t('go_to_login')}</a></div></div>`;
 }
 
-let allTeams = [], allLeaders = [], allStudents = [], allSupervisors = [], editingTeamId = null, editingLeaderId = null, editingStudentId = null, editingSupervisorId = null, assigningTeamId = null;
-let currentTab = 'dashboard';
+let allTeams = [], allLeaders = [], allStudents = [], allSupervisors = [], editingTeamId = null, editingLeaderId = null, editingStudentId = null, editingSupervisorId = null, assigningTeamId = null, viewingTeamId = null;
+let currentTab = localStorage.getItem("adminCurrentTab") || "dashboard";
 
 function getHeaders() { return { 'Content-Type':'application/json', Authorization:'Bearer '+token }; }
 function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -602,6 +797,9 @@ async function logout() {
 
 function switchTab(tab) {
   currentTab = tab;
+  viewingTeamId = null;
+  localStorage.setItem("adminCurrentTab", tab);
+  localStorage.setItem("adminScrollY", window.scrollY);
 
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
@@ -609,8 +807,9 @@ function switchTab(tab) {
     dashboard: 0,
     users: 1,
     teams: 2,
-    reports: 3,
-    settings: 4
+    calendar: 3,
+    requests: 4,
+    settings: 5
   };
 
   document.querySelectorAll('.sidebar-nav .nav-item')[idx[tab]]?.classList.add('active');
@@ -619,7 +818,8 @@ function switchTab(tab) {
     dashboard: t('tb_dashboard'),
     users: t('tb_users'),
     teams: t('tb_teams'),
-    reports: t('tb_reports'),
+    calendar: t('nav_calendar'),
+    requests: t('nav_messages'),
     settings: t('tb_settings')
   };
 
@@ -631,8 +831,8 @@ function statusBadge(status) {
   const map = {
     published: `<span class="badge badge-green">${t('lbl_published')}</span>`,
     pending:   `<span class="badge" style="background:#fef3c7;color:#92400e;">${t('lbl_pending')}</span>`,
-    draft:     `<span class="badge badge-amber">Draft</span>`,
-    rejected:  `<span class="badge" style="background:#fee2e2;color:#991b1b;">Rejected</span>`
+    draft:     `<span class="badge badge-amber">${t('badge_draft')}</span>`,
+    rejected:  `<span class="badge" style="background:#fee2e2;color:#991b1b;">${t('badge_rejected')}</span>`
   };
   return map[status] || `<span class="badge">${status}</span>`;
 }
@@ -670,8 +870,12 @@ async function loadTab(tab) {
         renderTeams(el, data);
         break;
 
-      case 'reports':
-        renderReports(el, data);
+      case 'calendar':
+        renderCalendar(el);
+        break;
+
+      case 'requests':
+        renderRequests(el);
         break;
 
       case 'settings':
@@ -688,8 +892,9 @@ async function loadTab(tab) {
 }
 
 // ── OVERVIEW ──────────────────────────────────────────────────────────────────
-function renderOverview(el, {stats, teams, users}) {
+async function renderOverview(el, {stats, teams, users}) {
   const leaders = users.leaders || [];
+  const supervisors = users.supervisors || [];
   const announcements =
     JSON.parse(localStorage.getItem("announcements")) || [
       {
@@ -704,73 +909,83 @@ function renderOverview(el, {stats, teams, users}) {
       }
     ];
 
-  const events =
-    JSON.parse(localStorage.getItem("calendarEvents")) || [
-      {
-        title: "Weekly Report Due",
-        date: "2026-06-20",
-        time: "11:59 PM"
-      },
-      {
-        title: "Supervisor Meeting",
-        date: "2026-06-22",
-        time: "10:00 AM"
-      },
-      {
-        title: "Project Deadline",
-        date: "2026-06-26",
-        time: "11:59 PM"
-      }
-    ];
+  let allEvents = [];
+  try {
+    allEvents = await fetch('/api/calendar-events', { headers: getHeaders() }).then(r => r.json());
+  } catch (e) {}
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const events = allEvents.filter(ev => ev.EventDate >= todayStr).slice(0, 3);
 
   el.innerHTML = `
     <div class="page-header">
       <div>
-        <h2>Admin Overview</h2>
-        <p>Full system summary</p>
+        <h2>${t('h_overview')}</h2>
+        <p>${t('sub_overview')}</p>
       </div>
     </div>
 
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-icon blue">👥</div>
-        <div class="stat-info">
-          <h3>${stats.totalTeams || 0}</h3>
-          <p>Teams</p>
-        </div>
-      </div>
+    <div class="stats-row-hero">
 
-      <div class="stat-card">
-        <div class="stat-icon purple">👤</div>
-        <div class="stat-info">
-          <h3>${stats.totalLeaders || 0}</h3>
-          <p>Leaders</p>
-        </div>
-      </div>
+  <!-- USERS -->
+  <div class="stat-card-hero accent-blue tooltip-card">
+    <div class="stat-icon-hero blue">👥</div>
 
-      <div class="stat-card">
-        <div class="stat-icon green">🎓</div>
-        <div class="stat-info">
-          <h3>${stats.totalStudents || 0}</h3>
-          <p>Students</p>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon gold">🏆</div>
-        <div class="stat-info">
-          <h3>${stats.totalAchievements || 0}</h3>
-          <p>Published</p>
-        </div>
-      </div>
+    <div class="stat-info-hero">
+      <h3>${(stats.totalStudents || 0) + (stats.totalLeaders || 0) + (stats.totalSupervisors || 0)}</h3>
+      <p>${t('lbl_users_card')}</p>
     </div>
+<div class="card-tooltip">
+  🎓 ${t('lbl_interns')}: ${(stats.totalStudents || 0) + (stats.totalLeaders || 0)}<br>
+  🛡️ ${t('nav_supervisors')}: ${supervisors.length}
+</div>
+</div>
+
+  <!-- TEAMS -->
+  <div class="stat-card-hero accent-purple tooltip-card">
+    <div class="stat-icon-hero purple">👥</div>
+
+    <div class="stat-info-hero">
+      <h3>${stats.totalTeams || teams.length || 0}</h3>
+      <p>${t('lbl_teams')}</p>
+    </div>
+
+    <div class="card-tooltip">
+      ${teams.slice(0,3).map(tm => `• ${escHtml(tm.TeamName)}`).join('<br>')}
+
+      ${teams.length > 3 ? `
+      <br><button class="tooltip-link"
+      onclick="event.stopPropagation(); switchTab('teams')">
+      ${t('view_all_teams')}
+      </button>
+      ` : ''}
+    </div>
+  </div>
+
+
+  <!-- POSTS -->
+  <div class="stat-card-hero accent-gold tooltip-card">
+    <div class="stat-icon-hero gold">📄</div>
+
+    <div class="stat-info-hero">
+      <h3>${(stats.totalAchievements || 0) + (stats.totalPending || 0) + (stats.totalRejected || 0)}</h3>
+      <p>${t('th_posts')}</p>
+    </div>
+
+    <div class="card-tooltip">
+      ✅ ${t('lbl_published')}: ${stats.totalAchievements || 0}<br>
+      ⏳ ${t('lbl_pending')}: ${stats.totalPending || 0}<br>
+      ❌ ${t('badge_rejected')}: ${stats.totalRejected || 0}
+    </div>
+  </div>
+
+</div>
 
    <div class="dashboard-two-columns">
 
   <div class="panel">
     <div class="panel-header">
-      <h3>Teams</h3>
-      <a onclick="switchTab('teams')">Manage →</a>
+      <h3>${t('h_teams_panel')}</h3>
+      <a onclick="switchTab('teams')">${t('manage_arrow')}</a>
     </div>
 
     ${teams.length ? `
@@ -778,17 +993,17 @@ function renderOverview(el, {stats, teams, users}) {
         <table>
           <thead>
             <tr>
-              <th>TEAM</th>
-              <th>LEADER</th>
-              <th>STUDENTS</th>
-              <th>POSTS</th>
+              <th>${t('th_team')}</th>
+              <th>${t('th_leader')}</th>
+              <th>${t('th_students')}</th>
+              <th>${t('th_posts')}</th>
             </tr>
           </thead>
 
           <tbody>
             ${teams.map(tm => `
               <tr>
-                <td><strong>${escHtml(tm.TeamName)}</strong></td>
+                <td><strong style="cursor:pointer;color:var(--primary);" onclick="viewTeamDetail(${tm.TeamID})">${escHtml(tm.TeamName)}</strong></td>
                 <td>
   ${
     tm.LeaderName
@@ -797,7 +1012,7 @@ function renderOverview(el, {stats, teams, users}) {
          const leader = leaders.find(l => l.TeamID === tm.TeamID);
           return leader
             ? `<span class="badge badge-green">${escHtml(leader.Name)}</span>`
-            : `<span style="color:#f59e0b;">None</span>`;
+            : `<span style="color:#f59e0b;">${t('no_team')}</span>`;
         })()
   }
 </td>
@@ -808,14 +1023,14 @@ function renderOverview(el, {stats, teams, users}) {
           </tbody>
         </table>
       </div>
-    ` : `<div class="empty-state"><p>No teams yet.</p></div>`}
+    ` : `<div class="empty-state"><p>${t('no_teams')}</p></div>`}
 
   </div>
 
   <div class="panel">
     <div class="panel-header">
-      <h3>📢 Recent Announcements</h3>
-      <button class="btn btn-sm btn-primary" onclick="openAnnouncementModal()">+ Add</button>
+      <h3>${t('h_announcements')}</h3>
+      <button class="btn btn-sm btn-primary" onclick="openAnnouncementModal()">${t('btn_add')}</button>
     </div>
 
     <div class="announcement-list">
@@ -838,127 +1053,276 @@ function renderOverview(el, {stats, teams, users}) {
 </div>
     <div class="panel calendar-wide-card">
       <div class="panel-header">
-        <h3>📅 Internship Calendar</h3>
-        <button class="btn btn-sm btn-primary" onclick="openEventModal()">+ Add</button>
+        <h3>${t('h_calendar')}</h3>
+        <a onclick="switchTab('calendar')" style="cursor:pointer;">${t('view_all_events')}</a>
       </div>
 
       <div class="calendar-list">
-        ${events.map((ev, index) => {
-          const d = new Date(ev.date);
+        ${events.length ? events.map(ev => {
+          const d = new Date(ev.EventDate);
           const day = isNaN(d) ? "--" : d.getDate();
-          const month = isNaN(d) ? "---" : d.toLocaleString("en-US", { month: "short" }).toUpperCase();
+          const month = isNaN(d) ? "---" : d.toLocaleDateString(currentLang === 'ar' ? 'ar-AE' : 'en-US', { month: "short" }).toUpperCase();
 
           return `
-            <div class="calendar-row">
+            <div class="calendar-row" style="cursor:pointer;" onclick="switchTab('calendar')">
               <div class="calendar-date">
                 <strong>${day}</strong>
                 <span>${month}</span>
               </div>
 
               <div class="calendar-info">
-                <h4>${escHtml(ev.title)}</h4>
-                <p>${escHtml(ev.date)} • ${escHtml(ev.time)}</p>
+                <h4>${escHtml(ev.Title)}</h4>
+                <p>${escHtml(ev.EventDate)}${ev.EventTime ? ' • ' + escHtml(ev.EventTime) : ''}</p>
               </div>
-
-              <button class="mini-delete" onclick="deleteEvent(${index})">🗑️</button>
             </div>
           `;
-        }).join("")}
+        }).join("") : `<p class="text-muted" style="padding:10px 0;">${t('no_events_day')}</p>`}
       </div>
     </div>
 
     <div class="modal-overlay" id="announcementModal">
       <div class="modal-box">
         <div class="modal-header">
-          <h3>Add Announcement</h3>
+          <h3>${t('h_add_announcement')}</h3>
           <button class="modal-close" onclick="closeModal('announcementModal')">✕</button>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Title</label>
+          <label class="form-label">${t('lbl_title')}</label>
           <input id="announcementTitle" class="form-input" placeholder="Weekly Report Reminder">
         </div>
 
         <div class="form-group">
-          <label class="form-label">Message</label>
+          <label class="form-label">${t('lbl_message')}</label>
           <textarea id="announcementMessage" class="form-textarea" placeholder="Write announcement..."></textarea>
         </div>
 
-        <button class="btn btn-primary" onclick="saveAnnouncement()">Save Announcement</button>
+        <button class="btn btn-primary" onclick="saveAnnouncement()">${t('btn_save_announcement')}</button>
       </div>
     </div>
 
-    <div class="modal-overlay" id="eventModal">
-      <div class="modal-box">
-        <div class="modal-header">
-          <h3>Add Calendar Event</h3>
-          <button class="modal-close" onclick="closeModal('eventModal')">✕</button>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Event Title</label>
-          <input id="eventTitle" class="form-input" placeholder="Supervisor Meeting">
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Date</label>
-          <input id="eventDate" type="date" class="form-input">
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Time</label>
-          <input id="eventTime" type="time" class="form-input">
-        </div>
-
-        <button class="btn btn-primary" onclick="saveEvent()">Save Event</button>
-      </div>
-    </div>
   `;
 }
+
+function openAnnouncementModal() {
+  document.getElementById('announcementTitle').value = '';
+  document.getElementById('announcementMessage').value = '';
+  openModal('announcementModal');
+}
+
+function saveAnnouncement() {
+  const title = document.getElementById('announcementTitle').value.trim();
+  const message = document.getElementById('announcementMessage').value.trim();
+  if (!title || !message) return showToast(t('err_announcement_required'), 'error');
+
+  const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
+  announcements.unshift({
+    title,
+    message,
+    date: new Date().toLocaleDateString(currentLang === 'ar' ? 'ar-AE' : 'en-US', { month: 'short', day: 'numeric' })
+  });
+  localStorage.setItem('announcements', JSON.stringify(announcements));
+
+  closeModal('announcementModal');
+  showToast(t('toast_created'), 'success');
+  loadTab('dashboard');
+}
+
+function deleteAnnouncement(index) {
+  const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
+  announcements.splice(index, 1);
+  localStorage.setItem('announcements', JSON.stringify(announcements));
+  showToast(t('toast_deleted'), 'info');
+  loadTab('dashboard');
+}
 // ── TEAMS ─────────────────────────────────────────────────────────────────────
+const TEAM_BANNER_PALETTE = [
+  { icon: 'fa-cloud',        grad: 'linear-gradient(135deg,#0ea5e9,#3d5a7d)' },
+  { icon: 'fa-code',         grad: 'linear-gradient(135deg,#8b5cf6,#5b21b6)' },
+  { icon: 'fa-briefcase',    grad: 'linear-gradient(135deg,#64748b,#334155)' },
+  { icon: 'fa-photo-film',   grad: 'linear-gradient(135deg,#ec4899,#be185d)' },
+  { icon: 'fa-laptop-code',  grad: 'linear-gradient(135deg,#14b8a6,#0f766e)' },
+  { icon: 'fa-globe',        grad: 'linear-gradient(135deg,#f59e0b,#b45309)' },
+];
+
+function teamCardBanner(tm, idx) {
+  const style = TEAM_BANNER_PALETTE[idx % TEAM_BANNER_PALETTE.length];
+  const bg = tm.CoverImage
+    ? `background-image:url('${escHtml(tm.CoverImage)}');background-size:cover;background-position:center;`
+    : `background:${style.grad};`;
+  return { style, bg };
+}
+
 function renderTeams(el, {teams}) {
   el.innerHTML = `
     <div class="page-header">
       <div><h2>${t('h_teams')}</h2><p>${teams.length} ${t('lbl_total')}</p></div>
       <button class="btn btn-primary" onclick="openCreateTeam()">${t('btn_new_team')}</button>
     </div>
-    <div class="full-panel">
-      ${teams.length ? `<div class="table-wrapper"><table>
-        <thead><tr><th>${t('th_team')}</th><th>${t('th_description')}</th><th>${t('th_leader')}</th><th>${t('th_students')}</th><th>${t('th_posts')}</th><th>${t('th_actions')}</th></tr></thead>
-        <tbody>${teams.map(tm=>`
-          <tr>
-            <td><strong>${escHtml(tm.TeamName)}</strong></td>
-            <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(tm.Description||'—')}</td>
-          <td>
-  ${
-    tm.LeaderName
-      ? `<span class="badge badge-green">${escHtml(tm.LeaderName)}</span>`
-      : (() => {
-          const leader = allLeaders.find(l => l.TeamID === tm.TeamID);
-          return leader
-            ? `<span class="badge badge-green">${escHtml(leader.Name)}</span>`
-            : `<span style="color:#f59e0b;font-size:12px;">No leader</span>`;
-        })()
-  }
-</td>
-            <td>${allStudents.filter(s=>s.TeamID===tm.TeamID).length}</td>
-            <td><span class="badge badge-blue">${tm.AchievementCount||0}</span></td>
-            <td>
-  <div style="display:flex;gap:6px;">
-    <button class="btn btn-sm btn-ghost"
-      onclick="openEditTeam(${tm.TeamID},'${escHtml(tm.TeamName)}','${escHtml(tm.Description||'')}')">
-      ✏️
-    </button>
+    ${teams.length ? `<div class="teams-card-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+      ${teams.map((tm, i) => {
+        const studentCount = allStudents.filter(s => s.TeamID === tm.TeamID).length;
+        const leader = tm.LeaderName ? { Name: tm.LeaderName } : allLeaders.find(l => l.TeamID === tm.TeamID);
+        const { style, bg } = teamCardBanner(tm, i);
+        return `
+        <div class="panel team-card" style="padding:0;overflow:hidden;cursor:pointer;" onclick="viewTeamDetail(${tm.TeamID})">
+          <div style="position:relative;height:80px;${bg}">
+            <div style="position:absolute;left:14px;bottom:-16px;width:38px;height:38px;border-radius:10px;background:${style.grad};display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,0,0,.2);border:3px solid #fff;">
+              <i class="fa-solid ${style.icon}" style="color:#fff;font-size:15px;"></i>
+            </div>
+            <button class="btn btn-sm" title="${t('lbl_change_cover')}" onclick="event.stopPropagation();document.getElementById('coverInput_${tm.TeamID}').click()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.45);color:#fff;border:none;width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              <i class="fa-solid fa-camera" style="font-size:12px;"></i>
+            </button>
+            <input type="file" accept="image/*" id="coverInput_${tm.TeamID}" style="display:none" onclick="event.stopPropagation()" onchange="uploadTeamCover(${tm.TeamID}, this)">
+          </div>
+          <div style="padding:22px 16px 14px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+              <h3 style="margin:0;font-size:15px;">${escHtml(tm.TeamName)}</h3>
+              <div style="display:flex;gap:6px;flex-shrink:0;" onclick="event.stopPropagation()">
+                <button class="btn btn-sm btn-ghost"
+                  onclick="openEditTeam(${tm.TeamID},'${escHtml(tm.TeamName)}','${escHtml(tm.Description||'')}')">
+                  ✏️
+                </button>
+                <button class="btn btn-sm btn-danger"
+                  onclick="deleteTeam(${tm.TeamID})">
+                  🗑️
+                </button>
+              </div>
+            </div>
+            <p class="text-muted" style="font-size:12px;margin:4px 0 10px;">${t('th_leader')}: ${leader ? escHtml(leader.Name) : t('no_leader')}</p>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding-top:10px;border-top:1px solid var(--border);">
+              <div style="display:flex;gap:14px;font-size:12px;color:var(--text-muted);">
+                <span><strong style="color:var(--text);">${studentCount}</strong> ${t('th_students')}</span>
+                <span><strong style="color:var(--text);">${tm.AchievementCount||0}</strong> ${t('th_posts')}</span>
+              </div>
+              <button class="btn btn-sm btn-ghost" style="flex-shrink:0;" onclick="event.stopPropagation();viewTeamDetail(${tm.TeamID})">${t('view_team')}</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>` : `<div class="full-panel"><div class="empty-state"><div class="empty-icon">👥</div><h3>${t('no_teams')}</h3></div></div>`}`;
+}
 
-    <button class="btn btn-sm btn-danger"
-      onclick="deleteTeam(${tm.TeamID})">
-      🗑️
-    </button>
-  </div>
-</td></td>
-          </tr>`).join('')}</tbody>
-      </table></div>` : `<div class="empty-state"><div class="empty-icon">👥</div><h3>${t('no_teams')}</h3></div>`}
-    </div>`;
+async function viewTeamDetail(teamId) {
+  viewingTeamId = teamId;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.sidebar-nav .nav-item')[2]?.classList.add('active');
+
+  const el = document.getElementById('pageContent');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+  try {
+    const [teams, achievements] = await Promise.all([
+      fetch('/api/teams').then(r => r.json()),
+      fetch('/api/admin/achievements', { headers: getHeaders() }).then(r => r.json())
+    ]);
+
+    const idx = teams.findIndex(tm => tm.TeamID === teamId);
+    const team = teams[idx];
+    if (!team) { el.innerHTML = `<div class="empty-state"><h3>${t('no_teams')}</h3></div>`; return; }
+
+    allTeams = teams;
+    document.getElementById('topbarTitle').textContent = team.TeamName;
+
+    const teamAchievements = achievements.filter(a => a.TeamID === teamId);
+    const studentCount = allStudents.filter(s => s.TeamID === teamId).length;
+    const leader = team.LeaderName ? { Name: team.LeaderName } : allLeaders.find(l => l.TeamID === teamId);
+    const { bg } = teamCardBanner(team, idx);
+
+    el.innerHTML = `
+      <button class="btn btn-ghost" style="margin-bottom:16px;" onclick="backToTeams()">${t('btn_back_to_teams')}</button>
+
+      <div class="panel" style="padding:0;overflow:hidden;margin-bottom:20px;">
+        <div style="position:relative;height:160px;${bg}">
+          <button class="btn btn-sm" title="${t('lbl_change_cover')}" onclick="document.getElementById('coverInputDetail').click()" style="position:absolute;top:12px;right:12px;background:rgba(0,0,0,.45);color:#fff;border:none;width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+            <i class="fa-solid fa-camera"></i>
+          </button>
+          <input type="file" accept="image/*" id="coverInputDetail" style="display:none" onchange="uploadTeamCover(${teamId}, this)">
+        </div>
+        <div style="padding:20px 24px;">
+          <h2 style="margin:0 0 6px;">${escHtml(team.TeamName)}</h2>
+          <p class="text-muted" style="margin:0 0 14px;">${escHtml(team.Description || '—')}</p>
+          <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:14px;">
+            <span>${t('th_leader')}: ${leader ? `<strong>${escHtml(leader.Name)}</strong>` : t('no_leader')}</span>
+            <span>${t('th_students')}: <strong>${studentCount}</strong></span>
+            <span>${t('th_posts')}: <strong>${teamAchievements.length}</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-header" style="margin-bottom:14px;">
+        <h3 style="margin:0;">${t('th_posts')}</h3>
+      </div>
+      ${teamAchievements.length ? `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:18px;">
+          ${teamAchievements.map(a => `
+          <div class="panel" style="padding:0;overflow:hidden;">
+            ${a.FirstImage
+              ? `<img src="${escHtml(a.FirstImage)}" style="width:100%;max-height:260px;object-fit:cover;display:block;">`
+              : ''}
+            <div style="padding:18px 20px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;">
+                ${statusBadge(a.Status)}
+                <button class="btn btn-sm btn-danger" onclick="deleteAchievementInTeamDetail(${a.AchievementID})">🗑️</button>
+              </div>
+              <h3 style="margin:0 0 4px;">${escHtml(a.Title)}</h3>
+              <p class="text-muted" style="font-size:13px;margin:0 0 12px;">${escHtml(a.CreatorName || '—')} · ${fmtDate(a.CreatedAt)}</p>
+              <p style="font-size:14px;line-height:1.6;margin:0 0 12px;white-space:pre-wrap;">${escHtml(a.Description || '')}</p>
+              <div id="post-docs-${a.AchievementID}" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+            </div>
+          </div>`).join('')}
+        </div>` : `<div class="full-panel"><div class="empty-state"><div class="empty-icon">📄</div><h3>${t('no_posts_yet')}</h3></div></div>`}`;
+
+    teamAchievements.forEach(a => loadPostDocuments(a.AchievementID));
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('err_load')}</h3></div>`;
+  }
+}
+
+const DOC_ICON = { pdf: 'fa-file-pdf', ppt: 'fa-file-powerpoint', pptx: 'fa-file-powerpoint', doc: 'fa-file-word', docx: 'fa-file-word' };
+
+async function loadPostDocuments(achievementId) {
+  try {
+    const docs = await fetch('/api/achievements/' + achievementId + '/documents').then(r => r.json());
+    const el = document.getElementById('post-docs-' + achievementId);
+    if (!el) return;
+    el.innerHTML = docs.map(d => {
+      const ext = d.FileName.split('.').pop().toLowerCase();
+      const icon = DOC_ICON[ext] || 'fa-file';
+      return `<a href="${escHtml(d.FilePath)}" download="${escHtml(d.FileName)}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:#ebebdf;border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;color:var(--text);text-decoration:none;"><i class="fa-solid ${icon}"></i> ${escHtml(d.FileName)}</a>`;
+    }).join('');
+  } catch (e) {}
+}
+
+function backToTeams() {
+  viewingTeamId = null;
+  switchTab('teams');
+}
+
+async function deleteAchievementInTeamDetail(achievementId) {
+  if (!confirm(t('confirm_delete_ach'))) return;
+  const r = await fetch('/api/admin/achievements/' + achievementId, { method: 'DELETE', headers: getHeaders() });
+  if (r.ok) { showToast(t('toast_deleted'), 'info'); viewTeamDetail(viewingTeamId); }
+  else showToast(t('toast_failed'), 'error');
+}
+
+async function uploadTeamCover(teamId, inputEl) {
+  const file = inputEl.files[0];
+  if (!file) return;
+  const fd = new FormData();
+  fd.append('coverImage', file);
+  try {
+    const r = await fetch('/api/admin/teams/' + teamId + '/cover', { method: 'PUT', headers: { Authorization: 'Bearer ' + token }, body: fd });
+    if (r.ok) {
+      showToast(t('toast_cover_updated'), 'success');
+      if (viewingTeamId === teamId) viewTeamDetail(teamId);
+      else loadTab('teams');
+    } else {
+      showToast(t('toast_cover_failed'), 'error');
+    }
+  } catch (e) {
+    showToast(t('toast_cover_failed'), 'error');
+  }
+  inputEl.value = '';
 }
 
 // ── LEADERS ───────────────────────────────────────────────────────────────────
@@ -1010,7 +1374,7 @@ function renderStudents(el, {teams, users}) {
             <td style="color:var(--text-muted);">${escHtml(s.Email)}</td>
             <td>${s.TeamName?`<span class="badge badge-blue">${escHtml(s.TeamName)}</span>`:`<span style="color:#f59e0b;font-size:12px;">${t('unassigned')}</span>`}</td>
             <td><div style="display:flex;gap:6px;">
-              <button class="btn btn-sm btn-ghost" onclick="openEditStudent(${s.UserID},'${escHtml(s.Name)}','${escHtml(s.Email)}',${s.TeamID||'null'})">✏️</button>
+              <button class="btn btn-sm btn-ghost" onclick="openEditStudent(${s.UserID},'${escHtml(s.Name)}','${escHtml(s.Email)}',${s.TeamID||'null'},'${escHtml(s.Phone||'')}','${escHtml(s.ProfilePicture||'')}')">✏️</button>
               <button class="btn btn-sm btn-danger" onclick="deleteStudent(${s.UserID})">🗑️</button>
             </div></td>
           </tr>`).join('')}</tbody>
@@ -1044,9 +1408,19 @@ function toggleLanguageMenu(event){
     .classList.toggle("show");
 }
 
+function toggleAddUserMenu(event) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  document
+    .getElementById("addUserMenu")
+    .classList.toggle("show");
+}
+
 window.onclick = function(e) {
   const adminDropdown = document.getElementById("adminDropdown");
   const languageDropdown = document.getElementById("languageDropdown");
+  const addUserMenu = document.getElementById("addUserMenu");
 
   if (!e.target.closest(".admin-menu") && adminDropdown) {
     adminDropdown.classList.remove("show");
@@ -1054,6 +1428,10 @@ window.onclick = function(e) {
 
   if (!e.target.closest(".language-menu") && languageDropdown) {
     languageDropdown.classList.remove("show");
+  }
+
+  if (!e.target.closest(".add-user-wrap") && addUserMenu) {
+    addUserMenu.classList.remove("show");
   }
 };
 
@@ -1103,8 +1481,8 @@ async function renderAchievements(el) {
 // ── USERS ─────────────────────────────────────────────────────────────────────
 function renderUsers(el, {teams, users}) {
   const leaders = users.leaders || [];
-  const students = users.students || [];
-  const supervisors = users.supervisors || [];
+const students = users.students || [];
+const supervisors = users.supervisors || [];
 
   const allUsers = [
     ...students.map(u => ({...u, Role:'Student'})),
@@ -1115,47 +1493,75 @@ function renderUsers(el, {teams, users}) {
   el.innerHTML = `
     <div class="page-header">
       <div>
-        <h2>Users</h2>
-        <p>Manage students, leaders, and supervisors in one place</p>
+        <h2>${t('h_users')}</h2>
+        <p>${t('sub_users')}</p>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
 <div class="add-user-wrap">
   <button class="btn btn-primary add-user-btn" onclick="toggleAddUserMenu(event)">
-    + Add User ▾
+    ${t('btn_add_user')}
   </button>
 
   <div id="addUserMenu" class="add-user-menu">
-    <button onclick="openCreateStudent()"> Add Student</button>
-    <button onclick="openCreateLeader()"> Add Leader</button>
-    <button onclick="openCreateSupervisor()"> Add Supervisor</button>
+    <button onclick="openCreateStudent()"> ${t('btn_add_student')}</button>
+    <button onclick="openCreateLeader()"> ${t('btn_new_leader')}</button>
+    <button onclick="openCreateSupervisor()"> ${t('btn_add_supervisor')}</button>
   </div>
 </div>
       </div>
     </div>
 
     <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-icon blue">👥</div>
-        <div class="stat-info"><h3>${allUsers.length}</h3><p>Total Users</p></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon green">🎓</div>
-        <div class="stat-info"><h3>${students.length}</h3><p>Students</p></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon purple">👤</div>
-        <div class="stat-info"><h3>${leaders.length}</h3><p>Leaders</p></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon gold">👁️</div>
-        <div class="stat-info"><h3>${supervisors.length}</h3><p>Supervisors</p></div>
-      </div>
+
+  <div class="stat-card tooltip-card">
+    <div class="stat-icon blue">🏢</div>
+    <div class="stat-info">
+      <h3>${allUsers.length}</h3>
+      <p>${t('lbl_total_users')}</p>
     </div>
+
+    <div class="card-tooltip">
+      ${t('lbl_students')}: ${students.length}<br>
+      ${t('lbl_leaders')}: ${leaders.length}<br>
+      ${t('nav_supervisors')}: ${supervisors.length}
+    </div>
+  </div>
+
+  <div class="stat-card tooltip-card">
+    <div class="stat-icon green">🎓</div>
+    <div class="stat-info">
+      <h3>${students.length + leaders.length}</h3>
+      <p>${t('lbl_interns')}</p>
+    </div>
+
+    <div class="card-tooltip">
+      ${t('lbl_students')}: ${students.length}<br>
+      ${t('lbl_leaders')}: ${leaders.length}
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon gold">🛡️</div>
+    <div class="stat-info">
+      <h3>${supervisors.length}</h3>
+      <p>${t('nav_supervisors')}</p>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon purple">👥</div>
+    <div class="stat-info">
+      <h3>${teams.length}</h3>
+      <p>${t('lbl_teams')}</p>
+    </div>
+  </div>
+
+</div>
 
    <div class="full-panel">
 
   <div class="panel-header">
-    <h3>All Users</h3>
+    <h3>${t('h_all_users')}</h3>
   </div>
 
   <div class="users-tools">
@@ -1163,22 +1569,22 @@ function renderUsers(el, {teams, users}) {
       type="text"
       id="userSearch"
       class="users-search"
-      placeholder="Search users..."
+      placeholder="${t('ph_search_users')}"
       onkeyup="filterUsersTable()">
 
     <select id="roleFilter"
       class="users-filter"
       onchange="filterUsersTable()">
-      <option value="">All Roles</option>
-      <option value="Student">Students</option>
-      <option value="Leader">Leaders</option>
-      <option value="Supervisor">Supervisors</option>
+      <option value="">${t('lbl_all_roles')}</option>
+      <option value="Student">${t('lbl_students')}</option>
+      <option value="Leader">${t('lbl_leaders')}</option>
+      <option value="Supervisor">${t('h_supervisors')}</option>
     </select>
 
     <select id="teamFilter"
       class="users-filter"
       onchange="filterUsersTable()">
-      <option value="">All Teams</option>
+      <option value="">${t('lbl_all_teams')}</option>
       ${teams.map(t => `
       <option value="${escHtml(t.TeamName)}">
         ${escHtml(t.TeamName)}
@@ -1193,11 +1599,11 @@ function renderUsers(el, {teams, users}) {
         <table>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Team</th>
-              <th>Actions</th>
+              <th>${t('th_name')}</th>
+              <th>${t('th_email')}</th>
+              <th>${t('lbl_role')}</th>
+              <th>${t('th_team')}</th>
+              <th>${t('th_actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -1205,7 +1611,7 @@ function renderUsers(el, {teams, users}) {
 <tr class="user-row"
 data-role="${u.Role}"
 data-team="${u.TeamName || '—'}"
-onclick="openUserPanel('${escHtml(u.Name)}','${escHtml(u.Email)}','${u.Role}','${u.TeamName || '—'}')">
+onclick="openUserPanel('${escHtml(u.Name)}','${escHtml(u.Email)}','${u.Role}','${u.TeamName || '—'}','${escHtml(u.Phone||'')}','${escHtml(u.ProfilePicture||'')}')">
 
   <td><strong>${escHtml(u.Name)}</strong></td>
 
@@ -1214,7 +1620,7 @@ onclick="openUserPanel('${escHtml(u.Name)}','${escHtml(u.Email)}','${u.Role}','$
   </td>
 
   <td>
-    <span class="badge badge-blue">${u.Role}</span>
+    <span class="badge badge-blue">${t('role_' + u.Role.toLowerCase())}</span>
   </td>
 
   <td>${u.TeamName || '—'}</td>
@@ -1223,7 +1629,7 @@ onclick="openUserPanel('${escHtml(u.Name)}','${escHtml(u.Email)}','${u.Role}','$
     <div style="display:flex;gap:6px;">
 
       ${u.Role === 'Student' ? `
-        <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openEditStudent(${u.UserID},'${escHtml(u.Name)}','${escHtml(u.Email)}',${u.TeamID||'null'})">✏️</button>
+        <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openEditStudent(${u.UserID},'${escHtml(u.Name)}','${escHtml(u.Email)}',${u.TeamID||'null'},'${escHtml(u.Phone||'')}','${escHtml(u.ProfilePicture||'')}')">✏️</button>
         <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteStudent(${u.UserID})">🗑️</button>
       ` : ''}
 
@@ -1244,72 +1650,342 @@ onclick="openUserPanel('${escHtml(u.Name)}','${escHtml(u.Email)}','${u.Role}','$
           </tbody>
         </table>
       </div>
-      ` : `<div class="empty-state"><div class="empty-icon">👥</div><h3>No users yet</h3></div>`}
+      ` : `<div class="empty-state"><div class="empty-icon">👥</div><h3>${t('no_users')}</h3></div>`}
     </div>
 
     <div id="userSidePanel" class="user-side-panel">
       <button class="close-panel" onclick="closeUserPanel()">✕</button>
-      <div class="panel-avatar">
+      <div class="panel-avatar" id="panelUserAvatar" style="overflow:hidden;">
   <i class="fa-solid fa-user"></i>
 </div>
       <h2 id="panelUserName"></h2>
       <p id="panelUserEmail"></p>
 
       <div class="panel-info">
-        <p><strong>Role:</strong> <span id="panelUserRole"></span></p>
-        <p><strong>Team:</strong> <span id="panelUserTeam"></span></p>
-        <p><strong>Status:</strong> Active</p>
+        <p><strong>${t('lbl_role')}:</strong> <span id="panelUserRole"></span></p>
+        <p><strong>${t('lbl_assign_team').replace(' *','')}:</strong> <span id="panelUserTeam"></span></p>
+        <p><strong>${t('lbl_phone')}:</strong> <span id="panelUserPhone"></span></p>
+        <p><strong>${t('th_status')}:</strong> ${t('lbl_active')}</p>
       </div>
     </div>
   `;
-  
+
 }
 
-// ── REPORTS ───────────────────────────────────────────────────────────────────
-function renderReports(el, {stats, teams, users}) {
+function filterUsersTable() {
+  const search = (document.getElementById('userSearch')?.value || '').toLowerCase().trim();
+  const role = document.getElementById('roleFilter')?.value || '';
+  const team = document.getElementById('teamFilter')?.value || '';
+
+  document.querySelectorAll('.user-row').forEach(row => {
+    const name = row.children[0]?.textContent.toLowerCase() || '';
+    const email = row.children[1]?.textContent.toLowerCase() || '';
+    const matchesSearch = !search || name.includes(search) || email.includes(search);
+    const matchesRole = !role || row.dataset.role === role;
+    const matchesTeam = !team || row.dataset.team === team;
+    row.style.display = (matchesSearch && matchesRole && matchesTeam) ? '' : 'none';
+  });
+}
+
+// ── CALENDAR ──────────────────────────────────────────────────────────────────
+let calendarViewDate = new Date();
+let calendarEventsCache = [];
+let remindersCache = [];
+let calendarSideTab = 'events';
+let editingEventId = null;
+
+function calLocale() { return currentLang === 'ar' ? 'ar-AE' : 'en-US'; }
+
+function calDowLabels() {
+  const base = new Date(2024, 0, 1); // a Monday
+  return [0,1,2,3,4,5,6].map(i => {
+    const d = new Date(base); d.setDate(base.getDate() + i);
+    return d.toLocaleDateString(calLocale(), { weekday: 'short' });
+  });
+}
+
+function calDateKey(y, m, d) { return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+
+async function renderCalendar(el) {
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    [calendarEventsCache, remindersCache] = await Promise.all([
+      fetch('/api/calendar-events', { headers: getHeaders() }).then(r => r.json()),
+      fetch('/api/reminders', { headers: getHeaders() }).then(r => r.json())
+    ]);
+  } catch (e) {
+    calendarEventsCache = []; remindersCache = [];
+  }
+  renderCalendarUI(el);
+}
+
+function switchCalSideTab(tabKey) {
+  calendarSideTab = tabKey;
+  renderCalendarUI(document.getElementById('pageContent'));
+}
+
+function calSidePanelBody(monthEvents) {
+  if (calendarSideTab === 'reminders') {
+    return `
+      <div style="display:flex;flex-direction:column;gap:10px;max-height:460px;overflow-y:auto;margin-bottom:14px;">
+        ${remindersCache.length ? remindersCache.map(r => `
+          <div style="background:${r.Completed ? '#ebebdf' : '#dce8f5'};border-radius:12px;padding:12px 14px;${r.Completed ? 'opacity:.6;' : ''}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+              <div style="flex:1;min-width:0;">
+                ${r.StartTime ? `<div style="font-size:11px;color:#3d5a7d;font-weight:700;">${escHtml(r.StartTime)}${r.EndTime ? ' - ' + escHtml(r.EndTime) : ''}</div>` : ''}
+                <div style="font-weight:700;font-size:14px;text-decoration:${r.Completed ? 'line-through' : 'none'};">${escHtml(r.Title)}</div>
+                ${r.Description ? `<div style="font-size:12px;color:var(--text-muted);">${escHtml(r.Description)}</div>` : ''}
+                ${r.ReminderDate ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${escHtml(r.ReminderDate)}</div>` : ''}
+              </div>
+              <div style="display:flex;gap:6px;flex-shrink:0;">
+                <button class="btn btn-sm btn-ghost" onclick="toggleReminder(${r.ReminderID},${r.Completed ? 0 : 1})">${r.Completed ? '↺' : '✓'}</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteReminderItem(${r.ReminderID})">🗑️</button>
+              </div>
+            </div>
+          </div>`).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_reminders')}</p>`}
+      </div>
+      <button class="btn btn-primary" style="width:100%;" onclick="openReminderModal()">${t('btn_add_reminder')}</button>`;
+  }
+
+
+  return `
+    <div style="display:flex;flex-direction:column;gap:14px;max-height:520px;overflow-y:auto;">
+      ${monthEvents.length ? monthEvents.map(ev => {
+        const d = new Date(ev.EventDate + 'T00:00:00');
+        return `<div style="display:flex;gap:12px;">
+          <div style="flex-shrink:0;background:#dce8f5;color:#3d5a7d;border-radius:10px;padding:8px 6px;text-align:center;width:46px;">
+            <div style="font-weight:800;font-size:15px;">${d.getDate()}</div>
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;">${d.toLocaleDateString(calLocale(), { month: 'short' })}</div>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;font-size:14px;">${escHtml(ev.Title)}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin:2px 0;">${escHtml(ev.EventDate)}${ev.EventTime ? ' • ' + escHtml(ev.EventTime) : ''}</div>
+            ${ev.Description ? `<div style="font-size:12px;color:var(--text-muted);">${escHtml(ev.Description)}</div>` : ''}
+            <div style="margin-top:6px;display:flex;gap:6px;">
+              <button class="btn btn-sm btn-ghost" onclick="openEventModal(${ev.EventID})">✏️</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteCalendarEvent(${ev.EventID})">🗑️</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_events_month')}</p>`}
+    </div>`;
+}
+
+function renderCalendarUI(el) {
+  const year = calendarViewDate.getFullYear();
+  const month = calendarViewDate.getMonth();
+  const firstDow = (new Date(year, month, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const eventsByDate = {};
+  calendarEventsCache.forEach(ev => {
+    (eventsByDate[ev.EventDate] = eventsByDate[ev.EventDate] || []).push(ev);
+  });
+
+  const now = new Date();
+  const todayKey = calDateKey(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const cells = [];
+  for (let i = 0; i < firstDow; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+  const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+  const monthEvents = calendarEventsCache
+    .filter(ev => ev.EventDate.startsWith(monthPrefix))
+    .slice()
+    .sort((a, b) => (a.EventDate + (a.EventTime || '')).localeCompare(b.EventDate + (b.EventTime || '')));
+
   el.innerHTML = `
     <div class="page-header">
-      <div>
-        <h2>Reports</h2>
-        <p>View internship summaries and system reports</p>
+      <div><h2>${t('nav_calendar')}</h2></div>
+      <button class="btn btn-primary" onclick="openEventModal()">${t('btn_add_event')}</button>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:start;">
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+          <button class="btn btn-sm btn-ghost" onclick="changeCalendarMonth(-1)">‹</button>
+          <h3 style="margin:0;text-transform:capitalize;">${calendarViewDate.toLocaleDateString(calLocale(), { month: 'long', year: 'numeric' })}</h3>
+          <button class="btn btn-sm btn-ghost" onclick="changeCalendarMonth(1)">›</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;color:var(--text-muted);font-weight:700;margin-bottom:6px;">
+          ${calDowLabels().map(d => `<div>${d}</div>`).join('')}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">
+          ${cells.map(d => {
+            if (!d) return `<div></div>`;
+            const key = calDateKey(year, month, d);
+            const has = !!eventsByDate[key];
+            const isToday = key === todayKey;
+            return `<div onclick="openEventModal(null,'${key}')" style="cursor:pointer;text-align:center;padding:10px 0;border-radius:10px;${isToday ? 'background:#dce8f5;' : ''}">
+              <div style="font-size:13px;font-weight:${isToday ? '700' : '500'};">${d}</div>
+              ${has ? `<div style="width:5px;height:5px;border-radius:50%;background:var(--primary);margin:4px auto 0;"></div>` : '<div style="height:9px;"></div>'}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="panel">
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <button class="btn btn-sm ${calendarSideTab === 'events' ? 'btn-primary' : 'btn-ghost'}" onclick="switchCalSideTab('events')">${t('tab_events')}</button>
+          <button class="btn btn-sm ${calendarSideTab === 'reminders' ? 'btn-primary' : 'btn-ghost'}" onclick="switchCalSideTab('reminders')">${t('tab_reminders')}</button>
+        </div>
+        ${calSidePanelBody(monthEvents)}
       </div>
     </div>
 
-    <div class="content-grid">
-      <div class="panel">
-        <div class="panel-header"><h3>Internship Progress Report</h3></div>
-        <p class="text-muted">Track overall internship progress, pending reviews, and completed achievements.</p>
+    <div class="modal-overlay" id="eventModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 id="eventModalTitle">${t('h_add_event')}</h3>
+          <button class="modal-close" onclick="closeModal('eventModal')">✕</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_event_title')}</label>
+          <input id="eventTitle" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_description')}</label>
+          <textarea id="eventDescription" class="form-textarea"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('th_date')}</label>
+          <input id="eventDate" type="date" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_time')}</label>
+          <input id="eventTime" type="time" class="form-input">
+        </div>
+        <button class="btn btn-primary" onclick="saveCalendarEvent()">${t('btn_save_event')}</button>
       </div>
+    </div>
 
-      <div class="panel">
-        <div class="panel-header"><h3>Students Performance Report</h3></div>
-        <p class="text-muted">Review students, submitted work, and achievement activity.</p>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header"><h3>Teams Report</h3></div>
-        <p class="text-muted">Monitor team members, leaders, and group activity.</p>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header"><h3>Achievements Report</h3></div>
-        <p class="text-muted">View published, pending, and reviewed achievements.</p>
+    <div class="modal-overlay" id="reminderModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>${t('h_add_reminder')}</h3>
+          <button class="modal-close" onclick="closeModal('reminderModal')">✕</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_reminder_title')}</label>
+          <input id="reminderTitle" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_description')}</label>
+          <textarea id="reminderDescription" class="form-textarea"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('th_date')}</label>
+          <input id="reminderDate" type="date" class="form-input">
+        </div>
+        <div style="display:flex;gap:10px;">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">${t('lbl_start_time')}</label>
+            <input id="reminderStart" type="time" class="form-input">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">${t('lbl_end_time')}</label>
+            <input id="reminderEnd" type="time" class="form-input">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveReminder()">${t('btn_save_reminder')}</button>
       </div>
     </div>
   `;
+}
+
+function changeCalendarMonth(delta) {
+  calendarViewDate.setMonth(calendarViewDate.getMonth() + delta);
+  renderCalendarUI(document.getElementById('pageContent'));
+}
+
+function openReminderModal() {
+  document.getElementById('reminderTitle').value = '';
+  document.getElementById('reminderDescription').value = '';
+  const now = new Date();
+  document.getElementById('reminderDate').value = calDateKey(now.getFullYear(), now.getMonth(), now.getDate());
+  document.getElementById('reminderStart').value = '';
+  document.getElementById('reminderEnd').value = '';
+  openModal('reminderModal');
+}
+
+async function saveReminder() {
+  const title = document.getElementById('reminderTitle').value.trim();
+  const description = document.getElementById('reminderDescription').value.trim();
+  const reminderDate = document.getElementById('reminderDate').value;
+  const startTime = document.getElementById('reminderStart').value;
+  const endTime = document.getElementById('reminderEnd').value;
+  if (!title) return showToast(t('err_reminder_required'), 'error');
+
+  const r = await fetch('/api/reminders', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ title, description, reminderDate, startTime, endTime }) });
+  if (r.ok) {
+    closeModal('reminderModal');
+    showToast(t('toast_created'), 'success');
+    renderCalendar(document.getElementById('pageContent'));
+  } else {
+    showToast(t('toast_failed'), 'error');
+  }
+}
+
+async function toggleReminder(id, completed) {
+  await fetch('/api/reminders/' + id + '/toggle', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ completed }) });
+  renderCalendar(document.getElementById('pageContent'));
+}
+
+async function deleteReminderItem(id) {
+  if (!confirm(t('confirm_delete_reminder'))) return;
+  await fetch('/api/reminders/' + id, { method: 'DELETE', headers: getHeaders() });
+  showToast(t('toast_deleted'), 'info');
+  renderCalendar(document.getElementById('pageContent'));
+}
+
+function openEventModal(eventId, prefillDate) {
+  editingEventId = eventId || null;
+  const ev = eventId ? calendarEventsCache.find(e => e.EventID === eventId) : null;
+  document.getElementById('eventModalTitle').textContent = ev ? t('h_edit_event') : t('h_add_event');
+  document.getElementById('eventTitle').value = ev ? ev.Title : '';
+  document.getElementById('eventDescription').value = ev ? (ev.Description || '') : '';
+  const now = new Date();
+  document.getElementById('eventDate').value = ev ? ev.EventDate : (prefillDate || calDateKey(now.getFullYear(), now.getMonth(), now.getDate()));
+  document.getElementById('eventTime').value = ev ? (ev.EventTime || '') : '';
+  openModal('eventModal');
+}
+
+async function saveCalendarEvent() {
+  const title = document.getElementById('eventTitle').value.trim();
+  const description = document.getElementById('eventDescription').value.trim();
+  const eventDate = document.getElementById('eventDate').value;
+  const eventTime = document.getElementById('eventTime').value;
+  if (!title || !eventDate) return showToast(t('err_event_required'), 'error');
+
+  const url = editingEventId ? '/api/admin/calendar-events/' + editingEventId : '/api/admin/calendar-events';
+  const method = editingEventId ? 'PUT' : 'POST';
+  const r = await fetch(url, { method, headers: getHeaders(), body: JSON.stringify({ title, description, eventDate, eventTime }) });
+  if (r.ok) {
+    closeModal('eventModal');
+    showToast(editingEventId ? t('toast_updated') : t('toast_created'), 'success');
+    renderCalendar(document.getElementById('pageContent'));
+  } else {
+    showToast(t('toast_failed'), 'error');
+  }
+}
+
+async function deleteCalendarEvent(id) {
+  if (!confirm(t('confirm_delete_event'))) return;
+  const r = await fetch('/api/admin/calendar-events/' + id, { method: 'DELETE', headers: getHeaders() });
+  if (r.ok) { showToast(t('toast_deleted'), 'info'); renderCalendar(document.getElementById('pageContent')); }
+  else showToast(t('toast_failed'), 'error');
 }
 
 // ── SETTINGS ──────────────────────────────────────────────────────────────────
 function renderSettings(el) {
-  const settings = JSON.parse(localStorage.getItem("admin_settings")) || {
-    systemName: "InternTrack",
-    language: currentLang === "ar" ? "Arabic" : "English / Arabic",
-    duration: "16",
-    appearance: "Light Mode",
-    notifications: "Enabled",
-    adminName: document.getElementById("adminName")?.textContent || "Admin",
-    adminEmail: "admin@interntrack.com"
-  };
+  const settingCard = (icon, title, desc, type) => `
+    <div class="settings-icon-card" onclick="openSettingsModal('${type}')" style="cursor:pointer;border:1px solid var(--border);border-radius:14px;padding:22px 18px;text-align:center;transition:box-shadow .15s,transform .15s;">
+      <div style="width:48px;height:48px;border-radius:50%;background:#dce8f5;color:#3d5a7d;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:18px;">
+        <i class="fa-solid ${icon}"></i>
+      </div>
+      <h4 style="margin:0 0 4px;font-size:14px;">${title}</h4>
+      <p class="text-muted" style="margin:0;font-size:12px;">${desc}</p>
+    </div>`;
 
   el.innerHTML = `
     <div class="page-header">
@@ -1319,84 +1995,29 @@ function renderSettings(el) {
       </div>
     </div>
 
-    <div class="settings-grid">
-
-      <div class="settings-section">
-        <h3>${currentLang === "ar" ? "الإعدادات العامة" : "General Settings"}</h3>
-
-        <div class="setting-item">
-          <div>
-            <h4>${currentLang === "ar" ? "اسم النظام" : "System Name"}</h4>
-            <p>${currentLang === "ar" ? "تغيير اسم الموقع" : "Change platform display name"}</p>
-          </div>
-          <span id="settingSystemName">${settings.systemName}</span>
-          <button class="btn btn-sm btn-ghost" onclick="openSettingsModal('systemName')">${currentLang === "ar" ? "تعديل" : "Edit"}</button>
-        </div>
-
-        <div class="setting-item">
-          <div>
-            <h4>${currentLang === "ar" ? "اللغة الافتراضية" : "Default Language"}</h4>
-            <p>${currentLang === "ar" ? "اختيار لغة واجهة النظام" : "Choose system interface language"}</p>
-          </div>
-          <span id="settingLanguage">${settings.language}</span>
-          <button class="btn btn-sm btn-ghost" onclick="openSettingsModal('language')">${currentLang === "ar" ? "إدارة" : "Manage"}</button>
-        </div>
-
-        <div class="setting-item">
-          <div>
-            <h4>${currentLang === "ar" ? "مدة البرنامج" : "Program Duration"}</h4>
-            <p>${currentLang === "ar" ? "مدة التدريب بالأسابيع" : "Internship duration in weeks"}</p>
-          </div>
-          <span id="settingDuration">${settings.duration} ${currentLang === "ar" ? "أسبوع" : "Weeks"}</span>
-          <button class="btn btn-sm btn-ghost" onclick="openSettingsModal('duration')">${currentLang === "ar" ? "تعديل" : "Edit"}</button>
-        </div>
+    <div class="full-panel" style="margin-bottom:20px;">
+      <div class="panel-header"><h3>${currentLang === "ar" ? "الإعدادات العامة" : "General Settings"}</h3></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;">
+        ${settingCard('fa-signature', currentLang === "ar" ? "اسم النظام" : "System Name", currentLang === "ar" ? "تغيير اسم الموقع" : "Change platform display name", 'systemName')}
+        ${settingCard('fa-language', currentLang === "ar" ? "اللغة الافتراضية" : "Default Language", currentLang === "ar" ? "اختيار لغة واجهة النظام" : "Choose system interface language", 'language')}
+        ${settingCard('fa-calendar-week', currentLang === "ar" ? "مدة البرنامج" : "Program Duration", currentLang === "ar" ? "مدة التدريب بالأسابيع" : "Internship duration in weeks", 'duration')}
       </div>
+    </div>
 
-      <div class="settings-section">
-        <h3>${currentLang === "ar" ? "الصلاحيات والأمان" : "Access & Security"}</h3>
-
-        <div class="setting-item">
-          <div>
-            <h4>${currentLang === "ar" ? "صلاحيات الأدوار" : "Role Permissions"}</h4>
-            <p>${currentLang === "ar" ? "صلاحيات المشرف والطالب" : "Supervisor and Student permissions"}</p>
-          </div>
-          <span class="badge badge-green">${currentLang === "ar" ? "مفعلة" : "Enabled"}</span>
-          <button class="btn btn-sm btn-ghost" onclick="openSettingsModal('permissions')">${currentLang === "ar" ? "عرض" : "View"}</button>
-        </div>
-
-
-        <div class="setting-item">
-          <div>
-            <h4>${currentLang === "ar" ? "ملف الأدمن" : "Admin Profile"}</h4>
-            <p>${currentLang === "ar" ? "بيانات حساب المسؤول" : "Administrator account details"}</p>
-          </div>
-          <span id="settingAdminName">${settings.adminName}</span>
-          <button class="btn btn-sm btn-ghost" onclick="openSettingsModal('adminProfile')">${currentLang === "ar" ? "تحديث" : "Update"}</button>
-        </div>
+    <div class="full-panel" style="margin-bottom:20px;">
+      <div class="panel-header"><h3>${currentLang === "ar" ? "الصلاحيات والأمان" : "Access & Security"}</h3></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;">
+        ${settingCard('fa-user-shield', currentLang === "ar" ? "صلاحيات الأدوار" : "Role Permissions", currentLang === "ar" ? "صلاحيات المشرف والطالب" : "Supervisor and Student permissions", 'permissions')}
+        ${settingCard('fa-user-gear', currentLang === "ar" ? "ملف الأدمن" : "Admin Profile", currentLang === "ar" ? "بيانات حساب المسؤول" : "Administrator account details", 'adminProfile')}
       </div>
+    </div>
 
-      <div class="settings-section">
-        <h3>${currentLang === "ar" ? "تفضيلات النظام" : "System Preferences"}</h3>
-
-        <div class="setting-item">
-          <div>
-            <h4>${currentLang === "ar" ? "المظهر" : "Appearance"}</h4>
-            <p>${currentLang === "ar" ? "الوضع الفاتح أو الداكن" : "Light or dark mode"}</p>
-          </div>
-          <span id="settingAppearance">${settings.appearance}</span>
-          <button class="btn btn-sm btn-ghost" onclick="openSettingsModal('appearance')">${currentLang === "ar" ? "تخصيص" : "Customize"}</button>
-        </div>
-
-        <div class="setting-item">
-          <div>
-            <h4>${currentLang === "ar" ? "الإشعارات" : "Notifications"}</h4>
-            <p>${currentLang === "ar" ? "تشغيل أو إيقاف التنبيهات" : "Enable or disable alerts"}</p>
-          </div>
-          <span id="settingNotifications">${settings.notifications}</span>
-          <button class="btn btn-sm btn-ghost" onclick="openSettingsModal('notifications')">${currentLang === "ar" ? "إدارة" : "Manage"}</button>
-        </div>
+    <div class="full-panel">
+      <div class="panel-header"><h3>${currentLang === "ar" ? "تفضيلات النظام" : "System Preferences"}</h3></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;">
+        ${settingCard('fa-palette', currentLang === "ar" ? "المظهر" : "Appearance", currentLang === "ar" ? "الوضع الفاتح أو الداكن" : "Light or dark mode", 'appearance')}
+        ${settingCard('fa-bell', currentLang === "ar" ? "الإشعارات" : "Notifications", currentLang === "ar" ? "تشغيل أو إيقاف التنبيهات" : "Enable or disable alerts", 'notifications')}
       </div>
-
     </div>
 
     <div id="settingsModal" class="settings-modal">
@@ -1625,6 +2246,71 @@ function savePermissions() {
   showToast(currentLang === "ar" ? "تم تحديث الصلاحيات" : "Permissions updated", "success");
 }
 
+// ── REQUESTS ──────────────────────────────────────────────────────────────────
+async function renderRequests(el) {
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const messages = await fetch('/api/admin/help-messages', { headers: getHeaders() }).then(r => r.json());
+    const statusColor = { pending: '#f59e0b', done: '#10b981', rejected: '#ef4444' };
+    el.innerHTML = `
+      <div class="page-header">
+        <div><h2>${t('nav_messages')}</h2><p>${t('sub_requests')}</p></div>
+      </div>
+      ${messages.length ? messages.map(m => `
+        <div class="panel" style="margin-bottom:12px;border-left:4px solid ${statusColor[m.Status] || '#94a3b8'};">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+            <div>
+              <strong>${escHtml(m.SenderName)}</strong>
+              <span class="badge badge-blue" style="margin-left:8px;">${t('role_' + m.SenderRole.toLowerCase())}</span>
+            </div>
+            <div style="display:flex;gap:6px;flex-shrink:0;align-items:center;">
+              <select class="form-input" style="padding:6px 10px;font-size:12px;width:auto;" onchange="changeRequestStatus(${m.MessageID}, this.value)">
+                <option value="pending" ${m.Status === 'pending' ? 'selected' : ''}>${t('status_pending')}</option>
+                <option value="done" ${m.Status === 'done' ? 'selected' : ''}>${t('status_done')}</option>
+                <option value="rejected" ${m.Status === 'rejected' ? 'selected' : ''}>${t('status_rejected')}</option>
+              </select>
+              <button class="btn btn-sm btn-danger" onclick="deleteRequest(${m.MessageID})">🗑️</button>
+            </div>
+          </div>
+          <p style="margin:10px 0 4px;font-size:14px;">${escHtml(m.Message)}</p>
+          <p class="text-muted" style="font-size:12px;margin:0;">${fmtDate(m.CreatedAt)}</p>
+        </div>
+      `).join('') : `<div class="full-panel"><div class="empty-state"><div class="empty-icon">📭</div><h3>${t('no_requests')}</h3></div></div>`}
+    `;
+    updateRequestsBadge(messages);
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('err_load')}</h3></div>`;
+  }
+}
+
+function updateRequestsBadge(messages) {
+  const badge = document.getElementById('requestsBadge');
+  if (!badge) return;
+  const pending = messages.filter(m => m.Status === 'pending').length;
+  if (pending > 0) { badge.style.display = 'inline'; badge.textContent = pending; }
+  else { badge.style.display = 'none'; }
+}
+
+async function refreshRequestsBadge() {
+  try {
+    const messages = await fetch('/api/admin/help-messages', { headers: getHeaders() }).then(r => r.json());
+    updateRequestsBadge(messages);
+  } catch (e) {}
+}
+
+async function changeRequestStatus(id, status) {
+  await fetch('/api/admin/help-messages/' + id + '/status', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ status }) });
+  showToast(t('toast_updated'), 'success');
+  renderRequests(document.getElementById('pageContent'));
+}
+
+async function deleteRequest(id) {
+  if (!confirm(t('confirm_delete_request'))) return;
+  await fetch('/api/admin/help-messages/' + id, { method: 'DELETE', headers: getHeaders() });
+  showToast(t('toast_deleted'), 'info');
+  renderRequests(document.getElementById('pageContent'));
+}
+
 // ── TEAM CRUD ─────────────────────────────────────────────────────────────────
 function openCreateTeam() {
   editingTeamId = null;
@@ -1710,19 +2396,41 @@ async function deleteLeader(id) {
 }
 
 // ── STUDENT CRUD ──────────────────────────────────────────────────────────────
+let pendingStudentPhoto = null;
+
+function previewStudentPhoto(file) {
+  if (!file) return;
+  pendingStudentPhoto = file;
+  document.getElementById('stuPhotoPreview').innerHTML = `<img src="${URL.createObjectURL(file)}" style="width:100%;height:100%;object-fit:cover;">`;
+  document.getElementById('stuPhotoRemoveWrap').style.display = 'block';
+}
+
+function removeStudentPhoto() {
+  pendingStudentPhoto = 'REMOVE';
+  document.getElementById('stuPhotoInput').value = '';
+  document.getElementById('stuPhotoPreview').innerHTML = '<i class="fa-solid fa-user"></i>';
+  document.getElementById('stuPhotoRemoveWrap').style.display = 'none';
+}
+
 function openCreateStudent() {
   editingStudentId = null;
+  pendingStudentPhoto = null;
   document.getElementById('studentModalTitle').textContent = t('modal_add_student');
-  ['stuName','stuEmail','stuPassword'].forEach(id => document.getElementById(id).value = '');
+  ['stuName','stuEmail','stuPassword','stuPhone'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('stuPasswordGroup').style.display = 'block';
+  document.getElementById('stuPhotoGroup').style.display = 'none';
   document.getElementById('stuTeam').innerHTML = `<option value="">${t('no_team_label')}</option>` + allTeams.map(tm=>`<option value="${tm.TeamID}">${escHtml(tm.TeamName)}</option>`).join('');
   openModal('studentModal');
 }
-function openUserPanel(name,email,role,team){
+function openUserPanel(name,email,role,team,phone,profilePicture){
   document.getElementById("panelUserName").textContent = name;
   document.getElementById("panelUserEmail").textContent = email;
   document.getElementById("panelUserRole").textContent = role;
   document.getElementById("panelUserTeam").textContent = team;
+  document.getElementById("panelUserPhone").textContent = phone || '—';
+  document.getElementById("panelUserAvatar").innerHTML = profilePicture
+    ? `<img src="${escHtml(profilePicture)}" style="width:100%;height:100%;object-fit:cover;">`
+    : '<i class="fa-solid fa-user"></i>';
 
   document.getElementById("userSidePanel").classList.add("open");
 }
@@ -1730,13 +2438,20 @@ function openUserPanel(name,email,role,team){
 function closeUserPanel(){
   document.getElementById("userSidePanel").classList.remove("open");
 }
-function openEditStudent(id, name, email, teamId) {
+function openEditStudent(id, name, email, teamId, phone, profilePicture) {
   editingStudentId = id;
+  pendingStudentPhoto = null;
   document.getElementById('studentModalTitle').textContent = t('modal_edit_student');
   document.getElementById('stuName').value = name;
   document.getElementById('stuEmail').value = email;
   document.getElementById('stuPassword').value = '';
+  document.getElementById('stuPhone').value = phone || '';
   document.getElementById('stuPasswordGroup').style.display = 'none';
+  document.getElementById('stuPhotoGroup').style.display = 'block';
+  document.getElementById('stuPhotoPreview').innerHTML = profilePicture
+    ? `<img src="${escHtml(profilePicture)}" style="width:100%;height:100%;object-fit:cover;">`
+    : '<i class="fa-solid fa-user"></i>';
+  document.getElementById('stuPhotoRemoveWrap').style.display = profilePicture ? 'block' : 'none';
   document.getElementById('stuTeam').innerHTML = `<option value="">${t('no_team_label')}</option>` + allTeams.map(tm=>`<option value="${tm.TeamID}" ${tm.TeamID==teamId?'selected':''}>${escHtml(tm.TeamName)}</option>`).join('');
   openModal('studentModal');
 }
@@ -1744,13 +2459,23 @@ async function saveStudent() {
   const name=document.getElementById('stuName').value.trim();
   const email=document.getElementById('stuEmail').value.trim();
   const password=document.getElementById('stuPassword').value;
+  const phone=document.getElementById('stuPhone').value.trim();
   const teamId=document.getElementById('stuTeam').value;
   if (!name||!email) return showToast(t('err_name_email'),'error');
   if (!editingStudentId&&!password) return showToast(t('err_password'),'error');
   let r;
-  if (editingStudentId) r=await fetch('/api/admin/users/'+editingStudentId,{method:'PUT',headers:getHeaders(),body:JSON.stringify({name,email,teamId:teamId||null})});
-  else r=await fetch('/api/admin/users',{method:'POST',headers:getHeaders(),body:JSON.stringify({name,email,password,role:'Student',teamId:teamId||null})});
-  if (r.ok) { closeModal('studentModal'); showToast(editingStudentId?t('toast_student_updated'):t('toast_student_added'),'success'); loadTab('users'); }
+  if (editingStudentId) r=await fetch('/api/admin/users/'+editingStudentId,{method:'PUT',headers:getHeaders(),body:JSON.stringify({name,email,teamId:teamId||null,phone:phone||null})});
+  else r=await fetch('/api/admin/users',{method:'POST',headers:getHeaders(),body:JSON.stringify({name,email,password,role:'Student',teamId:teamId||null,phone:phone||null})});
+  if (r.ok) {
+    if (editingStudentId && pendingStudentPhoto === 'REMOVE') {
+      await fetch('/api/admin/users/'+editingStudentId+'/photo', { method:'DELETE', headers:getHeaders() });
+    } else if (editingStudentId && pendingStudentPhoto) {
+      const fd = new FormData();
+      fd.append('profileImage', pendingStudentPhoto);
+      await fetch('/api/admin/users/'+editingStudentId+'/photo', { method:'POST', headers:{ Authorization:'Bearer '+token }, body: fd });
+    }
+    closeModal('studentModal'); showToast(editingStudentId?t('toast_student_updated'):t('toast_student_added'),'success'); loadTab('users');
+  }
   else { const d=await r.json(); showToast(d.error||t('toast_failed'),'error'); }
 }
 async function deleteStudent(id) {
@@ -1828,137 +2553,38 @@ async function deleteAchievement(id) {
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
+// ── INIT ──────────────────────────────────────────────────────────────────────
 (async () => {
   const savedLang = localStorage.getItem('interntrack_lang') || 'en';
   currentLang = savedLang;
-const langBtn = document.getElementById('langBtn');
 
-if (langBtn) {
-  langBtn.textContent = savedLang === 'ar' ? 'English' : 'عربي';
-}
+  const langBtn = document.getElementById('langBtn');
+
+  if (langBtn) {
+    langBtn.textContent = savedLang === 'ar' ? 'English' : 'عربي';
+  }
+
   applyTranslations();
 
   try {
-    const me = await fetch('/api/auth/me',{headers:{Authorization:'Bearer '+token}}).then(r=>r.json());
+    const me = await fetch('/api/auth/me', {
+      headers: { Authorization: 'Bearer ' + token }
+    }).then(r => r.json());
+
     document.getElementById('adminName').textContent = me.Name || 'Admin';
   } catch(e) {}
-  switchTab('dashboard');
+
+  const savedTab = localStorage.getItem("adminCurrentTab") || "dashboard";
+  switchTab(savedTab);
+  refreshRequestsBadge();
+  setTimeout(() => {
+  const savedScroll = localStorage.getItem("adminScrollY") || 0;
+  window.scrollTo(0, parseInt(savedScroll));
+}, 100);
 })();
-function toggleAddUserMenu(event){
-  event.preventDefault();
-  event.stopPropagation();
-  document.getElementById("addUserMenu")?.classList.toggle("show");
-}
-
-function toggleNotifications(event){
-  event.preventDefault();
-  event.stopPropagation();
-  document.getElementById("notificationsBox")?.classList.toggle("show");
-}
-
-function filterUsersTable(){
-  const search = document.getElementById("userSearch")?.value.toLowerCase() || "";
-  const role = document.getElementById("roleFilter")?.value || "";
-  const team = document.getElementById("teamFilter")?.value || "";
-
-  document.querySelectorAll(".user-row").forEach(row => {
-    const rowText = row.innerText.toLowerCase();
-    const rowRole = row.dataset.role || "";
-    const rowTeam = row.dataset.team || "";
-
-    const matchSearch = rowText.includes(search);
-    const matchRole = !role || rowRole === role;
-    const matchTeam = !team || rowTeam === team;
-
-    row.style.display = matchSearch && matchRole && matchTeam ? "" : "none";
-  });
-}
-
-document.addEventListener("click", function(e){
-  if (!e.target.closest(".add-user-wrap")) {
-    document.getElementById("addUserMenu")?.classList.remove("show");
-  }
-
-  if (!e.target.closest(".notif-btn") && !e.target.closest(".notifications-box")) {
-    document.getElementById("notificationsBox")?.classList.remove("show");
-  }
+window.addEventListener("scroll", () => {
+  localStorage.setItem("adminScrollY", window.scrollY);
 });
-function openAnnouncementModal() {
-  openModal("announcementModal");
-}
-
-function saveAnnouncement() {
-  const title = document.getElementById("announcementTitle").value.trim();
-  const message = document.getElementById("announcementMessage").value.trim();
-
-  if (!title || !message) {
-    showToast("Please fill all fields", "error");
-    return;
-  }
-
-  const announcements =
-    JSON.parse(localStorage.getItem("announcements")) || [];
-
-  announcements.unshift({
-    title,
-    message,
-    date: "Today"
-  });
-
-  localStorage.setItem("announcements", JSON.stringify(announcements));
-
-  closeModal("announcementModal");
-  showToast("Announcement added", "success");
-  loadTab("dashboard");
-}
-
-function deleteAnnouncement(index) {
-  const announcements =
-    JSON.parse(localStorage.getItem("announcements")) || [];
-
-  announcements.splice(index, 1);
-  localStorage.setItem("announcements", JSON.stringify(announcements));
-  loadTab("dashboard");
-}
-
-function openEventModal() {
-  openModal("eventModal");
-}
-
-function saveEvent() {
-  const title = document.getElementById("eventTitle").value.trim();
-  const date = document.getElementById("eventDate").value;
-  const time = document.getElementById("eventTime").value;
-
-  if (!title || !date || !time) {
-    showToast("Please fill all fields", "error");
-    return;
-  }
-
-  const events =
-    JSON.parse(localStorage.getItem("calendarEvents")) || [];
-
-  events.unshift({
-    title,
-    date,
-    time
-  });
-
-  localStorage.setItem("calendarEvents", JSON.stringify(events));
-
-  closeModal("eventModal");
-  showToast("Event added", "success");
-  loadTab("dashboard");
-}
-
-function deleteEvent(index) {
-  const events =
-    JSON.parse(localStorage.getItem("calendarEvents")) || [];
-
-  events.splice(index, 1);
-  localStorage.setItem("calendarEvents", JSON.stringify(events));
-  loadTab("dashboard");
-}
 </script>
 </body>
 </html>

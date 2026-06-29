@@ -16,8 +16,11 @@ const {
   authenticateToken,
   authorizeRole,
   setUserClaims,
-  setDbHelpers
+  setDbHelpers,
+  signLocalToken
 } = require("./auth");
+
+const bcrypt = require("bcryptjs");
 
 // Initialize Firebase Admin SDK
 initFirebase();
@@ -34,15 +37,15 @@ app.use(cookieParser());
 
 // ==================== MULTER UPLOAD ====================
 
+const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, "public", "uploads");
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, "public", "uploads");
-
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    if (!fs.existsSync(UPLOAD_DIR)) {
+      fs.mkdirSync(UPLOAD_DIR, { recursive: true });
     }
 
-    cb(null, uploadDir);
+    cb(null, UPLOAD_DIR);
   },
 
   filename: (req, file, cb) => {
@@ -53,23 +56,20 @@ const storage = multer.diskStorage({
   }
 });
 
+const ALLOWED_IMAGE_TYPES = /jpeg|jpg|png|gif|webp/;
+const ALLOWED_DOC_TYPES   = /pdf|doc|docx|ppt|pptx/;
+const ALLOWED_DOC_MIMES   = /pdf|msword|officedocument|presentation|wordprocessingml|powerpoint/;
+
 const upload = multer({
   storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024
-  },
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB for documents
   fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const extname = allowedTypes.test(
-      path.extname(file.originalname).toLowerCase()
-    );
-    const mimetype = allowedTypes.test(file.mimetype);
-
-    if (extname && mimetype) {
+    const ext  = path.extname(file.originalname).toLowerCase().replace('.', '');
+    const mime = file.mimetype;
+    if (ALLOWED_IMAGE_TYPES.test(ext) || ALLOWED_DOC_TYPES.test(ext) || ALLOWED_DOC_MIMES.test(mime)) {
       return cb(null, true);
     }
-
-    cb(new Error("Only image files are allowed!"));
+    cb(new Error("Only images, PDF, Word, and PowerPoint files are allowed."));
   }
 });
 
@@ -89,6 +89,27 @@ app.get("/api/firebase-config", (req, res) => {
     appId: process.env.FIREBASE_APP_ID
   });
 });
+
+// ==================== SERVER-SENT EVENTS ====================
+
+const sseClients = new Set();
+
+app.get("/api/events", (req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+  sseClients.add(res);
+  const heartbeat = setInterval(() => res.write(":ping\n\n"), 25000);
+  req.on("close", () => { clearInterval(heartbeat); sseClients.delete(res); });
+});
+
+function broadcast(resource) {
+  const payload = `data: ${JSON.stringify({ resource })}\n\n`;
+  sseClients.forEach(client => client.write(payload));
+}
+
+// ==================== AUTH ROUTES ====================
 
 app.post("/api/auth/session", async (req, res) => {
   try {
@@ -146,6 +167,39 @@ app.post("/api/auth/session", async (req, res) => {
 app.post("/api/auth/logout", (req, res) => {
   res.clearCookie("token");
   res.json({ message: "Logged out successfully" });
+});
+
+app.post("/api/auth/local-login", (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: "Email and password required" });
+
+    const user = dbHelpers.getUserByEmail(email);
+    if (!user || !user.Password || user.Password === "firebase-auth-user") {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    const valid = bcrypt.compareSync(password, user.Password);
+    if (!valid) return res.status(401).json({ error: "Invalid credentials" });
+
+    const token = signLocalToken({
+      uid:    `local_${user.UserID}`,
+      email:  user.Email,
+      role:   user.Role,
+      teamId: user.TeamID || null,
+      exp:    Math.floor(Date.now() / 1000) + 3600
+    });
+
+    const redirectUrl = user.Role === "Admin"      ? "/admin-dashboard.html"
+                      : user.Role === "Leader"     ? "/leader-dashboard.html"
+                      : user.Role === "Supervisor" ? "/supervisor-dashboard.html"
+                      :                              "/student-dashboard.html";
+
+    res.cookie("token", token, { maxAge: 3600000, httpOnly: false, sameSite: "lax", path: "/" });
+    res.json({ token, redirectUrl, user: { email: user.Email, role: user.Role } });
+  } catch (err) {
+    res.status(500).json({ error: "Login failed" });
+  }
 });
 
 app.post("/api/auth/supervisor-session", async (req, res) => {
@@ -279,6 +333,97 @@ app.get("/api/statistics", (req, res) => {
   }
 });
 
+// ==================== CALENDAR EVENTS ====================
+// Shared calendar: any logged-in role can view, only Admin can create/edit/delete.
+
+app.get("/api/calendar-events", authenticateToken, (req, res) => {
+  try {
+    res.json(dbHelpers.getAllCalendarEvents());
+  } catch (error) {
+    res.status(500).json({
+      error: "Failed to fetch calendar events"
+    });
+  }
+});
+
+app.post(
+  "/api/admin/calendar-events",
+  authenticateToken,
+  authorizeRole("Admin", "Supervisor"),
+  (req, res) => {
+    try {
+      const { title, description, eventDate, eventTime } = req.body;
+
+      if (!title || !eventDate) {
+        return res.status(400).json({
+          error: "Title and date are required"
+        });
+      }
+
+      dbHelpers.createCalendarEvent(title, description, eventDate, eventTime, req.user.userId);
+
+      broadcast("calendar");
+      res.json({ message: "Event created" });
+    } catch (error) {
+      res.status(500).json({
+        error: "Failed to create event"
+      });
+    }
+  }
+);
+
+app.put(
+  "/api/admin/calendar-events/:id",
+  authenticateToken,
+  authorizeRole("Admin", "Supervisor"),
+  (req, res) => {
+    try {
+      const { title, description, eventDate, eventTime } = req.body;
+
+      if (!title || !eventDate) {
+        return res.status(400).json({
+          error: "Title and date are required"
+        });
+      }
+
+      dbHelpers.updateCalendarEvent(req.params.id, title, description, eventDate, eventTime);
+
+      broadcast("calendar");
+      res.json({ message: "Event updated" });
+    } catch (error) {
+      res.status(500).json({
+        error: "Failed to update event"
+      });
+    }
+  }
+);
+
+app.delete(
+  "/api/admin/calendar-events/:id",
+  authenticateToken,
+  authorizeRole("Admin", "Supervisor"),
+  (req, res) => {
+    try {
+      dbHelpers.deleteCalendarEvent(req.params.id);
+
+      broadcast("calendar");
+      res.json({ message: "Event deleted" });
+    } catch (error) {
+      res.status(500).json({
+        error: "Failed to delete event"
+      });
+    }
+  }
+);
+
+app.get("/api/achievements/:id/documents", (req, res) => {
+  try {
+    res.json(dbHelpers.getAchievementDocuments(req.params.id));
+  } catch (e) {
+    res.status(500).json({ error: "Failed to fetch documents" });
+  }
+});
+
 app.post("/api/achievements/:id/comments", (req, res) => {
   try {
     const { content, authorName } = req.body;
@@ -291,6 +436,7 @@ app.post("/api/achievements/:id/comments", (req, res) => {
 
     dbHelpers.addComment(content, req.params.id, null, authorName);
 
+    broadcast("comment");
     res.json({
       message: "Comment added"
     });
@@ -311,6 +457,7 @@ app.post("/api/achievements/:id/like", (req, res) => {
 
     const likeCount = dbHelpers.getLikeCount(req.params.id);
 
+    broadcast("like");
     res.json({
       liked,
       likeCount
@@ -348,10 +495,10 @@ app.post(
   "/api/student/achievements",
   authenticateToken,
   authorizeRole("Student"),
-  upload.array("images", 5),
+  upload.fields([{ name: 'images', maxCount: 5 }, { name: 'documents', maxCount: 10 }]),
   (req, res) => {
     try {
-      const { title, description } = req.body;
+      const { title, description, weekLabel } = req.body;
 
       if (!title || !description) {
         return res.status(400).json({
@@ -372,20 +519,29 @@ app.post(
         description,
         user.TeamID,
         req.user.userId,
-        "pending"
+        "pending",
+        weekLabel || null
       );
 
-      if (req.files) {
-        req.files.forEach((file) => {
-          dbHelpers.addImage(
+      const allFiles = [...(req.files?.images || []), ...(req.files?.documents || [])];
+      allFiles.forEach((file) => {
+        const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
+        const isDoc = ALLOWED_DOC_TYPES.test(ext);
+        if (isDoc) {
+          dbHelpers.addDocument(
             "/uploads/" + file.filename,
+            file.originalname,
+            ext.toUpperCase(),
             result.lastInsertRowid
           );
-        });
-      }
+        } else {
+          dbHelpers.addImage("/uploads/" + file.filename, result.lastInsertRowid);
+        }
+      });
 
+      broadcast("achievement");
       res.json({
-        message: "Achievement submitted for review",
+        message: "Weekly summary submitted for review",
         achievementId: result.lastInsertRowid
       });
     } catch (error) {
@@ -402,6 +558,7 @@ app.put(
   "/api/student/achievements/:id",
   authenticateToken,
   authorizeRole("Student"),
+  upload.fields([{ name: 'images', maxCount: 5 }, { name: 'documents', maxCount: 10 }]),
   (req, res) => {
     try {
       const achievement = dbHelpers.getAchievementById(req.params.id);
@@ -433,6 +590,23 @@ app.put(
         "pending"
       );
 
+      const allFiles = [...(req.files?.images || []), ...(req.files?.documents || [])];
+      allFiles.forEach((file) => {
+        const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
+        const isDoc = ALLOWED_DOC_TYPES.test(ext);
+        if (isDoc) {
+          dbHelpers.addDocument(
+            "/uploads/" + file.filename,
+            file.originalname,
+            ext.toUpperCase(),
+            req.params.id
+          );
+        } else {
+          dbHelpers.addImage("/uploads/" + file.filename, req.params.id);
+        }
+      });
+
+      broadcast("achievement");
       res.json({
         message: "Updated and resubmitted for review"
       });
@@ -466,6 +640,7 @@ app.delete(
 
       dbHelpers.deleteAchievement(req.params.id);
 
+      broadcast("achievement");
       res.json({
         message: "Deleted"
       });
@@ -476,8 +651,419 @@ app.delete(
     }
   }
 );
+// ==================== TEAM WORKSPACE ROUTES ====================
 
+app.get('/api/team-workspace', authenticateToken, (req, res) => {
+  try {
+    const user = dbHelpers.getUserByEmail(req.user.email);
+
+    if (!user || !user.TeamID) {
+      return res.status(400).json({
+        error: 'User is not assigned to a team'
+      });
+    }
+
+    res.json({
+      team: dbHelpers.getTeamById(user.TeamID),
+      members: dbHelpers.getTeamMembers(user.TeamID),
+      tasks: dbHelpers.getTeamTasks(user.TeamID),
+      chat: dbHelpers.getTeamChat(user.TeamID)
+    });
+
+  } catch (err) {
+    console.error('Team Workspace Error:', err);
+    res.status(500).json({
+      error: 'Failed to load team workspace'
+    });
+  }
+});
+
+app.post('/api/team-workspace/tasks', authenticateToken, (req, res) => {
+  try {
+    const user = dbHelpers.getUserByEmail(req.user.email);
+    if (!user || !user.TeamID) {
+      return res.status(400).json({ error: 'User is not assigned to a team' });
+    }
+    if (user.Role !== 'Leader') {
+      return res.status(403).json({ error: 'Only the team leader can assign tasks' });
+    }
+    const { title, description, assignedTo, dueDate } = req.body;
+    if (!title || !title.trim()) {
+      return res.status(400).json({ error: 'Title is required' });
+    }
+    dbHelpers.createTeamTask(user.TeamID, title.trim(), description, assignedTo || null, user.UserID, dueDate || null);
+    broadcast('team-workspace');
+    res.json({ message: 'Task created' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create task' });
+  }
+});
+
+app.put('/api/team-workspace/tasks/:id/status', authenticateToken, (req, res) => {
+  try {
+    const user = dbHelpers.getUserByEmail(req.user.email);
+    if (!user || !user.TeamID) {
+      return res.status(400).json({ error: 'User is not assigned to a team' });
+    }
+    const task = dbHelpers.getTeamTaskById(req.params.id);
+    if (!task || Number(task.TeamID) !== Number(user.TeamID)) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    if (user.Role !== 'Leader' && Number(task.AssignedTo) !== Number(user.UserID)) {
+      return res.status(403).json({ error: 'You can only update tasks assigned to you' });
+    }
+    const { status } = req.body;
+    if (!['todo', 'progress', 'done'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+    dbHelpers.updateTeamTaskStatus(req.params.id, status);
+    broadcast('team-workspace');
+    res.json({ message: 'Task updated' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update task' });
+  }
+});
+
+app.delete('/api/team-workspace/tasks/:id', authenticateToken, (req, res) => {
+  try {
+    const user = dbHelpers.getUserByEmail(req.user.email);
+    if (!user || !user.TeamID) {
+      return res.status(400).json({ error: 'User is not assigned to a team' });
+    }
+    if (user.Role !== 'Leader') {
+      return res.status(403).json({ error: 'Only the team leader can delete tasks' });
+    }
+    const task = dbHelpers.getTeamTaskById(req.params.id);
+    if (!task || Number(task.TeamID) !== Number(user.TeamID)) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    dbHelpers.deleteTeamTask(req.params.id);
+    broadcast('team-workspace');
+    res.json({ message: 'Task deleted' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete task' });
+  }
+});
+
+app.get('/api/team-workspace/notes', authenticateToken, (req, res) => {
+  try {
+    const user = dbHelpers.getUserByEmail(req.user.email);
+    if (!user || !user.TeamID) {
+      return res.status(400).json({ error: 'User is not assigned to a team' });
+    }
+    res.json(dbHelpers.getTeamNotes(user.TeamID));
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch notes' });
+  }
+});
+
+app.post('/api/team-workspace/notes', authenticateToken, (req, res) => {
+  try {
+    const user = dbHelpers.getUserByEmail(req.user.email);
+    if (!user || !user.TeamID) {
+      return res.status(400).json({ error: 'User is not assigned to a team' });
+    }
+    const { title } = req.body;
+    if (!title || !title.trim()) {
+      return res.status(400).json({ error: 'Title is required' });
+    }
+    dbHelpers.createTeamNote(user.TeamID, title.trim(), user.UserID);
+    broadcast('team-workspace');
+    res.json({ message: 'Note created' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create note' });
+  }
+});
+
+app.put('/api/team-workspace/notes/:id/toggle', authenticateToken, (req, res) => {
+  try {
+    const user = dbHelpers.getUserByEmail(req.user.email);
+    if (!user || !user.TeamID) {
+      return res.status(400).json({ error: 'User is not assigned to a team' });
+    }
+    const note = dbHelpers.getTeamNoteById(req.params.id);
+    if (!note || Number(note.TeamID) !== Number(user.TeamID)) {
+      return res.status(404).json({ error: 'Note not found' });
+    }
+    dbHelpers.toggleTeamNote(req.params.id, req.body.completed);
+    broadcast('team-workspace');
+    res.json({ message: 'Note updated' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update note' });
+  }
+});
+
+app.delete('/api/team-workspace/notes/:id', authenticateToken, (req, res) => {
+  try {
+    const user = dbHelpers.getUserByEmail(req.user.email);
+    if (!user || !user.TeamID) {
+      return res.status(400).json({ error: 'User is not assigned to a team' });
+    }
+    const note = dbHelpers.getTeamNoteById(req.params.id);
+    if (!note || Number(note.TeamID) !== Number(user.TeamID)) {
+      return res.status(404).json({ error: 'Note not found' });
+    }
+    dbHelpers.deleteTeamNote(req.params.id);
+    broadcast('team-workspace');
+    res.json({ message: 'Note deleted' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete note' });
+  }
+});
+
+app.get('/api/team-workspace/todos', authenticateToken, (req, res) => {
+  try {
+    const user = dbHelpers.getUserByEmail(req.user.email);
+    if (!user || !user.TeamID) {
+      return res.status(400).json({ error: 'User is not assigned to a team' });
+    }
+    res.json(dbHelpers.getTeamTodos(user.TeamID));
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load team todos' });
+  }
+});
+
+app.get('/api/team-workspace/links', authenticateToken, (req, res) => {
+  try {
+    const user = dbHelpers.getUserByEmail(req.user.email);
+    if (!user || !user.TeamID) {
+      return res.status(400).json({ error: 'User is not assigned to a team' });
+    }
+    res.json(dbHelpers.getTeamLinks(user.TeamID));
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load team links' });
+  }
+});
+
+app.post('/api/team-workspace/links', authenticateToken, (req, res) => {
+  try {
+    const user = dbHelpers.getUserByEmail(req.user.email);
+    if (!user || !user.TeamID) {
+      return res.status(400).json({ error: 'User is not assigned to a team' });
+    }
+    const { title, url } = req.body;
+    if (!url || !url.trim()) {
+      return res.status(400).json({ error: 'URL is required' });
+    }
+    dbHelpers.addTeamLink(user.TeamID, title?.trim() || null, url.trim(), user.UserID);
+    broadcast('team-workspace');
+    res.json({ message: 'Link added' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to add link' });
+  }
+});
+
+app.delete('/api/team-workspace/links/:id', authenticateToken, (req, res) => {
+  try {
+    const user = dbHelpers.getUserByEmail(req.user.email);
+    if (!user || !user.TeamID) {
+      return res.status(400).json({ error: 'User is not assigned to a team' });
+    }
+    const link = dbHelpers.getTeamLinkById(req.params.id);
+    if (!link || Number(link.TeamID) !== Number(user.TeamID)) {
+      return res.status(404).json({ error: 'Link not found' });
+    }
+    dbHelpers.deleteTeamLink(req.params.id);
+    broadcast('team-workspace');
+    res.json({ message: 'Link deleted' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete link' });
+  }
+});
 // ==================== LEADER ROUTES ====================
+app.post("/api/help-messages", authenticateToken, (req, res) => {
+  try {
+    const { message } = req.body;
+
+    const user = dbHelpers.getUserByEmail(req.user.email);
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({
+        error: "Message is required"
+      });
+    }
+
+    dbHelpers.createHelpMessage(
+      user.UserID,
+      user.Name,
+      user.Role,
+      message.trim()
+    );
+
+    broadcast("help-messages");
+    res.json({
+      success: true
+    });
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      error: "Failed to send message"
+    });
+  }
+});
+
+app.get("/api/help-messages/mine", authenticateToken, (req, res) => {
+  try {
+    res.json(dbHelpers.getHelpMessagesBySender(req.user.userId));
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to fetch your messages"
+    });
+  }
+});
+
+app.get(
+  "/api/admin/help-messages",
+  authenticateToken,
+  authorizeRole("Admin"),
+  (req, res) => {
+    try {
+      res.json(dbHelpers.getAllHelpMessages());
+    } catch (error) {
+      res.status(500).json({
+        error: "Failed to fetch help messages"
+      });
+    }
+  }
+);
+
+app.put(
+  "/api/admin/help-messages/:id/status",
+  authenticateToken,
+  authorizeRole("Admin"),
+  (req, res) => {
+    try {
+      const { status } = req.body;
+      if (!["pending", "done", "rejected"].includes(status)) {
+        return res.status(400).json({
+          error: "Invalid status"
+        });
+      }
+      dbHelpers.updateHelpMessageStatus(req.params.id, status);
+      broadcast("help-messages");
+      res.json({ message: "Status updated" });
+    } catch (error) {
+      res.status(500).json({
+        error: "Failed to update message"
+      });
+    }
+  }
+);
+
+app.delete(
+  "/api/admin/help-messages/:id",
+  authenticateToken,
+  authorizeRole("Admin"),
+  (req, res) => {
+    try {
+      dbHelpers.deleteHelpMessage(req.params.id);
+      broadcast("help-messages");
+      res.json({ message: "Deleted" });
+    } catch (error) {
+      res.status(500).json({
+        error: "Failed to delete message"
+      });
+    }
+  }
+);
+
+// ==================== PERSONAL REMINDERS & TO-DO (private per user) ====================
+
+app.get("/api/reminders", authenticateToken, (req, res) => {
+  try {
+    res.json(dbHelpers.getRemindersByUser(req.user.userId));
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch reminders" });
+  }
+});
+
+app.post("/api/reminders", authenticateToken, (req, res) => {
+  try {
+    const { title, description, reminderDate, startTime, endTime } = req.body;
+    if (!title) {
+      return res.status(400).json({ error: "Title is required" });
+    }
+    dbHelpers.createReminder(req.user.userId, title, description, reminderDate, startTime, endTime);
+    res.json({ message: "Reminder created" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create reminder" });
+  }
+});
+
+app.put("/api/reminders/:id", authenticateToken, (req, res) => {
+  try {
+    const { title, description, reminderDate, startTime, endTime } = req.body;
+    if (!title) {
+      return res.status(400).json({ error: "Title is required" });
+    }
+    dbHelpers.updateReminder(req.params.id, req.user.userId, title, description, reminderDate, startTime, endTime);
+    res.json({ message: "Reminder updated" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update reminder" });
+  }
+});
+
+app.put("/api/reminders/:id/toggle", authenticateToken, (req, res) => {
+  try {
+    dbHelpers.toggleReminder(req.params.id, req.user.userId, req.body.completed);
+    res.json({ message: "Reminder updated" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update reminder" });
+  }
+});
+
+app.delete("/api/reminders/:id", authenticateToken, (req, res) => {
+  try {
+    dbHelpers.deleteReminder(req.params.id, req.user.userId);
+    res.json({ message: "Reminder deleted" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete reminder" });
+  }
+});
+
+app.get("/api/todos", authenticateToken, (req, res) => {
+  try {
+    res.json(dbHelpers.getTodosByUser(req.user.userId));
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch to-do items" });
+  }
+});
+
+app.post("/api/todos", authenticateToken, (req, res) => {
+  try {
+    const { title } = req.body;
+    if (!title) {
+      return res.status(400).json({ error: "Title is required" });
+    }
+    dbHelpers.createTodo(req.user.userId, title);
+    broadcast('team-workspace');
+    res.json({ message: "To-do created" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create to-do item" });
+  }
+});
+
+app.put("/api/todos/:id/toggle", authenticateToken, (req, res) => {
+  try {
+    dbHelpers.toggleTodo(req.params.id, req.user.userId, req.body.completed);
+    broadcast('team-workspace');
+    res.json({ message: "To-do updated" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update to-do item" });
+  }
+});
+
+app.delete("/api/todos/:id", authenticateToken, (req, res) => {
+  try {
+    dbHelpers.deleteTodo(req.params.id, req.user.userId);
+    broadcast('team-workspace');
+    res.json({ message: "To-do deleted" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete to-do item" });
+  }
+});
 
 app.get(
   "/api/leader/achievements",
@@ -513,7 +1099,7 @@ app.post(
   "/api/leader/achievements",
   authenticateToken,
   authorizeRole("Leader"),
-  upload.array("images", 5),
+  upload.fields([{ name: 'images', maxCount: 5 }, { name: 'documents', maxCount: 10 }]),
   (req, res) => {
     try {
       const { title, description, status } = req.body;
@@ -544,15 +1130,23 @@ app.post(
         status || "published"
       );
 
-      if (req.files) {
-        req.files.forEach((file) => {
-          dbHelpers.addImage(
+      const allFiles = [...(req.files?.images || []), ...(req.files?.documents || [])];
+      allFiles.forEach((file) => {
+        const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
+        const isDoc = ALLOWED_DOC_TYPES.test(ext);
+        if (isDoc) {
+          dbHelpers.addDocument(
             "/uploads/" + file.filename,
+            file.originalname,
+            ext.toUpperCase(),
             result.lastInsertRowid
           );
-        });
-      }
+        } else {
+          dbHelpers.addImage("/uploads/" + file.filename, result.lastInsertRowid);
+        }
+      });
 
+      broadcast("achievement");
       res.json({
         message: "Created",
         achievementId: result.lastInsertRowid
@@ -571,6 +1165,7 @@ app.put(
   "/api/leader/achievements/:id",
   authenticateToken,
   authorizeRole("Leader"),
+  upload.fields([{ name: 'images', maxCount: 5 }, { name: 'documents', maxCount: 10 }]),
   (req, res) => {
     try {
       const achievement = dbHelpers.getAchievementById(req.params.id);
@@ -596,6 +1191,23 @@ app.put(
         status || achievement.Status
       );
 
+      const allFiles = [...(req.files?.images || []), ...(req.files?.documents || [])];
+      allFiles.forEach((file) => {
+        const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
+        const isDoc = ALLOWED_DOC_TYPES.test(ext);
+        if (isDoc) {
+          dbHelpers.addDocument(
+            "/uploads/" + file.filename,
+            file.originalname,
+            ext.toUpperCase(),
+            req.params.id
+          );
+        } else {
+          dbHelpers.addImage("/uploads/" + file.filename, req.params.id);
+        }
+      });
+
+      broadcast("achievement");
       res.json({
         message: "Updated"
       });
@@ -656,6 +1268,7 @@ app.post(
         );
       }
 
+      broadcast("achievement");
       res.json({
         message:
           action === "approve"
@@ -686,6 +1299,7 @@ app.delete(
 
       dbHelpers.deleteAchievement(req.params.id);
 
+      broadcast("achievement");
       res.json({
         message: "Deleted"
       });
@@ -734,6 +1348,7 @@ app.post(
         leaderId || null
       );
 
+      broadcast("teams");
       res.json({
         message: "Team created"
       });
@@ -778,6 +1393,7 @@ app.put(
           : existingTeam.LeaderUserID
       );
 
+      broadcast("teams");
       res.json({
         message: "Team updated"
       });
@@ -799,12 +1415,42 @@ app.delete(
     try {
       dbHelpers.deleteTeam(req.params.id);
 
+      broadcast("teams");
       res.json({
         message: "Team deleted"
       });
     } catch (error) {
       res.status(500).json({
         error: "Failed to delete team"
+      });
+    }
+  }
+);
+
+app.put(
+  "/api/admin/teams/:id/cover",
+  authenticateToken,
+  authorizeRole("Admin"),
+  upload.single("coverImage"),
+  (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          error: "No image uploaded"
+        });
+      }
+
+      const coverImage = "/uploads/" + req.file.filename;
+      dbHelpers.updateTeamCoverImage(req.params.id, coverImage);
+
+      broadcast("teams");
+      res.json({
+        message: "Cover image updated",
+        coverImage
+      });
+    } catch (error) {
+      res.status(500).json({
+        error: "Failed to update cover image"
       });
     }
   }
@@ -841,7 +1487,7 @@ app.post(
   authorizeRole("Admin"),
   async (req, res) => {
     try {
-      const { name, email, password, role, teamId } = req.body;
+      const { name, email, password, role, teamId, phone } = req.body;
 
       if (!name || !email || !password || !role) {
         return res.status(400).json({
@@ -857,32 +1503,27 @@ app.post(
         });
       }
 
-      const fbUser = await admin.auth().createUser({
-        email,
-        password,
-        displayName: name
-      });
+      let uid = null;
+      try {
+        const fbUser = await admin.auth().createUser({ email, password, displayName: name });
+        await setUserClaims(fbUser.uid, role, teamId || null);
+        uid = fbUser.uid;
+        dbHelpers.createUser(name, email, null, role, teamId || null, phone || null);
+      } catch (fbErr) {
+        if (fbErr.code && fbErr.code.startsWith("auth/")) {
+          // Firebase rejected it (e.g. email already exists) — surface the error
+          return res.status(400).json({ error: fbErr.message || "Firebase error" });
+        }
+        // Network unreachable — create locally with hashed password so user can still log in
+        console.warn("[user creation] Firebase unreachable, creating locally:", fbErr.message);
+        dbHelpers.createUser(name, email, password, role, teamId || null, phone || null);
+      }
 
-      await setUserClaims(fbUser.uid, role, teamId || null);
-
-      dbHelpers.createUser(
-        name,
-        email,
-        null,
-        role,
-        teamId || null
-      );
-
-      res.json({
-        message: "User created",
-        uid: fbUser.uid
-      });
+      broadcast("users");
+      res.json({ message: "User created", uid });
     } catch (error) {
       console.error("Create user error:", error);
-
-      res.status(500).json({
-        error: error.message || "Failed to create user"
-      });
+      res.status(500).json({ error: error.message || "Failed to create user" });
     }
   }
 );
@@ -893,15 +1534,19 @@ app.put(
   authorizeRole("Admin"),
   (req, res) => {
     try {
-      const { name, email, teamId } = req.body;
+      const { name, email, teamId, phone } = req.body;
+      const existing = dbHelpers.getUserById(req.params.id);
 
       dbHelpers.updateUser(
         req.params.id,
         name,
         email,
-        teamId
+        teamId,
+        phone,
+        existing?.ProfilePicture
       );
 
+      broadcast("users");
       res.json({
         message: "User updated"
       });
@@ -909,6 +1554,63 @@ app.put(
       res.status(500).json({
         error: "Failed to update user"
       });
+    }
+  }
+);
+
+app.post(
+  "/api/admin/users/:id/photo",
+  authenticateToken,
+  authorizeRole("Admin"),
+  upload.single("profileImage"),
+  (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No image uploaded" });
+      }
+      const existing = dbHelpers.getUserById(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      const profilePicture = "/uploads/" + req.file.filename;
+      dbHelpers.updateUser(
+        req.params.id,
+        existing.Name,
+        existing.Email,
+        existing.TeamID,
+        existing.Phone,
+        profilePicture
+      );
+      broadcast("users");
+      res.json({ message: "Profile picture updated", profilePicture });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update profile picture" });
+    }
+  }
+);
+
+app.delete(
+  "/api/admin/users/:id/photo",
+  authenticateToken,
+  authorizeRole("Admin"),
+  (req, res) => {
+    try {
+      const existing = dbHelpers.getUserById(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      dbHelpers.updateUser(
+        req.params.id,
+        existing.Name,
+        existing.Email,
+        existing.TeamID,
+        existing.Phone,
+        null
+      );
+      broadcast("users");
+      res.json({ message: "Profile picture removed" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to remove profile picture" });
     }
   }
 );
@@ -921,6 +1623,7 @@ app.delete(
     try {
       dbHelpers.deleteUser(req.params.id);
 
+      broadcast("users");
       res.json({
         message: "User deleted"
       });
@@ -990,7 +1693,9 @@ app.put(
           dbUser.UserID,
           name || dbUser.Name,
           email || dbUser.Email,
-          dbUser.TeamID || null
+          dbUser.TeamID || null,
+          dbUser.Phone || null,
+          req.file ? "/uploads/" + req.file.filename : dbUser.ProfilePicture
         );
       }
 
@@ -1009,6 +1714,96 @@ app.put(
     }
   }
 );
+
+// ==================== SELF-SERVICE PROFILE UPDATE (any role) ====================
+// Updates the caller's own name/email/password/phone. Tries Firebase first;
+// if the account isn't Firebase-backed (or Firebase is unreachable), falls
+// back to updating the local record only so the request still succeeds.
+
+app.put("/api/profile", authenticateToken, async (req, res) => {
+  try {
+    const { name, email, password, phone } = req.body;
+    const currentEmail = req.user.email;
+
+    const dbUser = dbHelpers.getUserByEmail(currentEmail);
+    if (!dbUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (password && password.trim() !== "" && password.length < 6) {
+      return res.status(400).json({
+        error: "Password must be at least 6 characters."
+      });
+    }
+
+    let updatedEmail = dbUser.Email;
+
+    try {
+      const firebaseUser = await admin.auth().getUserByEmail(currentEmail);
+      const updateData = {};
+
+      if (name && name.trim() !== "") updateData.displayName = name.trim();
+      if (email && email.trim() !== "" && email.trim() !== currentEmail) updateData.email = email.trim();
+      if (password && password.trim() !== "") updateData.password = password;
+
+      if (Object.keys(updateData).length > 0) {
+        await admin.auth().updateUser(firebaseUser.uid, updateData);
+      }
+      if (updateData.email) updatedEmail = updateData.email;
+    } catch (fbErr) {
+      console.warn("[profile update] Firebase update skipped:", fbErr.message);
+    }
+
+    dbHelpers.updateUser(
+      dbUser.UserID,
+      name && name.trim() !== "" ? name.trim() : dbUser.Name,
+      updatedEmail,
+      dbUser.TeamID || null,
+      phone !== undefined ? phone : dbUser.Phone,
+      dbUser.ProfilePicture
+    );
+
+    res.json({
+      message: "Profile updated",
+      name: name && name.trim() !== "" ? name.trim() : dbUser.Name,
+      email: updatedEmail,
+      phone: phone !== undefined ? phone : dbUser.Phone
+    });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    res.status(500).json({
+      error: error.message || "Failed to update profile"
+    });
+  }
+});
+
+app.post("/api/profile/photo", authenticateToken, upload.single("profileImage"), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No image uploaded" });
+    }
+    const dbUser = dbHelpers.getUserByEmail(req.user.email);
+    if (!dbUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    if (dbUser.Role === "Student") {
+      return res.status(403).json({ error: "Only an admin can change your profile picture." });
+    }
+    const profilePicture = "/uploads/" + req.file.filename;
+    dbHelpers.updateUser(
+      dbUser.UserID,
+      dbUser.Name,
+      dbUser.Email,
+      dbUser.TeamID || null,
+      dbUser.Phone,
+      profilePicture
+    );
+    res.json({ message: "Profile picture updated", profilePicture });
+  } catch (error) {
+    console.error("Profile photo update error:", error);
+    res.status(500).json({ error: "Failed to update profile picture" });
+  }
+});
 
 app.get(
   "/api/admin/achievements",
@@ -1037,6 +1832,7 @@ app.delete(
     try {
       dbHelpers.deleteAchievement(req.params.id);
 
+      broadcast("achievement");
       res.json({
         message: "Deleted"
       });
@@ -1116,6 +1912,7 @@ app.post(
         authorName
       );
 
+      broadcast("feedback");
       res.json({
         message: "Feedback posted"
       });
@@ -1282,6 +2079,7 @@ app.get("/supervisor-dashboard.html", requirePageAuth, (req, res) => {
   );
 });
 
+app.use("/uploads", express.static(UPLOAD_DIR));
 app.use(express.static(path.join(__dirname, "public")));
 
 // ==================== SEED DEFAULT ADMIN ====================
@@ -1333,10 +2131,8 @@ async function startServer() {
   try {
     console.log("1 - Start server");
 
-    const uploadDir = path.join(__dirname, "public", "uploads");
-
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    if (!fs.existsSync(UPLOAD_DIR)) {
+      fs.mkdirSync(UPLOAD_DIR, { recursive: true });
     }
 
     console.log("2 - Before database");

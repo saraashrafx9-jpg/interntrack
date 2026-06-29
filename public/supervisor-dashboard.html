@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Supervisor Dashboard – InternTrack</title>
+  <title>InternTrack – SGMB Supervisor Portal</title>
   <link rel="stylesheet" href="/css/style.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script>
@@ -44,67 +44,72 @@
       border-radius: 12px 12px 0 0; border: 1px solid var(--border);
       border-bottom: 2px solid var(--primary);
     }
-    .achievement-expand {
-      border: 1px solid var(--border); border-radius: 12px;
-      margin-bottom: 10px; background: var(--card-bg);
-      overflow: hidden;
-    }
-    .achievement-expand-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 16px; cursor: pointer; gap: 12px;
-    }
-    .achievement-expand-header:hover { background: #f8fafc; }
-    .achievement-expand-body { padding: 0 16px 16px; display: none; }
-    .achievement-expand-body.open { display: block; }
-    .feedback-form-area { margin-top: 14px; }
-    .feedback-form-area textarea {
-      width: 100%; min-height: 90px; padding: 10px 12px;
-      border: 1.5px solid var(--border); border-radius: 10px;
-      font-size: 14px; font-family: inherit; resize: vertical;
-      outline: none; transition: border-color .2s;
-    }
-    .feedback-form-area textarea:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,.1); }
-    .btn-feedback { background: #f59e0b; color: #fff; border: none; border-radius: 10px; padding: 9px 18px; font-size: 13px; font-weight: 700; cursor: pointer; }
-    .btn-feedback:hover { background: #d97706; }
-    .btn-feedback:disabled { background: #fcd34d; cursor: not-allowed; }
     .filter-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
     .filter-tab { padding: 7px 16px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--card-bg); font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-muted); transition: all .2s; }
     .filter-tab.active, .filter-tab:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
     .stat-icon.amber { background: #fef3c7; color: #92400e; }
+
+    /* ── Achievement Board Cards ── */
+    .ach-board { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+    .ach-card { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.05); transition: box-shadow .2s; display: flex; flex-direction: column; }
+    .ach-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.09); }
+    .ach-card-images { display: flex; gap: 2px; overflow: hidden; max-height: 150px; background: #ebebdf; flex-shrink: 0; }
+    .ach-card-images img { object-fit: cover; height: 150px; flex: 1; min-width: 120px; cursor: pointer; }
+    .ach-card-body { padding: 12px 14px 8px; flex: 1; }
+    .ach-card-toprow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+    .ach-week-badge { background: #dce8f5; color: #3d5a7d; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; letter-spacing: .01em; }
+    .ach-card-title { font-size: 14px; font-weight: 700; color: #0f172a; margin: 0 0 3px; }
+    .ach-card-who { font-size: 11px; color: #94a3b8; margin-bottom: 7px; }
+    .ach-card-desc { font-size: 12px; color: #374151; line-height: 1.55; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .ach-card-docs { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+    .ach-doc-chip { display: inline-flex; align-items: center; gap: 4px; background: #f2f2ea; border: 1px solid #e2e8f0; border-radius: 6px; padding: 3px 8px; font-size: 11px; text-decoration: none; color: #334155; font-weight: 500; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ach-doc-chip:hover { background: #e2e8f0; }
+    .ach-card-footer { padding: 8px 14px 10px; border-top: 1px solid #ebebdf; background: #f4f4ed; flex-shrink: 0; }
+    .ach-fb-existing { margin-bottom: 8px; }
+    .ach-fb-note { padding: 4px 0; border-bottom: 1px solid #ebebdf; }
+    .ach-fb-note:last-child { border-bottom: none; }
+    .ach-fb-note-who { font-size: 10px; color: #92400e; font-weight: 700; margin-bottom: 1px; }
+    .ach-fb-note-text { font-size: 12px; color: #374151; }
+    .ach-fb-row { display: flex; gap: 6px; align-items: center; min-width: 0; }
+    .ach-fb-input { flex: 1; min-width: 0; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 6px 10px; font-size: 12px; font-family: inherit; outline: none; background: #fff; }
+    .ach-fb-input:focus { border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,.12); }
+    .ach-fb-btn { background: #f59e0b; color: #fff; border: none; border-radius: 8px; padding: 6px 14px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; width: 56px; text-align: center; }
+    .ach-fb-btn:hover { background: #d97706; }
+    .ach-fb-btn:disabled { background: #fcd34d; cursor: not-allowed; }
   </style>
 </head>
 <body>
+<script>if (localStorage.getItem('interntrack_theme') === 'dark') document.body.classList.add('dark-mode');</script>
 
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-brand">
     <img src="/images/logo.png" alt="InternTrack" onerror="this.style.display='none'">
     <div class="sidebar-brand-text">
       <h2>InternTrack</h2>
-      <p data-i18n="supervisor_portal">Supervisor Portal</p>
+      <p data-i18n="supervisor_portal">SGMB · Supervisor Portal</p>
     </div>
   </div>
   <nav class="sidebar-nav">
-    <div class="nav-section-label" data-i18n="nav_navigation">Navigation</div>
-    <a class="nav-item" href="/">
-      <span class="nav-icon">▦</span> <span data-i18n="nav_public">Public Dashboard</span>
-    </a>
     <div class="nav-section-label" data-i18n="nav_supervisor">Supervisor</div>
     <a class="nav-item active" onclick="switchTab('overview')" href="#">
-      <span class="nav-icon">📊</span> <span data-i18n="nav_overview">Overview</span>
-    </a>
-    <a class="nav-item" onclick="switchTab('achievements')" href="#">
-      <span class="nav-icon">🏆</span> <span data-i18n="nav_all_ach">All Achievements</span>
+      <span class="nav-icon"><i class="fa-solid fa-gauge-high"></i></span> <span data-i18n="nav_overview">Overview</span>
     </a>
     <a class="nav-item" onclick="switchTab('feedback')" href="#">
-      <span class="nav-icon">💬</span> <span data-i18n="nav_my_feedback">My Feedback</span>
+      <span class="nav-icon"><i class="fa-solid fa-comment-dots"></i></span> <span data-i18n="nav_my_feedback">My Feedback</span>
+    </a>
+    <a class="nav-item" onclick="switchTab('calendar')" href="#">
+      <span class="nav-icon"><i class="fa-regular fa-calendar-days"></i></span> <span data-i18n="nav_calendar">Calendar</span>
+    </a>
+    <a class="nav-item" onclick="switchTab('settings')" href="#">
+      <span class="nav-icon"><i class="fa-solid fa-gear"></i></span> <span data-i18n="nav_settings">Settings</span>
     </a>
   </nav>
   <div class="sidebar-footer">
     <div class="user-card">
-      <div class="user-avatar">🎓</div>
+      <div class="user-avatar"><i class="fa-solid fa-user-tie" style="font-size:15px;"></i></div>
       <div class="user-info">
         <strong id="supervisorName">Supervisor</strong>
-        <span class="supervisor-badge-pill">👁️ <span data-i18n="badge_supervisor">Supervisor</span></span>
+        <span class="supervisor-badge-pill"><span data-i18n="badge_supervisor">Supervisor</span></span>
       </div>
     </div>
     <button class="sidebar-login-btn" style="background:#374151;margin-top:8px;" onclick="logout()" data-i18n="btn_signout">Sign Out</button>
@@ -141,50 +146,92 @@ let currentLang = localStorage.getItem('interntrack_lang') || 'en';
 const T = {
   en: {
     supervisor_portal: 'Supervisor Portal',
-    nav_navigation: 'Navigation',
-    nav_public: 'Public Dashboard',
     nav_supervisor: 'Supervisor',
-    nav_overview: 'Overview',
-    nav_all_ach: 'All Achievements',
+    nav_overview: 'Dashboard',
     nav_my_feedback: 'My Feedback',
+    nav_calendar: 'Calendar',
+    nav_settings: 'Settings',
+    tb_settings: 'Settings',
+    sub_settings: 'Manage your account settings',
+    settings_profile: 'Profile',
+    settings_profile_desc: 'Update your name, email, and phone number',
+    settings_password: 'Password',
+    settings_password_desc: 'Change your account password',
+    settings_language: 'Language',
+    settings_language_desc: 'Switch between English and Arabic',
+    settings_theme: 'Appearance',
+    settings_theme_desc_dark: 'Switch to light mode',
+    settings_theme_desc_light: 'Switch to dark mode',
+    lbl_full_name: 'Full Name',
+    lbl_email: 'Email',
+    lbl_phone: 'Phone Number',
+    lbl_role: 'Role',
+    lbl_new_password: 'New Password',
+    password_hint: 'Min 6 characters',
+    not_set: 'Not set',
+    err_name_email: 'Name and email are required',
+    err_password_length: 'Password must be at least 6 characters',
+    toast_password_updated: 'Password updated!',
+    btn_save: 'Save',
+    events_this_month: "This Month's Events",
+    no_events_month: 'No events this month.',
+    tab_events: 'Events',
+    tab_reminders: 'Reminders',
+    no_reminders: 'No reminders yet.',
+    btn_add_reminder: '+ Add Reminder',
+    h_add_reminder: 'Add Reminder',
+    lbl_reminder_title: 'Reminder Title',
+    lbl_start_time: 'Start Time',
+    lbl_end_time: 'End Time',
+    btn_save_reminder: 'Save Reminder',
+    confirm_delete_reminder: 'Delete this reminder?',
+    err_reminder_required: 'Title is required',
+    btn_add_event: '+ Add Event',
+    h_add_event: 'Add Calendar Event',
+    h_edit_event: 'Edit Event',
+    lbl_event_title: 'Event Title',
+    lbl_description: 'Description',
+    th_date: 'Date',
+    lbl_time: 'Time',
+    btn_save_event: 'Save Event',
+    confirm_delete_event: 'Delete this event?',
+    err_event_required: 'Title and date are required',
+    toast_created: 'Created!',
+    toast_updated: 'Updated!',
+    toast_deleted: 'Deleted',
+    toast_failed: 'Failed',
     btn_signout: 'Sign Out',
     badge_supervisor: 'Supervisor',
     loading: 'Loading…',
-    footer: '© 2026 InternTrack — Supervisor Portal. All rights reserved.',
+    footer: '© 2026 InternTrack — Sharjah Government Media Bureau. All rights reserved.',
     // Overview
-    tb_overview: 'Overview',
-    tb_achievements: 'All Achievements',
+    tb_overview: 'Dashboard',
     tb_feedback: 'My Feedback',
     welcome: 'Welcome,',
     lbl_total_ach: 'Total Achievements',
     lbl_published: 'Published',
     lbl_teams: 'Teams',
     lbl_feedback_given: 'Feedback Given',
-    h_private_note: '🔒 Private Supervisor Feedback',
+    h_private_note: 'Private Supervisor Feedback',
     private_note_desc: 'Your feedback is private — only team members (leaders and students) can see it, not the public.',
     // Achievements tab
-    h_all_ach: 'All Achievements',
     all_teams_opt: 'All Teams',
-    filter_all: 'All',
-    filter_published: 'Published',
-    filter_pending: 'Pending',
-    filter_rejected: 'Rejected',
     search_ph: 'Search achievements…',
     no_ach_found: 'No achievements found',
     adjust_search: 'Try adjusting your search or filter.',
     by: 'by',
-    general: 'General',
     // Feedback section inside achievement
     lbl_supervisor_feedback: '🔒 Supervisor Feedback (Private)',
     lbl_feedback_ph: 'Write private feedback for the team…\n\nThis is only visible to team leaders and students — not to the public.',
-    btn_post_feedback: '💬 Post Feedback',
-    posting: 'Posting…',
+    btn_post_feedback: 'Send',
+    posting: '…',
     feedback_posted: '✅ Feedback posted!',
     feedback_fail: 'Failed to post feedback',
     no_feedback: 'No supervisor feedback yet.',
     // My feedback tab
     h_my_feedback: 'My Feedback',
-    my_feedback_desc: 'Feedback you have given across all achievements',
+    my_feedback_desc: 'Browse achievements, leave private feedback, and review what you have shared',
+    h_my_feedback_history: 'Feedback History',
     no_my_feedback: 'You have not given any feedback yet.',
     on_achievement: 'On:',
     // Status
@@ -202,46 +249,88 @@ const T = {
   },
   ar: {
     supervisor_portal: 'بوابة المشرف',
-    nav_navigation: 'التنقل',
-    nav_public: 'اللوحة العامة',
     nav_supervisor: 'المشرف',
     nav_overview: 'نظرة عامة',
-    nav_all_ach: 'جميع الإنجازات',
     nav_my_feedback: 'ملاحظاتي',
+    nav_calendar: 'التقويم',
+    nav_settings: 'الإعدادات',
+    tb_settings: 'الإعدادات',
+    sub_settings: 'إدارة إعدادات حسابك',
+    settings_profile: 'الملف الشخصي',
+    settings_profile_desc: 'تحديث اسمك وبريدك الإلكتروني ورقم هاتفك',
+    settings_password: 'كلمة المرور',
+    settings_password_desc: 'تغيير كلمة مرور حسابك',
+    settings_language: 'اللغة',
+    settings_language_desc: 'التبديل بين الإنجليزية والعربية',
+    settings_theme: 'المظهر',
+    settings_theme_desc_dark: 'التبديل إلى الوضع الفاتح',
+    settings_theme_desc_light: 'التبديل إلى الوضع الداكن',
+    lbl_full_name: 'الاسم الكامل',
+    lbl_email: 'البريد الإلكتروني',
+    lbl_phone: 'رقم الهاتف',
+    lbl_role: 'الدور',
+    lbl_new_password: 'كلمة المرور الجديدة',
+    password_hint: 'بحد أدنى 6 أحرف',
+    not_set: 'غير محدد',
+    err_name_email: 'الاسم والبريد الإلكتروني مطلوبان',
+    err_password_length: 'يجب أن تكون كلمة المرور 6 أحرف على الأقل',
+    toast_password_updated: 'تم تحديث كلمة المرور!',
+    btn_save: 'حفظ',
+    events_this_month: 'فعاليات هذا الشهر',
+    no_events_month: 'لا توجد فعاليات هذا الشهر.',
+    tab_events: 'الفعاليات',
+    tab_reminders: 'التذكيرات',
+    no_reminders: 'لا توجد تذكيرات بعد.',
+    btn_add_reminder: '+ إضافة تذكير',
+    h_add_reminder: 'إضافة تذكير',
+    lbl_reminder_title: 'عنوان التذكير',
+    lbl_start_time: 'وقت البدء',
+    lbl_end_time: 'وقت الانتهاء',
+    btn_save_reminder: 'حفظ التذكير',
+    confirm_delete_reminder: 'حذف هذا التذكير؟',
+    err_reminder_required: 'العنوان مطلوب',
+    btn_add_event: '+ إضافة حدث',
+    h_add_event: 'إضافة حدث',
+    h_edit_event: 'تعديل الحدث',
+    lbl_event_title: 'عنوان الحدث',
+    lbl_description: 'الوصف',
+    th_date: 'التاريخ',
+    lbl_time: 'الوقت',
+    btn_save_event: 'حفظ الحدث',
+    confirm_delete_event: 'حذف هذا الحدث؟',
+    err_event_required: 'العنوان والتاريخ مطلوبان',
+    toast_created: 'تم الإنشاء!',
+    toast_updated: 'تم التحديث!',
+    toast_deleted: 'تم الحذف',
+    toast_failed: 'فشل',
     btn_signout: 'تسجيل الخروج',
     badge_supervisor: 'مشرف',
     loading: 'جارٍ التحميل…',
-    footer: '© 2026 InternTrack — بوابة المشرف. جميع الحقوق محفوظة.',
+    footer: '© 2026 InternTrack — دائرة الإعلام الحكومي في الشارقة. جميع الحقوق محفوظة.',
     tb_overview: 'نظرة عامة',
-    tb_achievements: 'جميع الإنجازات',
     tb_feedback: 'ملاحظاتي',
     welcome: 'مرحباً،',
     lbl_total_ach: 'إجمالي الإنجازات',
     lbl_published: 'منشور',
     lbl_teams: 'الفرق',
     lbl_feedback_given: 'ملاحظات مُعطاة',
-    h_private_note: '🔒 ملاحظات المشرف الخاصة',
+    h_private_note: 'ملاحظات المشرف الخاصة',
     private_note_desc: 'ملاحظاتك خاصة — يمكن لأعضاء الفريق فقط رؤيتها (قادة الفريق والطلاب)، وليست مرئية للعموم.',
-    h_all_ach: 'جميع الإنجازات',
     all_teams_opt: 'جميع الفرق',
-    filter_all: 'الكل',
-    filter_published: 'منشور',
-    filter_pending: 'قيد الانتظار',
-    filter_rejected: 'مرفوض',
     search_ph: 'ابحث عن الإنجازات…',
     no_ach_found: 'لا توجد إنجازات',
     adjust_search: 'حاول تعديل البحث أو الفلتر.',
     by: 'بواسطة',
-    general: 'عام',
     lbl_supervisor_feedback: '🔒 ملاحظات المشرف (خاصة)',
     lbl_feedback_ph: 'اكتب ملاحظات خاصة للفريق…\n\nهذا مرئي فقط لقادة الفريق والطلاب — وليس للعموم.',
-    btn_post_feedback: '💬 نشر الملاحظة',
-    posting: 'جارٍ النشر…',
+    btn_post_feedback: 'إرسال',
+    posting: '…',
     feedback_posted: '✅ تم نشر الملاحظة!',
     feedback_fail: 'فشل نشر الملاحظة',
     no_feedback: 'لا توجد ملاحظات من المشرف بعد.',
     h_my_feedback: 'ملاحظاتي',
-    my_feedback_desc: 'الملاحظات التي أعطيتها لجميع الإنجازات',
+    my_feedback_desc: 'تصفح الإنجازات، أضف ملاحظات خاصة، وراجع ما شاركته من قبل',
+    h_my_feedback_history: 'سجل الملاحظات',
     no_my_feedback: 'لم تعطِ أي ملاحظات بعد.',
     on_achievement: 'على:',
     badge_published: '📢 منشور',
@@ -278,18 +367,34 @@ function applyTranslations() {
   });
 }
 
+new MutationObserver(mutations => {
+  mutations.forEach(m => {
+    m.addedNodes.forEach(node => {
+      if (node.nodeType !== 1) return;
+      if (node.dataset?.i18n) node.textContent = t(node.dataset.i18n);
+      node.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+    });
+  });
+}).observe(document.documentElement, { childList: true, subtree: true });
+
+// Real-time updates
+(function() {
+  const es = new EventSource('/api/events');
+  let _rt;
+  es.onmessage = () => { clearTimeout(_rt); _rt = setTimeout(() => switchTab(currentTabName), 300); };
+})();
+
 // ── CORE ──────────────────────────────────────────────────────────────────────
 const token = (() => {
   const c = document.cookie.split(';').find(c => c.trim().startsWith('token='));
   return c ? c.trim().slice(6) : localStorage.getItem('token');
 })();
 
-if (!token) { window.location.href = '/supervisor-login.html'; }
+if (!token) { window.location.href = '/login.html'; }
 
 let currentUser = null;
 let allAchievements = [];
 let currentTabName = 'overview';
-let activeFilter = 'all';
 let activeTeamFilter = '';
 
 function getHeaders(json = true) {
@@ -322,7 +427,7 @@ async function logout() {
   await fetch('/api/auth/logout', { method: 'POST' });
   document.cookie = 'token=;max-age=0;path=/';
   localStorage.removeItem('token');
-  window.location.href = '/supervisor-login.html';
+  window.location.href = '/login.html';
 }
 
 function statusBadge(status) {
@@ -337,36 +442,352 @@ function statusBadge(status) {
 
 function switchTab(tab) {
   currentTabName = tab;
+  localStorage.setItem('supervisorCurrentTab', tab);
   document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
   const navItems = document.querySelectorAll('.sidebar-nav .nav-item');
-  const idx = { overview: 1, achievements: 2, feedback: 3 };
+  const idx = { overview: 0, feedback: 1, calendar: 2, settings: 3 };
   navItems[idx[tab]]?.classList.add('active');
-  const titles = { overview: t('tb_overview'), achievements: t('tb_achievements'), feedback: t('tb_feedback') };
+  const titles = { overview: t('tb_overview'), feedback: t('tb_feedback'), calendar: t('nav_calendar'), settings: t('nav_settings') };
   document.getElementById('topbarTitle').textContent = titles[tab] || tab;
   const el = document.getElementById('pageContent');
   switch (tab) {
     case 'overview': renderOverview(el); break;
-    case 'achievements': renderAchievements(el); break;
     case 'feedback': renderMyFeedback(el); break;
+    case 'calendar': renderCalendar(el); break;
+    case 'settings': renderSettings(el); break;
   }
 }
 
+// ── CALENDAR (Admin + Supervisor can add/edit/delete) ────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+
+let calendarViewDate = new Date();
+let calendarEventsCache = [];
+let remindersCache = [];
+let calendarSideTab = 'events';
+let editingEventId = null;
+
+function calLocale() { return currentLang === 'ar' ? 'ar-AE' : 'en-US'; }
+
+function calDowLabels() {
+  const base = new Date(2024, 0, 1);
+  return [0,1,2,3,4,5,6].map(i => {
+    const d = new Date(base); d.setDate(base.getDate() + i);
+    return d.toLocaleDateString(calLocale(), { weekday: 'short' });
+  });
+}
+
+function calDateKey(y, m, d) { return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+
+async function renderCalendar(el) {
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    [calendarEventsCache, remindersCache] = await Promise.all([
+      fetch('/api/calendar-events', { headers: getHeaders() }).then(r => r.json()),
+      fetch('/api/reminders', { headers: getHeaders() }).then(r => r.json())
+    ]);
+  } catch (e) {
+    calendarEventsCache = []; remindersCache = [];
+  }
+  renderCalendarUI(el);
+}
+
+function switchCalSideTab(tabKey) {
+  calendarSideTab = tabKey;
+  renderCalendarUI(document.getElementById('pageContent'));
+}
+
+function calSidePanelBody(monthEvents) {
+  if (calendarSideTab === 'reminders') {
+    return `
+      <div style="display:flex;flex-direction:column;gap:10px;max-height:460px;overflow-y:auto;margin-bottom:14px;">
+        ${remindersCache.length ? remindersCache.map(r => `
+          <div style="background:${r.Completed ? '#ebebdf' : '#dce8f5'};border-radius:12px;padding:12px 14px;${r.Completed ? 'opacity:.6;' : ''}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+              <div style="flex:1;min-width:0;">
+                ${r.StartTime ? `<div style="font-size:11px;color:#3d5a7d;font-weight:700;">${escHtml(r.StartTime)}${r.EndTime ? ' - ' + escHtml(r.EndTime) : ''}</div>` : ''}
+                <div style="font-weight:700;font-size:14px;text-decoration:${r.Completed ? 'line-through' : 'none'};">${escHtml(r.Title)}</div>
+                ${r.Description ? `<div style="font-size:12px;color:var(--text-muted);">${escHtml(r.Description)}</div>` : ''}
+                ${r.ReminderDate ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${escHtml(r.ReminderDate)}</div>` : ''}
+              </div>
+              <div style="display:flex;gap:6px;flex-shrink:0;">
+                <button class="btn btn-sm btn-ghost" onclick="toggleReminder(${r.ReminderID},${r.Completed ? 0 : 1})">${r.Completed ? '↺' : '✓'}</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteReminderItem(${r.ReminderID})">🗑️</button>
+              </div>
+            </div>
+          </div>`).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_reminders')}</p>`}
+      </div>
+      <button class="btn btn-primary" style="width:100%;" onclick="openReminderModal()">${t('btn_add_reminder')}</button>`;
+  }
+
+
+  return `
+    <div style="display:flex;flex-direction:column;gap:14px;max-height:520px;overflow-y:auto;">
+      ${monthEvents.length ? monthEvents.map(ev => {
+        const d = new Date(ev.EventDate + 'T00:00:00');
+        return `<div style="display:flex;gap:12px;">
+          <div style="flex-shrink:0;background:#dce8f5;color:#3d5a7d;border-radius:10px;padding:8px 6px;text-align:center;width:46px;">
+            <div style="font-weight:800;font-size:15px;">${d.getDate()}</div>
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;">${d.toLocaleDateString(calLocale(), { month: 'short' })}</div>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;font-size:14px;">${escHtml(ev.Title)}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin:2px 0;">${escHtml(ev.EventDate)}${ev.EventTime ? ' • ' + escHtml(ev.EventTime) : ''}</div>
+            ${ev.Description ? `<div style="font-size:12px;color:var(--text-muted);">${escHtml(ev.Description)}</div>` : ''}
+            <div style="margin-top:6px;display:flex;gap:6px;">
+              <button class="btn btn-sm btn-ghost" onclick="openEventModal(${ev.EventID})">✏️</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteCalendarEvent(${ev.EventID})">🗑️</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_events_month')}</p>`}
+    </div>`;
+}
+
+function renderCalendarUI(el) {
+  const year = calendarViewDate.getFullYear();
+  const month = calendarViewDate.getMonth();
+  const firstDow = (new Date(year, month, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const eventsByDate = {};
+  calendarEventsCache.forEach(ev => {
+    (eventsByDate[ev.EventDate] = eventsByDate[ev.EventDate] || []).push(ev);
+  });
+
+  const now = new Date();
+  const todayKey = calDateKey(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const cells = [];
+  for (let i = 0; i < firstDow; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+  const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+  const monthEvents = calendarEventsCache
+    .filter(ev => ev.EventDate.startsWith(monthPrefix))
+    .slice()
+    .sort((a, b) => (a.EventDate + (a.EventTime || '')).localeCompare(b.EventDate + (b.EventTime || '')));
+
+  el.innerHTML = `
+    <div class="page-header">
+      <div><h2>${t('nav_calendar')}</h2></div>
+      <button class="btn btn-primary" onclick="openEventModal()">${t('btn_add_event')}</button>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:start;">
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+          <button class="btn btn-sm btn-ghost" onclick="changeCalendarMonth(-1)">‹</button>
+          <h3 style="margin:0;text-transform:capitalize;">${calendarViewDate.toLocaleDateString(calLocale(), { month: 'long', year: 'numeric' })}</h3>
+          <button class="btn btn-sm btn-ghost" onclick="changeCalendarMonth(1)">›</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;color:var(--text-muted);font-weight:700;margin-bottom:6px;">
+          ${calDowLabels().map(d => `<div>${d}</div>`).join('')}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">
+          ${cells.map(d => {
+            if (!d) return `<div></div>`;
+            const key = calDateKey(year, month, d);
+            const has = !!eventsByDate[key];
+            const isToday = key === todayKey;
+            return `<div onclick="openEventModal(null,'${key}')" style="cursor:pointer;text-align:center;padding:10px 0;border-radius:10px;${isToday ? 'background:#dce8f5;' : ''}">
+              <div style="font-size:13px;font-weight:${isToday ? '700' : '500'};">${d}</div>
+              ${has ? `<div style="width:5px;height:5px;border-radius:50%;background:var(--primary);margin:4px auto 0;"></div>` : '<div style="height:9px;"></div>'}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="panel">
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <button class="btn btn-sm ${calendarSideTab === 'events' ? 'btn-primary' : 'btn-ghost'}" onclick="switchCalSideTab('events')">${t('tab_events')}</button>
+          <button class="btn btn-sm ${calendarSideTab === 'reminders' ? 'btn-primary' : 'btn-ghost'}" onclick="switchCalSideTab('reminders')">${t('tab_reminders')}</button>
+        </div>
+        ${calSidePanelBody(monthEvents)}
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="eventModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 id="eventModalTitle">${t('h_add_event')}</h3>
+          <button class="modal-close" onclick="closeModal('eventModal')">✕</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_event_title')}</label>
+          <input id="eventTitle" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_description')}</label>
+          <textarea id="eventDescription" class="form-textarea"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('th_date')}</label>
+          <input id="eventDate" type="date" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_time')}</label>
+          <input id="eventTime" type="time" class="form-input">
+        </div>
+        <button class="btn btn-primary" onclick="saveCalendarEvent()">${t('btn_save_event')}</button>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="reminderModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>${t('h_add_reminder')}</h3>
+          <button class="modal-close" onclick="closeModal('reminderModal')">✕</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_reminder_title')}</label>
+          <input id="reminderTitle" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_description')}</label>
+          <textarea id="reminderDescription" class="form-textarea"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('th_date')}</label>
+          <input id="reminderDate" type="date" class="form-input">
+        </div>
+        <div style="display:flex;gap:10px;">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">${t('lbl_start_time')}</label>
+            <input id="reminderStart" type="time" class="form-input">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">${t('lbl_end_time')}</label>
+            <input id="reminderEnd" type="time" class="form-input">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveReminder()">${t('btn_save_reminder')}</button>
+      </div>
+    </div>
+  `;
+}
+
+function changeCalendarMonth(delta) {
+  calendarViewDate.setMonth(calendarViewDate.getMonth() + delta);
+  renderCalendarUI(document.getElementById('pageContent'));
+}
+
+function openEventModal(eventId, prefillDate) {
+  editingEventId = eventId || null;
+  const ev = eventId ? calendarEventsCache.find(e => e.EventID === eventId) : null;
+  document.getElementById('eventModalTitle').textContent = ev ? t('h_edit_event') : t('h_add_event');
+  document.getElementById('eventTitle').value = ev ? ev.Title : '';
+  document.getElementById('eventDescription').value = ev ? (ev.Description || '') : '';
+  const now = new Date();
+  document.getElementById('eventDate').value = ev ? ev.EventDate : (prefillDate || calDateKey(now.getFullYear(), now.getMonth(), now.getDate()));
+  document.getElementById('eventTime').value = ev ? (ev.EventTime || '') : '';
+  openModal('eventModal');
+}
+
+async function saveCalendarEvent() {
+  const title = document.getElementById('eventTitle').value.trim();
+  const description = document.getElementById('eventDescription').value.trim();
+  const eventDate = document.getElementById('eventDate').value;
+  const eventTime = document.getElementById('eventTime').value;
+  if (!title || !eventDate) return showToast(t('err_event_required'), 'error');
+
+  const url = editingEventId ? '/api/admin/calendar-events/' + editingEventId : '/api/admin/calendar-events';
+  const method = editingEventId ? 'PUT' : 'POST';
+  const r = await fetch(url, { method, headers: getHeaders(), body: JSON.stringify({ title, description, eventDate, eventTime }) });
+  if (r.ok) {
+    closeModal('eventModal');
+    showToast(editingEventId ? t('toast_updated') : t('toast_created'), 'success');
+    renderCalendar(document.getElementById('pageContent'));
+  } else {
+    showToast(t('toast_failed'), 'error');
+  }
+}
+
+async function deleteCalendarEvent(id) {
+  if (!confirm(t('confirm_delete_event'))) return;
+  const r = await fetch('/api/admin/calendar-events/' + id, { method: 'DELETE', headers: getHeaders() });
+  if (r.ok) { showToast(t('toast_deleted'), 'info'); renderCalendar(document.getElementById('pageContent')); }
+  else showToast(t('toast_failed'), 'error');
+}
+
+function openReminderModal() {
+  document.getElementById('reminderTitle').value = '';
+  document.getElementById('reminderDescription').value = '';
+  const now = new Date();
+  document.getElementById('reminderDate').value = calDateKey(now.getFullYear(), now.getMonth(), now.getDate());
+  document.getElementById('reminderStart').value = '';
+  document.getElementById('reminderEnd').value = '';
+  openModal('reminderModal');
+}
+
+async function saveReminder() {
+  const title = document.getElementById('reminderTitle').value.trim();
+  const description = document.getElementById('reminderDescription').value.trim();
+  const reminderDate = document.getElementById('reminderDate').value;
+  const startTime = document.getElementById('reminderStart').value;
+  const endTime = document.getElementById('reminderEnd').value;
+  if (!title) return showToast(t('err_reminder_required'), 'error');
+
+  const r = await fetch('/api/reminders', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ title, description, reminderDate, startTime, endTime }) });
+  if (r.ok) {
+    closeModal('reminderModal');
+    showToast(t('toast_created'), 'success');
+    renderCalendar(document.getElementById('pageContent'));
+  } else {
+    showToast(t('toast_failed'), 'error');
+  }
+}
+
+async function toggleReminder(id, completed) {
+  await fetch('/api/reminders/' + id + '/toggle', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ completed }) });
+  renderCalendar(document.getElementById('pageContent'));
+}
+
+async function deleteReminderItem(id) {
+  if (!confirm(t('confirm_delete_reminder'))) return;
+  await fetch('/api/reminders/' + id, { method: 'DELETE', headers: getHeaders() });
+  showToast(t('toast_deleted'), 'info');
+  renderCalendar(document.getElementById('pageContent'));
+}
+
 // ── OVERVIEW ──────────────────────────────────────────────────────────────────
+function renderTeamPostCard(a) {
+  return `
+    <div class="achievement-card-full">
+      ${a.FirstImage
+        ? `<img class="card-image" src="${escHtml(a.FirstImage)}" style="width:100%;height:180px;object-fit:cover;" onerror="this.style.display='none'">`
+        : `<div class="card-image">🏆</div>`}
+      <div class="card-body">
+        <div class="card-title">${escHtml(a.Title)}</div>
+        <div class="card-desc">${escHtml(a.Description || '')}</div>
+        <div class="card-meta">
+          <span>${escHtml(a.CreatorName || '')} · ${fmtDate(a.CreatedAt)}</span>
+          ${statusBadge(a.Status)}
+        </div>
+      </div>
+    </div>`;
+}
+
+let overviewAchievements = [];
+let overviewTeams = [];
+
 async function renderOverview(el) {
   el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
   try {
-    const [stats, achievements] = await Promise.all([
+    const [stats, achievements, teams] = await Promise.all([
       fetch('/api/statistics').then(r => r.json()),
-      fetch('/api/supervisor/achievements', { headers: getHeaders() }).then(r => r.json())
+      fetch('/api/supervisor/achievements', { headers: getHeaders() }).then(r => r.json()),
+      fetch('/api/teams').then(r => r.json())
     ]);
     allAchievements = achievements;
+    overviewAchievements = achievements;
+    overviewTeams = teams;
     const myFeedbackCount = achievements.reduce((sum, a) => sum + (a.supervisorFeedbackCount || 0), 0);
 
     el.innerHTML = `
       <div class="page-header">
         <div>
-          <h2>${t('welcome')} ${escHtml(currentUser?.Name || 'Supervisor')}! 👁️</h2>
-          <p style="color:var(--text-muted);font-size:14px;">${t('h_private_note')}</p>
+          <h2>${t('welcome')} ${escHtml(currentUser?.Name || 'Supervisor')}!</h2>
         </div>
       </div>
 
@@ -397,72 +818,61 @@ async function renderOverview(el) {
         </div>
       </div>
 
-      <div class="full-panel">
-        <div class="panel-header">
-          <h3>${t('h_all_ach')}</h3>
-          <a onclick="switchTab('achievements')" href="#">${t('nav_all_ach')} →</a>
-        </div>
-        ${achievements.slice(0, 5).map(a => renderAchievementRow(a, false)).join('') || `<div class="empty-state"><p>${t('no_ach_found')}</p></div>`}
-      </div>`;
+      <div class="form-group" style="max-width:280px;">
+        <select id="overviewTeamFilter" class="filter-select" onchange="renderOverviewTeamSections()">
+          <option value="">${t('all_teams_opt')}</option>
+          ${teams.map(tm => `<option value="${tm.TeamID}">${escHtml(tm.TeamName)}</option>`).join('')}
+        </select>
+      </div>
+
+      <div id="overviewTeamSections"></div>`;
+
+    renderOverviewTeamSections();
   } catch (e) {
     el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('err_data')}</h3><p>${t('err_server')}</p></div>`;
   }
 }
 
-// ── ACHIEVEMENTS ──────────────────────────────────────────────────────────────
-async function renderAchievements(el) {
-  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-  try {
-    const [achievements, teams] = await Promise.all([
-      fetch('/api/supervisor/achievements', { headers: getHeaders() }).then(r => r.json()),
-      fetch('/api/teams').then(r => r.json())
-    ]);
-    allAchievements = achievements;
+function renderOverviewTeamSections() {
+  const container = document.getElementById('overviewTeamSections');
+  if (!container) return;
+  const filterVal = document.getElementById('overviewTeamFilter')?.value || '';
 
-    const teamOptions = teams.map(t =>
-      `<option value="${t.TeamID}">${escHtml(t.TeamName)}</option>`
-    ).join('');
+  const byTeam = {};
+  overviewAchievements.forEach(a => {
+    (byTeam[a.TeamID] = byTeam[a.TeamID] || []).push(a);
+  });
 
-    el.innerHTML = `
-      <div class="page-header">
-        <div><h2>${t('h_all_ach')}</h2></div>
-      </div>
-      <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1.5px solid #f59e0b;border-radius:12px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#78350f;display:flex;gap:8px;align-items:center;">
-        🔒 ${t('private_note_desc')}
-      </div>
-      <div class="search-filters" style="margin-bottom:14px;">
-        <input class="search-input" id="searchInput" placeholder="${t('search_ph')}" oninput="filterAndRender()">
-        <select class="filter-select" id="teamFilter" onchange="filterAndRender()">
-          <option value="">${t('all_teams_opt')}</option>
-          ${teamOptions}
-        </select>
-      </div>
-      <div class="filter-tabs">
-        <button class="filter-tab active" onclick="setFilter('all',this)">${t('filter_all')}</button>
-        <button class="filter-tab" onclick="setFilter('published',this)">${t('filter_published')}</button>
-        <button class="filter-tab" onclick="setFilter('pending',this)">${t('filter_pending')}</button>
-        <button class="filter-tab" onclick="setFilter('rejected',this)">${t('filter_rejected')}</button>
-      </div>
-      <div id="achievementsList"></div>`;
-
-    filterAndRender();
-  } catch (e) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('err_data')}</h3></div>`;
+  if (filterVal) {
+    const tm = overviewTeams.find(t => String(t.TeamID) === filterVal);
+    const items = byTeam[filterVal] || [];
+    container.innerHTML = `
+      <div class="full-panel">
+        <div class="panel-header"><h3>${escHtml(tm?.TeamName || '')}</h3><span class="badge badge-blue">${items.length}</span></div>
+        ${items.length
+          ? `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;">${items.map(renderTeamPostCard).join('')}</div>`
+          : `<p class="text-muted" style="font-size:13px;">${t('no_ach_found')}</p>`}
+      </div>`;
+    return;
   }
-}
 
-function setFilter(f, btn) {
-  activeFilter = f;
-  document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  filterAndRender();
+  container.innerHTML = overviewTeams.map(tm => {
+    const items = byTeam[tm.TeamID] || [];
+    const scroll = items.length > 3;
+    return `
+      <div class="full-panel" style="margin-bottom:20px;">
+        <div class="panel-header"><h3>${escHtml(tm.TeamName)}</h3><span class="badge badge-blue">${items.length}</span></div>
+        ${items.length
+          ? `<div style="display:flex;gap:14px;${scroll ? 'overflow-x:auto;padding-bottom:8px;' : ''}">${items.map(a => `<div style="flex:${scroll ? '0 0 calc((100% - 28px)/3)' : '1'};min-width:260px;">${renderTeamPostCard(a)}</div>`).join('')}</div>`
+          : `<p class="text-muted" style="font-size:13px;">${t('no_ach_found')}</p>`}
+      </div>`;
+  }).join('') || `<div class="empty-state"><p>${t('no_ach_found')}</p></div>`;
 }
 
 function filterAndRender() {
   const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
   const tid = document.getElementById('teamFilter')?.value;
   let filtered = allAchievements;
-  if (activeFilter !== 'all') filtered = filtered.filter(a => a.Status === activeFilter);
   if (q) filtered = filtered.filter(a => a.Title.toLowerCase().includes(q) || (a.Description || '').toLowerCase().includes(q));
   if (tid) filtered = filtered.filter(a => String(a.TeamID) === tid);
 
@@ -472,90 +882,90 @@ function filterAndRender() {
     list.innerHTML = `<div class="empty-state"><div class="empty-icon">🏆</div><h3>${t('no_ach_found')}</h3><p>${t('adjust_search')}</p></div>`;
     return;
   }
-  list.innerHTML = filtered.map(a => `<div class="achievement-expand" id="aexp-${a.AchievementID}">${renderAchievementRow(a, true)}</div>`).join('');
+  list.innerHTML = `<div class="ach-board">${filtered.map(a => renderAchCard(a)).join('')}</div>`;
+  filtered.forEach(a => loadCardDetails(a.AchievementID));
 }
 
-function renderAchievementRow(a, expandable) {
-  if (!expandable) {
-    return `
-      <div class="achievement-item" onclick="switchTab('achievements')">
-        ${a.FirstImage ? `<img src="${escHtml(a.FirstImage)}" class="achievement-thumb" onerror="this.style.display='none'">` : '<div class="achievement-thumb-placeholder"></div>'}
-        <div class="achievement-info">
-          <h4>${escHtml(a.Title)}</h4>
-          <p>${escHtml(a.TeamName || t('general'))} · ${t('by')} ${escHtml(a.CreatorName || '')}</p>
-        </div>
-        ${statusBadge(a.Status)}
-      </div>`;
-  }
-
+function renderAchCard(a) {
+  const DOC_ICON = { pdf:'📄', ppt:'📊', pptx:'📊', doc:'📝', docx:'📝' };
   return `
-    <div class="achievement-expand-header" onclick="toggleExpand(${a.AchievementID})">
-      <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
-        ${a.FirstImage ? `<img src="${escHtml(a.FirstImage)}" style="width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">` : ''}
-        <div style="min-width:0;">
-          <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(a.Title)}</div>
-          <div style="font-size:12px;color:var(--text-muted);">${escHtml(a.TeamName || t('general'))} · ${t('by')} ${escHtml(a.CreatorName || '')} · ${fmtDate(a.CreatedAt)}</div>
+    <div class="ach-card" id="card-${a.AchievementID}">
+      <div class="ach-card-images" id="card-imgs-${a.AchievementID}"></div>
+      <div class="ach-card-body">
+        <div class="ach-card-toprow">
+          ${a.WeekLabel ? `<span class="ach-week-badge">📅 ${escHtml(a.WeekLabel)}</span>` : ''}
+          ${statusBadge(a.Status)}
+        </div>
+        <h3 class="ach-card-title">${escHtml(a.Title)}</h3>
+        <p class="ach-card-who">${escHtml(a.TeamName || '')} · ${t('by')} ${escHtml(a.CreatorName || '')} · ${fmtDate(a.CreatedAt)}</p>
+        <p class="ach-card-desc">${escHtml(a.Description || '')}</p>
+        <div class="ach-card-docs" id="card-docs-${a.AchievementID}"></div>
+      </div>
+      <div class="ach-card-footer">
+        <div class="ach-fb-existing" id="card-fb-${a.AchievementID}">
+          <div style="font-size:12px;color:#94a3b8;padding:4px 0;">Loading notes…</div>
+        </div>
+        <div class="ach-fb-row">
+          <input class="ach-fb-input" id="fb-input-${a.AchievementID}" placeholder="🔒 Leave a private note…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();postFeedback(${a.AchievementID});}">
+          <button class="ach-fb-btn" id="fb-btn-${a.AchievementID}" onclick="postFeedback(${a.AchievementID})">${t('btn_post_feedback')}</button>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-        ${statusBadge(a.Status)}
-        ${a.supervisorFeedbackCount ? `<span style="background:#fef3c7;color:#92400e;border-radius:12px;padding:2px 10px;font-size:11px;font-weight:700;">💬 ${a.supervisorFeedbackCount}</span>` : ''}
-        <span style="color:var(--text-muted);font-size:18px;" id="expand-icon-${a.AchievementID}">▼</span>
-      </div>
-    </div>
-    <div class="achievement-expand-body" id="expand-body-${a.AchievementID}"></div>`;
+    </div>`;
 }
 
-async function toggleExpand(id) {
-  const body = document.getElementById(`expand-body-${id}`);
-  const icon = document.getElementById(`expand-icon-${id}`);
-  if (!body) return;
-  if (body.classList.contains('open')) {
-    body.classList.remove('open');
-    icon.textContent = '▼';
-    return;
-  }
-  body.classList.add('open');
-  icon.textContent = '▲';
-  body.innerHTML = '<div class="loading" style="padding:16px;"><div class="spinner"></div></div>';
+async function loadCardDetails(id) {
+  const DOC_ICON = { pdf:'📄', ppt:'📊', pptx:'📊', doc:'📝', docx:'📝' };
   try {
-    const a = await fetch('/api/achievements/' + id).then(r => r.json());
-    const feedback = await fetch('/api/supervisor/achievements/' + id + '/feedback', { headers: getHeaders() }).then(r => r.json());
+    const [detail, docs, feedback] = await Promise.all([
+      fetch('/api/achievements/' + id).then(r => r.json()),
+      fetch('/api/achievements/' + id + '/documents', { headers: getHeaders() }).then(r => r.ok ? r.json() : []),
+      fetch('/api/supervisor/achievements/' + id + '/feedback', { headers: getHeaders() }).then(r => r.json())
+    ]);
 
-    const existingFeedback = feedback.length
-      ? feedback.map(f => `
-          <div class="private-feedback-item">
-            <div class="feedback-meta">🎓 ${escHtml(f.AuthorName)} · ${fmtDate(f.CreatedAt)}</div>
-            <div class="feedback-text">${escHtml(f.Content)}</div>
-          </div>`).join('')
-      : `<p style="color:var(--text-muted);font-size:13px;font-style:italic;">${t('no_feedback')}</p>`;
+    // Images
+    const imgsEl = document.getElementById(`card-imgs-${id}`);
+    if (imgsEl && detail.images?.length) {
+      imgsEl.innerHTML = detail.images.map(img =>
+        `<img src="${escHtml(img.ImageURL)}" alt="" onclick="window.open(this.src)" onerror="this.parentElement.removeChild(this)">`
+      ).join('');
+    }
 
-    body.innerHTML = `
-      <div style="margin-bottom:12px;">
-        <p style="font-size:14px;line-height:1.7;color:var(--text);margin-bottom:10px;">${escHtml(a.Description)}</p>
-        ${a.images?.length ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">${a.images.map(img=>`<img src="${escHtml(img.ImageURL)}" style="height:80px;border-radius:8px;object-fit:cover;cursor:pointer;" onclick="window.open(this.src)">`).join('')}</div>` : ''}
-      </div>
+    // Documents
+    const docsEl = document.getElementById(`card-docs-${id}`);
+    if (docsEl && docs.length) {
+      docsEl.innerHTML = docs.map(d => {
+        const ext = d.FileName.split('.').pop().toLowerCase();
+        const icon = DOC_ICON[ext] || '📎';
+        return `<a class="ach-doc-chip" href="${escHtml(d.FilePath)}" target="_blank" download>${icon} ${escHtml(d.FileName)}</a>`;
+      }).join('');
+    }
 
-      <div class="private-feedback-box">
-        <div class="feedback-header">
-          <span>🔒</span> ${t('lbl_supervisor_feedback')}
-        </div>
-        <div id="feedback-list-${id}">${existingFeedback}</div>
-        <div class="feedback-form-area" style="margin-top:12px;">
-          <textarea id="feedback-input-${id}" placeholder="${t('lbl_feedback_ph')}"></textarea>
-          <div style="margin-top:8px;">
-            <button class="btn-feedback" onclick="postFeedback(${id})" id="feedback-btn-${id}">${t('btn_post_feedback')}</button>
-          </div>
-        </div>
-      </div>`;
+    // Feedback
+    renderFeedbackList(id, feedback);
   } catch (e) {
-    body.innerHTML = `<p style="color:#ef4444;padding:10px;">${t('load_fail')}</p>`;
+    const fbEl = document.getElementById(`card-fb-${id}`);
+    if (fbEl) fbEl.innerHTML = '';
   }
+}
+
+function renderFeedbackList(id, feedback) {
+  const el = document.getElementById(`card-fb-${id}`);
+  if (!el) return;
+  if (!feedback.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">🔒 ${t('lbl_supervisor_feedback')}</div>
+    <div class="ach-fb-existing">
+      ${feedback.map(f => `
+        <div class="ach-fb-note">
+          <div class="ach-fb-note-who">🎓 ${escHtml(f.AuthorName)} · ${fmtDate(f.CreatedAt)}</div>
+          <div class="ach-fb-note-text">${escHtml(f.Content)}</div>
+        </div>`).join('')}
+    </div>`;
 }
 
 async function postFeedback(achievementId) {
-  const input = document.getElementById(`feedback-input-${achievementId}`);
-  const btn = document.getElementById(`feedback-btn-${achievementId}`);
+  const input = document.getElementById(`fb-input-${achievementId}`);
+  const btn = document.getElementById(`fb-btn-${achievementId}`);
   const content = input?.value?.trim();
   if (!content) return;
 
@@ -569,25 +979,8 @@ async function postFeedback(achievementId) {
     if (r.ok) {
       showToast(t('feedback_posted'), 'success');
       input.value = '';
-      // Reload feedback list
       const feedback = await fetch('/api/supervisor/achievements/' + achievementId + '/feedback', { headers: getHeaders() }).then(r => r.json());
-      const list = document.getElementById(`feedback-list-${achievementId}`);
-      if (list) {
-        list.innerHTML = feedback.length
-          ? feedback.map(f => `
-              <div class="private-feedback-item">
-                <div class="feedback-meta">🎓 ${escHtml(f.AuthorName)} · ${fmtDate(f.CreatedAt)}</div>
-                <div class="feedback-text">${escHtml(f.Content)}</div>
-              </div>`).join('')
-          : `<p style="color:var(--text-muted);font-size:13px;">${t('no_feedback')}</p>`;
-      }
-      // Update badge
-      const exp = document.querySelector(`#aexp-${achievementId} [id^="expand-icon"]`);
-      const badgeEl = exp?.parentElement?.querySelector('span[style*="fef3c7"]');
-      if (badgeEl) {
-        const curr = parseInt(badgeEl.textContent.replace(/\D/g,'')) || 0;
-        badgeEl.textContent = `💬 ${curr + 1}`;
-      }
+      renderFeedbackList(achievementId, feedback);
     } else {
       showToast(t('feedback_fail'), 'error');
     }
@@ -599,12 +992,35 @@ async function postFeedback(achievementId) {
 async function renderMyFeedback(el) {
   el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
   try {
-    const myFeedback = await fetch('/api/supervisor/my-feedback', { headers: getHeaders() }).then(r => r.json());
+    const [achievements, teams, myFeedback] = await Promise.all([
+      fetch('/api/supervisor/achievements', { headers: getHeaders() }).then(r => r.json()),
+      fetch('/api/teams').then(r => r.json()),
+      fetch('/api/supervisor/my-feedback', { headers: getHeaders() }).then(r => r.json())
+    ]);
+    allAchievements = achievements;
+
+    const teamOptions = teams.map(t =>
+      `<option value="${t.TeamID}">${escHtml(t.TeamName)}</option>`
+    ).join('');
+
     el.innerHTML = `
       <div class="page-header">
         <div><h2>${t('h_my_feedback')}</h2><p>${t('my_feedback_desc')}</p></div>
       </div>
-      <div class="full-panel">
+      <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1.5px solid #f59e0b;border-radius:12px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#78350f;display:flex;gap:8px;align-items:center;">
+        🔒 ${t('private_note_desc')}
+      </div>
+      <div class="search-filters" style="margin-bottom:14px;">
+        <input class="search-input" id="searchInput" placeholder="${t('search_ph')}" oninput="filterAndRender()">
+        <select class="filter-select" id="teamFilter" onchange="filterAndRender()">
+          <option value="">${t('all_teams_opt')}</option>
+          ${teamOptions}
+        </select>
+      </div>
+      <div id="achievementsList"></div>
+
+      <div class="full-panel" style="margin-top:24px;">
+        <div class="panel-header"><h3>${t('h_my_feedback_history')}</h3></div>
         ${myFeedback.length ? myFeedback.map(f => `
           <div style="padding:16px 0;border-bottom:1px solid var(--border);">
             <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">${t('on_achievement')} <strong>${escHtml(f.AchievementTitle)}</strong> · ${escHtml(f.TeamName || '')} · ${fmtDate(f.CreatedAt)}</div>
@@ -615,8 +1031,134 @@ async function renderMyFeedback(el) {
           </div>`).join('') + '<style>div[style*="border-bottom"]:last-child{border-bottom:none;}</style>'
         : `<div class="empty-state"><div class="empty-icon">💬</div><h3>${t('no_my_feedback')}</h3></div>`}
       </div>`;
+
+    filterAndRender();
   } catch (e) {
     el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('err_data')}</h3></div>`;
+  }
+}
+
+// ── SETTINGS ───────────────────────────────────────────────────────────────────
+function renderSettings(el) {
+  const settingCard = (icon, title, desc, onclick) => `
+    <div class="settings-icon-card" onclick="${onclick}" style="cursor:pointer;border:1px solid var(--border);border-radius:14px;padding:22px 18px;text-align:center;transition:box-shadow .15s,transform .15s;">
+      <div style="width:48px;height:48px;border-radius:50%;background:#dce8f5;color:#3d5a7d;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:18px;">
+        <i class="fa-solid ${icon}"></i>
+      </div>
+      <h4 style="margin:0 0 4px;font-size:14px;">${title}</h4>
+      <p class="text-muted" style="margin:0;font-size:12px;">${desc}</p>
+    </div>`;
+
+  const initial = (currentUser?.Name || 'S').trim().charAt(0).toUpperCase();
+
+  el.innerHTML = `
+    <div class="page-header">
+      <div><h2>${t('nav_settings')}</h2><p>${t('sub_settings')}</p></div>
+    </div>
+
+    <div class="full-panel" style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+      <div style="position:relative;flex-shrink:0;">
+        <div style="width:88px;height:88px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#4a7099,#355a7d);color:#fff;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;">
+          ${currentUser?.ProfilePicture ? `<img src="${escHtml(currentUser.ProfilePicture)}" style="width:100%;height:100%;object-fit:cover;">` : initial}
+        </div>
+      </div>
+      <div style="flex:1;min-width:220px;">
+        <h3 style="margin:0 0 4px;">${escHtml(currentUser?.Name || '')}</h3>
+        <p class="text-muted" style="margin:0 0 14px;font-size:13px;">${escHtml(currentUser?.Email || '')}</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;font-size:13px;">
+          <div><span class="text-muted">${t('lbl_phone')}</span><br><strong>${escHtml(currentUser?.Phone || t('not_set'))}</strong></div>
+          <div><span class="text-muted">${t('lbl_role')}</span><br><strong>${escHtml(currentUser?.Role || '')}</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="full-panel">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;">
+        ${settingCard('fa-id-card', t('settings_profile'), t('settings_profile_desc'), "openModal('profileModal')")}
+        ${settingCard('fa-lock', t('settings_password'), t('settings_password_desc'), "openModal('passwordModal')")}
+        ${settingCard('fa-globe', t('settings_language'), t('settings_language_desc'), "toggleLang()")}
+        ${settingCard(document.body.classList.contains('dark-mode') ? 'fa-sun' : 'fa-moon', t('settings_theme'), document.body.classList.contains('dark-mode') ? t('settings_theme_desc_dark') : t('settings_theme_desc_light'), "toggleTheme()")}
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="profileModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>${t('settings_profile')}</h3>
+          <button class="modal-close" onclick="closeModal('profileModal')">✕</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_full_name')}</label>
+          <input id="profileName" class="form-input" value="${escHtml(currentUser?.Name || '')}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_email')}</label>
+          <input id="profileEmail" type="email" class="form-input" value="${escHtml(currentUser?.Email || '')}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_phone')}</label>
+          <input id="profilePhone" class="form-input" value="${escHtml(currentUser?.Phone || '')}">
+        </div>
+        <button class="btn btn-primary" onclick="saveProfile()">${t('btn_save')}</button>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="passwordModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>${t('settings_password')}</h3>
+          <button class="modal-close" onclick="closeModal('passwordModal')">✕</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_new_password')}</label>
+          <input id="newPassword" type="password" class="form-input" placeholder="${t('password_hint')}">
+        </div>
+        <button class="btn btn-primary" onclick="savePassword()">${t('btn_save')}</button>
+      </div>
+    </div>`;
+}
+
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  localStorage.setItem('interntrack_theme', isDark ? 'dark' : 'light');
+  renderSettings(document.getElementById('pageContent'));
+}
+
+async function saveProfile() {
+  const name = document.getElementById('profileName').value.trim();
+  const email = document.getElementById('profileEmail').value.trim();
+  const phone = document.getElementById('profilePhone').value.trim();
+  if (!name || !email) return showToast(t('err_name_email'), 'error');
+
+  const r = await fetch('/api/profile', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ name, email, phone }) });
+  if (r.ok) {
+    const data = await r.json();
+    currentUser.Name = data.name;
+    currentUser.Email = data.email;
+    currentUser.Phone = data.phone;
+    const nameEl = document.getElementById('supervisorName');
+    if (nameEl) nameEl.textContent = data.name;
+    closeModal('profileModal');
+    renderSettings(document.getElementById('pageContent'));
+    showToast(t('toast_updated'), 'success');
+  } else {
+    const d = await r.json();
+    showToast(d.error || t('toast_failed'), 'error');
+  }
+}
+
+async function savePassword() {
+  const password = document.getElementById('newPassword').value;
+  if (!password || password.length < 6) return showToast(t('err_password_length'), 'error');
+
+  const r = await fetch('/api/profile', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ password }) });
+  if (r.ok) {
+    document.getElementById('newPassword').value = '';
+    closeModal('passwordModal');
+    showToast(t('toast_password_updated'), 'success');
+  } else {
+    const d = await r.json();
+    showToast(d.error || t('toast_failed'), 'error');
   }
 }
 
@@ -634,15 +1176,15 @@ async function renderMyFeedback(el) {
     // Handle both capitalizations (Role from DB, role from token fallback)
     const userRole = currentUser.Role || currentUser.role;
     if (userRole !== 'Supervisor') {
-      window.location.href = '/supervisor-login.html';
+      window.location.href = '/login.html';
       return;
     }
     document.getElementById('supervisorName').textContent = currentUser.Name || currentUser.name || 'Supervisor';
   } catch (e) {
-    window.location.href = '/supervisor-login.html';
+    window.location.href = '/login.html';
     return;
   }
-  switchTab('overview');
+  switchTab(localStorage.getItem('supervisorCurrentTab') || 'overview');
 })();
 </script>
 </body>

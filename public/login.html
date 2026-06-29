@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login – InternTrack</title>
+  <title>InternTrack – SGMB Internship Portal</title>
 
   <link rel="stylesheet" href="/css/style.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -27,8 +27,8 @@
     justify-content:center;
     font-family:'Inter','Plus Jakarta Sans',Arial,sans-serif;
     background:
-      radial-gradient(circle at top left, rgba(37,99,235,.25), transparent 35%),
-      linear-gradient(135deg,#081326 0%,#102542 48%,#07111f 100%);
+      radial-gradient(circle at top left, rgba(234,99,27,.12), transparent 35%),
+      linear-gradient(135deg,#eef3fa 0%,#dce8f5 50%,#c6d9ef 100%);
     overflow-y:auto;
     overflow-x:hidden;
     padding:20px;
@@ -63,9 +63,9 @@
   .lang-btn{
     padding:7px 15px;
     border-radius:10px;
-    border:1px solid rgba(255,255,255,.25);
-    background:rgba(255,255,255,.12);
-    color:#fff;
+    border:1px solid #c6d9ef;
+    background:rgba(255,255,255,.7);
+    color:#355a7d;
     font-size:13px;
     font-weight:700;
     cursor:pointer;
@@ -89,7 +89,7 @@
     position:relative;
     padding:42px 32px;
     color:#fff;
-    background:linear-gradient(145deg,#2456d6,#0f8bd8);
+    background:linear-gradient(145deg,#4a7099,#355a7d);
     display:flex;
     flex-direction:column;
     justify-content:center;
@@ -248,12 +248,12 @@
   width:100%;
   height:47px;
   padding:0 50px 0 43px;
-  border:1.5px solid #dbe3ef;
+  border:1.5px solid #c6d9ef;
   border-radius:15px;
   outline:none;
   font-size:14.5px;
   color:#0f172a;
-  background:#f8fafc;
+  background:#f2f2ea;
   transition:.2s;
 }
 
@@ -310,11 +310,11 @@
   .remember input{
     width:15px;
     height:15px;
-    accent-color:#2563eb;
+    accent-color:#4a7099;
   }
 
   .forgot{
-    color:#2563eb;
+    color:#4a7099;
     font-weight:800;
     text-decoration:none;
     cursor:pointer;
@@ -333,18 +333,18 @@
     height:50px;
     border:none;
     border-radius:16px;
-    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    background:linear-gradient(135deg,#ea631b,#c24f14);
     color:#fff;
     font-size:15px;
     font-weight:900;
     cursor:pointer;
-    box-shadow:0 12px 22px rgba(37,99,235,.25);
+    box-shadow:0 12px 22px rgba(234,99,27,.25);
     transition:.2s;
   }
 
   .btn-login:hover{
     transform:translateY(-1px);
-    box-shadow:0 16px 26px rgba(37,99,235,.32);
+    box-shadow:0 16px 26px rgba(234,99,27,.32);
   }
 
   .btn-login:disabled{
@@ -363,7 +363,7 @@
   }
 
   .help-link span{
-    color:#2563eb;
+    color:#4a7099;
     font-weight:900;
   }
 
@@ -422,14 +422,14 @@
 <main class="login-shell">
   <section class="brand-panel">
     <div class="brand-content">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid rgba(255,255,255,.18);">
+        <div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.7;margin-bottom:2px;">Sharjah Government Media Bureau</div>
+          <div style="font-size:17px;font-weight:800;letter-spacing:-.2px;">InternTrack System</div>
+        </div>
       </div>
-
       <h2 id="brand_title">Internship Management Platform</h2>
-
-<p id="brand_desc">
-  Track internship activities, monitor progress,
-  manage achievements, and receive supervisor reviews.
-</p>
+      <p id="brand_desc">Track internship activities, monitor progress, manage achievements, and receive supervisor reviews.</p>
     </div>
 
     <div class="feature-list">
@@ -661,16 +661,33 @@ async function handleLogin(e){
     window.location.href = data.redirectUrl || '/student-dashboard.html';
 
   }catch(err){
-    const firebaseErrors = {
-      'auth/user-not-found': l.err_not_found,
-      'auth/wrong-password': l.err_wrong_pw,
-      'auth/invalid-credential': l.err_invalid,
-      'auth/invalid-email': l.err_invalid
-    };
-
-    errEl.textContent = firebaseErrors[err.code] || l.err_generic;
-    btn.disabled = false;
-    btnText.textContent = l.signin;
+    // Firebase login failed for any reason — this account may only exist in the
+    // local DB (e.g. created while Firebase was unreachable), so always try local
+    // auth as a fallback before giving up.
+    try{
+      const r = await fetch('/api/auth/local-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await r.json();
+      if(!r.ok) throw new Error(data.error || 'Login failed');
+      document.cookie = `token=${data.token};path=/;max-age=3600;sameSite=lax`;
+      localStorage.setItem('token', data.token);
+      window.location.href = data.redirectUrl || '/student-dashboard.html';
+      return;
+    }catch(localErr){
+      // Not a local account either — surface the original Firebase error.
+      const firebaseErrors = {
+        'auth/user-not-found': l.err_not_found,
+        'auth/wrong-password': l.err_wrong_pw,
+        'auth/invalid-credential': l.err_invalid,
+        'auth/invalid-email': l.err_invalid
+      };
+      errEl.textContent = firebaseErrors[err.code] || l.err_generic;
+      btn.disabled = false;
+      btnText.textContent = l.signin;
+    }
   }
 }
 </script>
