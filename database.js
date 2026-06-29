@@ -974,4 +974,4 @@ getTeamTodos: (teamId) => {
   }
 };
 
-module.exports = { initializeDatabase, seedDefaultAdmin, dbHelpers, DB_PATH };
+module.exports = { initializeDatabase, seedDefaultAdmin, dbHelpers };

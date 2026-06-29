@@ -10,7 +10,7 @@ const cors = require("cors");
 const multer = require("multer");
 const admin = require("firebase-admin");
 
-const { initializeDatabase, dbHelpers, DB_PATH } = require("./database");
+const { initializeDatabase, dbHelpers } = require("./database");
 const {
   initFirebase,
   authenticateToken,
@@ -2081,38 +2081,6 @@ app.get("/supervisor-dashboard.html", requirePageAuth, (req, res) => {
 
 app.use("/uploads", express.static(UPLOAD_DIR));
 app.use(express.static(path.join(__dirname, "public")));
-
-// ==================== TEMPORARY: ONE-TIME DATA MIGRATION ====================
-// Remove this whole block after migrating local data to production.
-const migrateUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
-
-app.post(
-  "/api/admin/migrate/db",
-  authenticateToken,
-  authorizeRole("Admin"),
-  migrateUpload.single("dbfile"),
-  (req, res) => {
-    if (!req.file) return res.status(400).json({ error: "No file" });
-    fs.writeFileSync(DB_PATH, req.file.buffer);
-    res.json({ message: "Database replaced. Restarting to load it..." });
-    setTimeout(() => process.exit(1), 300);
-  }
-);
-
-app.post(
-  "/api/admin/migrate/file",
-  authenticateToken,
-  authorizeRole("Admin"),
-  migrateUpload.single("file"),
-  (req, res) => {
-    if (!req.file) return res.status(400).json({ error: "No file" });
-    const filename = req.body.filename || req.file.originalname;
-    if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-    fs.writeFileSync(path.join(UPLOAD_DIR, filename), req.file.buffer);
-    res.json({ message: "File restored: " + filename });
-  }
-);
-// ==================== END TEMPORARY MIGRATION BLOCK ====================
 
 // ==================== SEED DEFAULT ADMIN ====================
 
