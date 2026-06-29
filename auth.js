@@ -23,8 +23,14 @@ function verifyLocalToken(token) {
 }
 
 // Initialize Firebase Admin SDK (called once from server.js)
+// Non-fatal if credentials are missing/invalid — local-auth login still works without Firebase.
 function initFirebase() {
-  if (admin.apps.length === 0) {
+  if (admin.apps.length > 0) return;
+  if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
+    console.warn('[auth] Firebase env vars missing — skipping Firebase Admin init (local-auth login will still work).');
+    return;
+  }
+  try {
     admin.initializeApp({
       credential: admin.credential.cert({
         projectId: process.env.FIREBASE_PROJECT_ID,
@@ -32,6 +38,8 @@ function initFirebase() {
         privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
       }),
     });
+  } catch (err) {
+    console.warn('[auth] Firebase Admin init failed — continuing without it:', err.message);
   }
 }
 
