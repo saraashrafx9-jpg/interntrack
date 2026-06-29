@@ -420,6 +420,7 @@ function showToast(msg, type = 'info') {
 
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('collapsed');
+  document.getElementById('sidebar').classList.toggle('open');
   document.getElementById('mainLayout').classList.toggle('expanded');
 }
 
@@ -441,6 +442,7 @@ function statusBadge(status) {
 }
 
 function switchTab(tab) {
+  if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
   currentTabName = tab;
   localStorage.setItem('supervisorCurrentTab', tab);
   document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
@@ -574,7 +576,7 @@ function renderCalendarUI(el) {
       <div><h2>${t('nav_calendar')}</h2></div>
       <button class="btn btn-primary" onclick="openEventModal()">${t('btn_add_event')}</button>
     </div>
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:start;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;align-items:start;">
       <div class="panel">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
           <button class="btn btn-sm btn-ghost" onclick="changeCalendarMonth(-1)">‹</button>
@@ -850,7 +852,7 @@ function renderOverviewTeamSections() {
       <div class="full-panel">
         <div class="panel-header"><h3>${escHtml(tm?.TeamName || '')}</h3><span class="badge badge-blue">${items.length}</span></div>
         ${items.length
-          ? `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;">${items.map(renderTeamPostCard).join('')}</div>`
+          ? `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;">${items.map(renderTeamPostCard).join('')}</div>`
           : `<p class="text-muted" style="font-size:13px;">${t('no_ach_found')}</p>`}
       </div>`;
     return;

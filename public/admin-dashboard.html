@@ -785,6 +785,7 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('collapsed');
+  document.getElementById('sidebar').classList.toggle('open');
   document.getElementById('mainLayout').classList.toggle('expanded');
 }
 
@@ -796,6 +797,7 @@ async function logout() {
 }
 
 function switchTab(tab) {
+  if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
   currentTab = tab;
   viewingTeamId = null;
   localStorage.setItem("adminCurrentTab", tab);
@@ -1159,7 +1161,7 @@ function renderTeams(el, {teams}) {
       <div><h2>${t('h_teams')}</h2><p>${teams.length} ${t('lbl_total')}</p></div>
       <button class="btn btn-primary" onclick="openCreateTeam()">${t('btn_new_team')}</button>
     </div>
-    ${teams.length ? `<div class="teams-card-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+    ${teams.length ? `<div class="teams-card-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;">
       ${teams.map((tm, i) => {
         const studentCount = allStudents.filter(s => s.TeamID === tm.TeamID).length;
         const leader = tm.LeaderName ? { Name: tm.LeaderName } : allLeaders.find(l => l.TeamID === tm.TeamID);
@@ -1253,7 +1255,7 @@ async function viewTeamDetail(teamId) {
       <div class="page-header" style="margin-bottom:14px;">
         <h3 style="margin:0;">${t('th_posts')}</h3>
       </div>
-      ${teamAchievements.length ? `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:18px;">
+      ${teamAchievements.length ? `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;">
           ${teamAchievements.map(a => `
           <div class="panel" style="padding:0;overflow:hidden;">
             ${a.FirstImage
@@ -1800,7 +1802,7 @@ function renderCalendarUI(el) {
       <div><h2>${t('nav_calendar')}</h2></div>
       <button class="btn btn-primary" onclick="openEventModal()">${t('btn_add_event')}</button>
     </div>
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:start;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;align-items:start;">
       <div class="panel">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
           <button class="btn btn-sm btn-ghost" onclick="changeCalendarMonth(-1)">‹</button>
