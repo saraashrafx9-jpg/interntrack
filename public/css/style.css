@@ -1148,6 +1148,24 @@ tbody tr:hover { background: #f2f2ea; }
   min-width: 0;
 }
 
+/* ── Pinterest-style masonry grid (Team To-Do Lists) ─────────── */
+.todo-masonry {
+  column-count: 2;
+  column-gap: 16px;
+  margin-bottom: 20px;
+}
+@media (min-width: 1024px) {
+  .todo-masonry { column-count: 3; }
+}
+.todo-masonry .full-panel {
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  display: inline-block;
+  width: 100%;
+  vertical-align: top;
+  padding: 14px;
+}
+
 /* ── LANGUAGE TOGGLE BUTTON ──────────────── */
 .lang-btn {
   background: var(--bg);
@@ -1336,10 +1354,8 @@ html[dir="rtl"] .permission-table td:first-child {
 .dark-mode .topbar-badge { color: #e8edf3; }
 
 .dark-mode .toggle-btn,
-.dark-mode .topbar-badge,
-.dark-mode .notif-btn { background: #1a1e29; color: #e8edf3; border-color: rgba(255,255,255,.08); }
-.dark-mode .toggle-btn:hover,
-.dark-mode .notif-btn:hover { background: #232838; }
+.dark-mode .topbar-badge { background: #1a1e29; color: #e8edf3; border-color: rgba(255,255,255,.08); }
+.dark-mode .toggle-btn:hover { background: #232838; }
 
 .dark-mode .sidebar {
   background: linear-gradient(180deg, #131620 0%, #0a0c12 100%) !important;
@@ -1447,7 +1463,6 @@ html[dir="rtl"] .permission-table td:first-child {
 .dark-mode .comment-box,
 .dark-mode .auth-box,
 .dark-mode .add-user-menu,
-.dark-mode .notifications-box,
 .dark-mode .user-side-panel,
 .dark-mode .panel-info {
   background: #1a1e29 !important;
@@ -1674,61 +1689,6 @@ html[dir="rtl"] .language-dropdown {
   display:flex;
   justify-content:space-between;
   align-items:center;
-}
-
-.notification-wrapper{
-  position:relative;
-}
-
-.notif-btn{
-  border:none;
-  background:#ebebdf;
-  border-radius:12px;
-  padding:10px 14px;
-  cursor:pointer;
-  font-size:16px;
-  transition:.25s;
-}
-
-.notif-btn:hover{
-  background:#e2e8f0;
-}
-
-.notif-btn span{
-  background:var(--splash);
-  color:#fff;
-  border-radius:50px;
-  padding:2px 7px;
-  font-size:12px;
-  margin-left:4px;
-}
-
-.notifications-box{
-  display:none;
-  position:absolute;
-  right:0;
-  top:55px;
-  width:280px;
-  background:#fff;
-  border:1px solid #e2e8f0;
-  border-radius:16px;
-  box-shadow:0 18px 40px rgba(15,23,42,.16);
-  padding:12px;
-  z-index:9999;
-}
-
-.notifications-box.show{
-  display:block;
-}
-
-.notifications-box p{
-  padding:10px;
-  margin:0;
-  border-radius:10px;
-}
-
-.notifications-box p:hover{
-  background:#f2f2ea;
 }
 
 .users-tools{
