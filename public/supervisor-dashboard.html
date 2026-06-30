@@ -94,6 +94,12 @@
     <a class="nav-item active" onclick="switchTab('overview')" href="#">
       <span class="nav-icon"><i class="fa-solid fa-gauge-high"></i></span> <span data-i18n="nav_overview">Overview</span>
     </a>
+    <a class="nav-item" onclick="switchTab('teams')" href="#">
+      <span class="nav-icon"><i class="fa-solid fa-users"></i></span> <span data-i18n="nav_teams">Teams</span>
+    </a>
+    <a class="nav-item" onclick="switchTab('users')" href="#">
+      <span class="nav-icon"><i class="fa-solid fa-user-group"></i></span> <span data-i18n="nav_users">Users</span>
+    </a>
     <a class="nav-item" onclick="switchTab('feedback')" href="#">
       <span class="nav-icon"><i class="fa-solid fa-comment-dots"></i></span> <span data-i18n="nav_my_feedback">My Feedback</span>
     </a>
@@ -168,6 +174,36 @@ const T = {
     lbl_role: 'Role',
     lbl_new_password: 'New Password',
     password_hint: 'Min 6 characters',
+    nav_teams: 'Teams',
+    nav_users: 'Users',
+    h_teams: 'Teams',
+    lbl_total: 'total',
+    th_leader: 'Leader',
+    no_leader: 'No leader',
+    th_students: 'Students',
+    th_posts: 'Posts',
+    view_team: 'View Team →',
+    no_teams: 'No teams yet.',
+    h_users: 'Users',
+    sub_users: 'View students, leaders, and supervisors in one place',
+    th_name: 'Name',
+    th_email: 'Email',
+    th_team: 'Team',
+    ph_search_users: 'Search users...',
+    lbl_all_roles: 'All Roles',
+    lbl_students: 'Students',
+    lbl_leaders: 'Leaders',
+    h_supervisors: 'Supervisors',
+    lbl_all_teams: 'All Teams',
+    no_users: 'No users yet',
+    role_student: 'Student',
+    role_leader: 'Leader',
+    role_supervisor: 'Supervisor',
+    lbl_assign_team: 'Team',
+    th_status: 'Status',
+    lbl_active: 'Active',
+    err_load: 'Error loading data',
+    no_posts_yet: 'No posts yet.',
     not_set: 'Not set',
     err_name_email: 'Name and email are required',
     err_password_length: 'Password must be at least 6 characters',
@@ -272,6 +308,36 @@ const T = {
     lbl_new_password: 'كلمة المرور الجديدة',
     password_hint: 'بحد أدنى 6 أحرف',
     not_set: 'غير محدد',
+    nav_teams: 'الفرق',
+    nav_users: 'المستخدمون',
+    h_teams: 'الفرق',
+    lbl_total: 'المجموع',
+    th_leader: 'القائد',
+    no_leader: 'لا يوجد قائد',
+    th_students: 'الطلاب',
+    th_posts: 'المنشورات',
+    view_team: 'عرض الفريق ←',
+    no_teams: 'لا توجد فرق بعد.',
+    h_users: 'المستخدمون',
+    sub_users: 'عرض الطلاب والقادة والمشرفين في مكان واحد',
+    th_name: 'الاسم',
+    th_email: 'البريد',
+    th_team: 'الفريق',
+    ph_search_users: 'بحث عن مستخدم...',
+    lbl_all_roles: 'جميع الأدوار',
+    lbl_students: 'الطلاب',
+    lbl_leaders: 'القادة',
+    h_supervisors: 'المشرفون',
+    lbl_all_teams: 'جميع الفرق',
+    no_users: 'لا يوجد مستخدمون بعد',
+    role_student: 'طالب',
+    role_leader: 'قائد',
+    role_supervisor: 'مشرف',
+    lbl_assign_team: 'الفريق',
+    th_status: 'الحالة',
+    lbl_active: 'نشط',
+    err_load: 'خطأ في تحميل البيانات',
+    no_posts_yet: 'لا توجد منشورات بعد.',
     err_name_email: 'الاسم والبريد الإلكتروني مطلوبان',
     err_password_length: 'يجب أن تكون كلمة المرور 6 أحرف على الأقل',
     toast_password_updated: 'تم تحديث كلمة المرور!',
@@ -447,13 +513,15 @@ function switchTab(tab) {
   localStorage.setItem('supervisorCurrentTab', tab);
   document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
   const navItems = document.querySelectorAll('.sidebar-nav .nav-item');
-  const idx = { overview: 0, feedback: 1, calendar: 2, settings: 3 };
+  const idx = { overview: 0, teams: 1, users: 2, feedback: 3, calendar: 4, settings: 5 };
   navItems[idx[tab]]?.classList.add('active');
-  const titles = { overview: t('tb_overview'), feedback: t('tb_feedback'), calendar: t('nav_calendar'), settings: t('nav_settings') };
+  const titles = { overview: t('tb_overview'), teams: t('h_teams'), users: t('h_users'), feedback: t('tb_feedback'), calendar: t('nav_calendar'), settings: t('nav_settings') };
   document.getElementById('topbarTitle').textContent = titles[tab] || tab;
   const el = document.getElementById('pageContent');
   switch (tab) {
     case 'overview': renderOverview(el); break;
+    case 'teams': renderSupTeams(el); break;
+    case 'users': renderSupUsers(el); break;
     case 'feedback': renderMyFeedback(el); break;
     case 'calendar': renderCalendar(el); break;
     case 'settings': renderSettings(el); break;
@@ -1094,6 +1162,240 @@ async function renderMyFeedback(el) {
   } catch (e) {
     el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('err_data')}</h3></div>`;
   }
+}
+
+// ── TEAMS (view-only mirror of admin) ────────────────────────────────────────
+const TEAM_BANNER_PALETTE = [
+  { icon: 'fa-cloud',        grad: 'linear-gradient(135deg,#0ea5e9,#3d5a7d)' },
+  { icon: 'fa-code',         grad: 'linear-gradient(135deg,#8b5cf6,#5b21b6)' },
+  { icon: 'fa-briefcase',    grad: 'linear-gradient(135deg,#64748b,#334155)' },
+  { icon: 'fa-photo-film',   grad: 'linear-gradient(135deg,#ec4899,#be185d)' },
+  { icon: 'fa-laptop-code',  grad: 'linear-gradient(135deg,#14b8a6,#0f766e)' },
+  { icon: 'fa-globe',        grad: 'linear-gradient(135deg,#f59e0b,#b45309)' },
+];
+function supTeamCardBanner(tm, idx) {
+  const style = TEAM_BANNER_PALETTE[idx % TEAM_BANNER_PALETTE.length];
+  const bg = tm.CoverImage
+    ? `background-image:url('${escHtml(tm.CoverImage)}');background-size:cover;background-position:center;`
+    : `background:${style.grad};`;
+  return { style, bg };
+}
+
+let supTeamsCache = [], supUsersCache = { leaders: [], students: [], supervisors: [] };
+
+async function renderSupTeams(el) {
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const [teams, users] = await Promise.all([
+      fetch('/api/teams').then(r => r.json()),
+      fetch('/api/admin/users', { headers: getHeaders() }).then(r => r.json())
+    ]);
+    supTeamsCache = teams;
+    supUsersCache = users;
+    renderSupTeamsUI(el);
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('err_load')}</h3></div>`;
+  }
+}
+
+function renderSupTeamsUI(el) {
+  const teams = supTeamsCache;
+  el.innerHTML = `
+    <div class="page-header">
+      <div><h2>${t('h_teams')}</h2><p>${teams.length} ${t('lbl_total')}</p></div>
+    </div>
+    ${teams.length ? `<div class="teams-card-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;">
+      ${teams.map((tm, i) => {
+        const studentCount = (supUsersCache.students || []).filter(s => s.TeamID === tm.TeamID).length;
+        const leader = tm.LeaderName ? { Name: tm.LeaderName } : (supUsersCache.leaders || []).find(l => l.TeamID === tm.TeamID);
+        const { style, bg } = supTeamCardBanner(tm, i);
+        return `
+        <div class="panel team-card" style="padding:0;overflow:hidden;cursor:pointer;" onclick="viewSupTeamDetail(${tm.TeamID})">
+          <div style="position:relative;height:80px;${bg}">
+            <div style="position:absolute;left:14px;bottom:-16px;width:38px;height:38px;border-radius:10px;background:${style.grad};display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,0,0,.2);border:3px solid #fff;">
+              <i class="fa-solid ${style.icon}" style="color:#fff;font-size:15px;"></i>
+            </div>
+          </div>
+          <div style="padding:22px 16px 14px;">
+            <h3 style="margin:0;font-size:15px;">${escHtml(tm.TeamName)}</h3>
+            <p class="text-muted" style="font-size:12px;margin:4px 0 10px;">${t('th_leader')}: ${leader ? escHtml(leader.Name) : t('no_leader')}</p>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding-top:10px;border-top:1px solid var(--border);">
+              <div style="display:flex;gap:14px;font-size:12px;color:var(--text-muted);">
+                <span><strong style="color:var(--text);">${studentCount}</strong> ${t('th_students')}</span>
+                <span><strong style="color:var(--text);">${tm.AchievementCount || 0}</strong> ${t('th_posts')}</span>
+              </div>
+              <span class="btn btn-sm btn-ghost" style="flex-shrink:0;">${t('view_team')}</span>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>` : `<div class="full-panel"><div class="empty-state"><div class="empty-icon">👥</div><h3>${t('no_teams')}</h3></div></div>`}`;
+}
+
+async function viewSupTeamDetail(teamId) {
+  const el = document.getElementById('pageContent');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const [teams, achievements] = await Promise.all([
+      fetch('/api/teams').then(r => r.json()),
+      fetch('/api/supervisor/achievements', { headers: getHeaders() }).then(r => r.json())
+    ]);
+    const idx = teams.findIndex(tm => tm.TeamID === teamId);
+    const team = teams[idx];
+    if (!team) { el.innerHTML = `<div class="empty-state"><h3>${t('no_teams')}</h3></div>`; return; }
+
+    document.getElementById('topbarTitle').textContent = team.TeamName;
+    const teamAchievements = achievements.filter(a => a.TeamID === teamId);
+    const studentCount = (supUsersCache.students || []).filter(s => s.TeamID === teamId).length;
+    const leader = team.LeaderName ? { Name: team.LeaderName } : (supUsersCache.leaders || []).find(l => l.TeamID === teamId);
+    const { bg } = supTeamCardBanner(team, idx);
+
+    el.innerHTML = `
+      <button class="btn btn-ghost" style="margin-bottom:16px;" onclick="switchTab('teams')">← ${t('h_teams')}</button>
+      <div class="panel" style="padding:0;overflow:hidden;margin-bottom:20px;">
+        <div style="position:relative;height:160px;${bg}"></div>
+        <div style="padding:20px 24px;">
+          <h2 style="margin:0 0 6px;">${escHtml(team.TeamName)}</h2>
+          <p class="text-muted" style="margin:0 0 14px;">${escHtml(team.Description || '—')}</p>
+          <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:14px;">
+            <span>${t('th_leader')}: ${leader ? `<strong>${escHtml(leader.Name)}</strong>` : t('no_leader')}</span>
+            <span>${t('th_students')}: <strong>${studentCount}</strong></span>
+            <span>${t('th_posts')}: <strong>${teamAchievements.length}</strong></span>
+          </div>
+        </div>
+      </div>
+      <div class="page-header" style="margin-bottom:14px;"><h3 style="margin:0;">${t('th_posts')}</h3></div>
+      ${teamAchievements.length ? `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;">
+          ${teamAchievements.map(a => `
+          <div class="panel" style="padding:0;overflow:hidden;">
+            ${a.FirstImage ? `<img src="${escHtml(a.FirstImage)}" style="width:100%;max-height:260px;object-fit:cover;display:block;">` : ''}
+            <div style="padding:18px 20px;">
+              ${statusBadge(a.Status)}
+              <h3 style="margin:10px 0 4px;">${escHtml(a.Title)}</h3>
+              <p class="text-muted" style="font-size:13px;margin:0 0 12px;">${escHtml(a.CreatorName || '—')} · ${fmtDate(a.CreatedAt)}</p>
+              <p style="font-size:14px;line-height:1.6;margin:0;white-space:pre-wrap;">${escHtml(a.Description || '')}</p>
+            </div>
+          </div>`).join('')}
+        </div>` : `<div class="full-panel"><div class="empty-state"><div class="empty-icon">📄</div><h3>${t('no_posts_yet')}</h3></div></div>`}`;
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('err_load')}</h3></div>`;
+  }
+}
+
+// ── USERS (view-only mirror of admin) ────────────────────────────────────────
+async function renderSupUsers(el) {
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const [teams, users] = await Promise.all([
+      fetch('/api/teams').then(r => r.json()),
+      fetch('/api/admin/users', { headers: getHeaders() }).then(r => r.json())
+    ]);
+    supTeamsCache = teams;
+    supUsersCache = users;
+    renderSupUsersUI(el);
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('err_load')}</h3></div>`;
+  }
+}
+
+function renderSupUsersUI(el) {
+  const teams = supTeamsCache;
+  const leaders = supUsersCache.leaders || [];
+  const students = supUsersCache.students || [];
+  const supervisors = supUsersCache.supervisors || [];
+  const allUsers = [
+    ...students.map(u => ({ ...u, Role: 'Student' })),
+    ...leaders.map(u => ({ ...u, Role: 'Leader' })),
+    ...supervisors.map(u => ({ ...u, Role: 'Supervisor' }))
+  ];
+
+  el.innerHTML = `
+    <div class="page-header">
+      <div><h2>${t('h_users')}</h2><p>${t('sub_users')}</p></div>
+    </div>
+
+    <div class="stats-row" style="grid-template-columns:repeat(4,1fr);">
+      <div class="stat-card"><div class="stat-icon blue">🏢</div><div class="stat-info"><h3>${allUsers.length}</h3><p>${t('h_users')}</p></div></div>
+      <div class="stat-card"><div class="stat-icon green">🎓</div><div class="stat-info"><h3>${students.length}</h3><p>${t('lbl_students')}</p></div></div>
+      <div class="stat-card"><div class="stat-icon gold">🛡️</div><div class="stat-info"><h3>${supervisors.length}</h3><p>${t('h_supervisors')}</p></div></div>
+      <div class="stat-card"><div class="stat-icon purple">👥</div><div class="stat-info"><h3>${teams.length}</h3><p>${t('lbl_teams')}</p></div></div>
+    </div>
+
+    <div class="full-panel">
+      <div class="panel-header"><h3>${t('h_users')}</h3></div>
+      <div class="users-tools">
+        <input type="text" id="supUserSearch" class="users-search" placeholder="${t('ph_search_users')}" onkeyup="filterSupUsersTable()">
+        <select id="supRoleFilter" class="users-filter" onchange="filterSupUsersTable()">
+          <option value="">${t('lbl_all_roles')}</option>
+          <option value="Student">${t('lbl_students')}</option>
+          <option value="Leader">${t('lbl_leaders')}</option>
+          <option value="Supervisor">${t('h_supervisors')}</option>
+        </select>
+        <select id="supTeamFilter" class="users-filter" onchange="filterSupUsersTable()">
+          <option value="">${t('lbl_all_teams')}</option>
+          ${teams.map(tm => `<option value="${escHtml(tm.TeamName)}">${escHtml(tm.TeamName)}</option>`).join('')}
+        </select>
+      </div>
+      ${allUsers.length ? `
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>${t('th_name')}</th><th>${t('th_email')}</th><th>${t('lbl_role')}</th><th>${t('th_team')}</th></tr></thead>
+          <tbody>
+            ${allUsers.map(u => `
+            <tr class="sup-user-row" data-role="${u.Role}" data-team="${u.TeamName || '—'}"
+              onclick="openSupUserPanel('${escHtml(u.Name)}','${escHtml(u.Email)}','${u.Role}','${u.TeamName || '—'}','${escHtml(u.Phone || '')}','${escHtml(u.ProfilePicture || '')}')">
+              <td><strong>${escHtml(u.Name)}</strong></td>
+              <td style="color:var(--text-muted);">${escHtml(u.Email)}</td>
+              <td><span class="badge badge-blue">${t('role_' + u.Role.toLowerCase())}</span></td>
+              <td>${u.TeamName || '—'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>` : `<div class="empty-state"><div class="empty-icon">👥</div><h3>${t('no_users')}</h3></div>`}
+    </div>
+
+    <div id="supUserSidePanel" class="user-side-panel">
+      <button class="close-panel" onclick="closeSupUserPanel()">✕</button>
+      <div class="panel-avatar" id="supPanelUserAvatar" style="overflow:hidden;"><i class="fa-solid fa-user"></i></div>
+      <h2 id="supPanelUserName"></h2>
+      <p id="supPanelUserEmail"></p>
+      <div class="panel-info">
+        <p><strong>${t('lbl_role')}:</strong> <span id="supPanelUserRole"></span></p>
+        <p><strong>${t('lbl_assign_team')}:</strong> <span id="supPanelUserTeam"></span></p>
+        <p><strong>${t('lbl_phone')}:</strong> <span id="supPanelUserPhone"></span></p>
+        <p><strong>${t('th_status')}:</strong> ${t('lbl_active')}</p>
+      </div>
+    </div>`;
+}
+
+function filterSupUsersTable() {
+  const search = (document.getElementById('supUserSearch')?.value || '').toLowerCase().trim();
+  const role = document.getElementById('supRoleFilter')?.value || '';
+  const team = document.getElementById('supTeamFilter')?.value || '';
+  document.querySelectorAll('.sup-user-row').forEach(row => {
+    const name = row.children[0]?.textContent.toLowerCase() || '';
+    const email = row.children[1]?.textContent.toLowerCase() || '';
+    const matchesSearch = !search || name.includes(search) || email.includes(search);
+    const matchesRole = !role || row.dataset.role === role;
+    const matchesTeam = !team || row.dataset.team === team;
+    row.style.display = (matchesSearch && matchesRole && matchesTeam) ? '' : 'none';
+  });
+}
+
+function openSupUserPanel(name, email, role, team, phone, profilePicture) {
+  document.getElementById('supPanelUserName').textContent = name;
+  document.getElementById('supPanelUserEmail').textContent = email;
+  document.getElementById('supPanelUserRole').textContent = role;
+  document.getElementById('supPanelUserTeam').textContent = team;
+  document.getElementById('supPanelUserPhone').textContent = phone || '—';
+  document.getElementById('supPanelUserAvatar').innerHTML = profilePicture
+    ? `<img src="${escHtml(profilePicture)}" style="width:100%;height:100%;object-fit:cover;">`
+    : '<i class="fa-solid fa-user"></i>';
+  document.getElementById('supUserSidePanel').classList.add('open');
+}
+
+function closeSupUserPanel() {
+  document.getElementById('supUserSidePanel').classList.remove('open');
 }
 
 // ── SETTINGS ───────────────────────────────────────────────────────────────────

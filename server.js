@@ -1474,7 +1474,7 @@ app.put(
 app.get(
   "/api/admin/users",
   authenticateToken,
-  authorizeRole("Admin"),
+  authorizeRole("Admin", "Supervisor"),
   (req, res) => {
     try {
       const leaders = dbHelpers.getUsersByRole("Leader");
