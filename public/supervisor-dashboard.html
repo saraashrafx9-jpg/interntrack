@@ -756,7 +756,7 @@ async function deleteReminderItem(id) {
 function renderTeamPostCard(a) {
   const docs = overviewDocsMap[a.AchievementID] || [];
   return `
-    <div class="achievement-card-full">
+    <div class="achievement-card-full" style="cursor:pointer;" onclick="openPostDetail(${a.AchievementID})">
       ${a.FirstImage
         ? `<img class="card-image" src="${escHtml(a.FirstImage)}" style="width:100%;height:180px;object-fit:cover;" onerror="this.style.display='none'">`
         : `<div class="card-image">🏆</div>`}
@@ -772,11 +772,43 @@ function renderTeamPostCard(a) {
           ${docs.map(d => {
             const ext = d.FileName.split('.').pop().toLowerCase();
             const icon = {pdf:'📄',ppt:'📊',pptx:'📊',doc:'📝',docx:'📝'}[ext] || '📎';
-            return `<a href="${escHtml(d.FilePath)}" target="_blank" download style="display:flex;align-items:center;gap:5px;background:#ebebdf;border:1px solid #e2e8f0;border-radius:8px;padding:4px 10px;font-size:12px;text-decoration:none;color:#334155;">${icon} ${escHtml(d.FileName)}</a>`;
+            return `<a href="${escHtml(d.FilePath)}" target="_blank" download onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;background:#ebebdf;border:1px solid #e2e8f0;border-radius:8px;padding:4px 10px;font-size:12px;text-decoration:none;color:#334155;">${icon} ${escHtml(d.FileName)}</a>`;
           }).join('')}
         </div>` : ''}
       </div>
     </div>`;
+}
+
+async function openPostDetail(id) {
+  const a = overviewAchievements.find(x => x.AchievementID === id);
+  if (!a) return;
+  const docs = overviewDocsMap[id] || [];
+  let images = [];
+  try {
+    const detail = await fetch('/api/achievements/' + id).then(r => r.json());
+    images = detail?.images || [];
+  } catch (e) {}
+
+  document.getElementById('postDetailTitle').textContent = a.Title;
+  document.getElementById('postDetailBody').innerHTML = `
+    ${images.length ? `
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+      ${images.map(img => `<img src="${escHtml(img.ImageURL)}" style="width:140px;height:140px;object-fit:cover;border-radius:10px;cursor:pointer;" onclick="window.open('${escHtml(img.ImageURL)}','_blank')">`).join('')}
+    </div>` : ''}
+    <p style="white-space:pre-wrap;line-height:1.7;font-size:14px;margin-bottom:16px;">${escHtml(a.Description || '')}</p>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span>${escHtml(a.CreatorName || '')} · ${fmtDate(a.CreatedAt)}</span>
+      ${statusBadge(a.Status)}
+    </div>
+    ${docs.length ? `
+    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+      ${docs.map(d => {
+        const ext = d.FileName.split('.').pop().toLowerCase();
+        const icon = {pdf:'📄',ppt:'📊',pptx:'📊',doc:'📝',docx:'📝'}[ext] || '📎';
+        return `<a href="${escHtml(d.FilePath)}" target="_blank" download style="display:flex;align-items:center;gap:5px;background:#ebebdf;border:1px solid #e2e8f0;border-radius:8px;padding:4px 10px;font-size:12px;text-decoration:none;color:#334155;">${icon} ${escHtml(d.FileName)}</a>`;
+      }).join('')}
+    </div>` : ''}`;
+  openModal('postDetailModal');
 }
 
 let overviewAchievements = [];
@@ -844,7 +876,14 @@ async function renderOverview(el) {
         </select>
       </div>
 
-      <div id="overviewTeamSections"></div>`;
+      <div id="overviewTeamSections"></div>
+
+      <div class="modal-overlay" id="postDetailModal">
+        <div class="modal-box" style="max-width:700px;">
+          <div class="modal-header"><h3 id="postDetailTitle"></h3><button class="modal-close" onclick="closeModal('postDetailModal')">✕</button></div>
+          <div id="postDetailBody"></div>
+        </div>
+      </div>`;
 
     renderOverviewTeamSections();
   } catch (e) {
