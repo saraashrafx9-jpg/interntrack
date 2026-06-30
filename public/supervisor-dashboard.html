@@ -754,6 +754,7 @@ async function deleteReminderItem(id) {
 
 // ── OVERVIEW ──────────────────────────────────────────────────────────────────
 function renderTeamPostCard(a) {
+  const docs = overviewDocsMap[a.AchievementID] || [];
   return `
     <div class="achievement-card-full">
       ${a.FirstImage
@@ -766,12 +767,21 @@ function renderTeamPostCard(a) {
           <span>${escHtml(a.CreatorName || '')} · ${fmtDate(a.CreatedAt)}</span>
           ${statusBadge(a.Status)}
         </div>
+        ${docs.length ? `
+        <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;">
+          ${docs.map(d => {
+            const ext = d.FileName.split('.').pop().toLowerCase();
+            const icon = {pdf:'📄',ppt:'📊',pptx:'📊',doc:'📝',docx:'📝'}[ext] || '📎';
+            return `<a href="${escHtml(d.FilePath)}" target="_blank" download style="display:flex;align-items:center;gap:5px;background:#ebebdf;border:1px solid #e2e8f0;border-radius:8px;padding:4px 10px;font-size:12px;text-decoration:none;color:#334155;">${icon} ${escHtml(d.FileName)}</a>`;
+          }).join('')}
+        </div>` : ''}
       </div>
     </div>`;
 }
 
 let overviewAchievements = [];
 let overviewTeams = [];
+let overviewDocsMap = {};
 
 async function renderOverview(el) {
   el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
@@ -784,6 +794,13 @@ async function renderOverview(el) {
     allAchievements = achievements;
     overviewAchievements = achievements;
     overviewTeams = teams;
+
+    overviewDocsMap = {};
+    await Promise.all(achievements.map(async a => {
+      try {
+        overviewDocsMap[a.AchievementID] = await fetch(`/api/achievements/${a.AchievementID}/documents`).then(r => r.ok ? r.json() : []);
+      } catch (e) { overviewDocsMap[a.AchievementID] = []; }
+    }));
     const myFeedbackCount = achievements.reduce((sum, a) => sum + (a.supervisorFeedbackCount || 0), 0);
 
     el.innerHTML = `

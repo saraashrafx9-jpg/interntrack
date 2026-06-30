@@ -1039,7 +1039,8 @@ async function renderOverview(el) {
   }
 }
 
-function renderTeamPostCard(a) {
+function renderTeamPostCard(a, docs) {
+  docs = docs || [];
   return `
     <div class="achievement-card-full">
       ${a.FirstImage
@@ -1052,6 +1053,14 @@ function renderTeamPostCard(a) {
           <span>${escHtml(a.CreatorName || '')} · ${fmtDate(a.CreatedAt)}</span>
           ${statusBadge(a.Status)}
         </div>
+        ${docs.length ? `
+        <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;">
+          ${docs.map(d => {
+            const ext = d.FileName.split('.').pop().toLowerCase();
+            const icon = {pdf:'📄',ppt:'📊',pptx:'📊',doc:'📝',docx:'📝'}[ext] || '📎';
+            return `<a href="${escHtml(d.FilePath)}" target="_blank" download style="display:flex;align-items:center;gap:5px;background:#ebebdf;border:1px solid #e2e8f0;border-radius:8px;padding:4px 10px;font-size:12px;text-decoration:none;color:#334155;">${icon} ${escHtml(d.FileName)}</a>`;
+          }).join('')}
+        </div>` : ''}
       </div>
     </div>`;
 }
@@ -1065,8 +1074,16 @@ async function renderAllTeamPosts(el) {
   try {
     posts = await fetch('/api/achievements?teamId=' + currentUser.TeamID + '&limit=50').then(r => r.json());
   } catch (e) {}
+
+  const docsMap = {};
+  await Promise.all(posts.map(async a => {
+    try {
+      docsMap[a.AchievementID] = await fetch(`/api/achievements/${a.AchievementID}/documents`).then(r => r.ok ? r.json() : []);
+    } catch (e) { docsMap[a.AchievementID] = []; }
+  }));
+
   el.innerHTML = posts.length
-    ? `<div class="achievement-cards-grid">${posts.map(renderTeamPostCard).join('')}</div>`
+    ? `<div class="achievement-cards-grid">${posts.map(a => renderTeamPostCard(a, docsMap[a.AchievementID])).join('')}</div>`
     : `<div class="full-panel"><div class="empty-state"><div class="empty-icon">🏆</div><h3>${t('no_team_posts')}</h3></div></div>`;
 }
 
@@ -1377,13 +1394,20 @@ async function renderApprovals(el) {
   el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
   await loadAchievements();
 
-  // Fetch supervisor feedback for each pending achievement
-  const feedbackMap = {};
+  // Fetch supervisor feedback, images, and documents for each pending achievement
+  const feedbackMap = {}, imagesMap = {}, docsMap = {};
   await Promise.all(pendingFromStudents.map(async a => {
     try {
       const fb = await fetch(`/api/team/achievements/${a.AchievementID}/supervisor-feedback`, { headers: getHeaders() }).then(r => r.ok ? r.json() : []);
       feedbackMap[a.AchievementID] = fb;
     } catch(e) { feedbackMap[a.AchievementID] = []; }
+    try {
+      const detail = await fetch(`/api/achievements/${a.AchievementID}`).then(r => r.ok ? r.json() : null);
+      imagesMap[a.AchievementID] = detail?.images || [];
+    } catch(e) { imagesMap[a.AchievementID] = []; }
+    try {
+      docsMap[a.AchievementID] = await fetch(`/api/achievements/${a.AchievementID}/documents`).then(r => r.ok ? r.json() : []);
+    } catch(e) { docsMap[a.AchievementID] = []; }
   }));
 
   el.innerHTML=`
@@ -1400,6 +1424,18 @@ async function renderApprovals(el) {
           </div>
           <p style="font-size:13px;color:var(--text-muted);margin-bottom:6px;">${t('submitted_by')} <strong>${escHtml(a.CreatorName)}</strong> · ${fmtDate(a.CreatedAt)}</p>
           <p style="font-size:14px;line-height:1.7;white-space:pre-wrap;">${escHtml(a.Description)}</p>
+          ${imagesMap[a.AchievementID]?.length ? `
+          <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;">
+            ${imagesMap[a.AchievementID].map(img => `<img src="${escHtml(img.ImageURL)}" style="width:90px;height:90px;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0;cursor:pointer;" onclick="window.open('${escHtml(img.ImageURL)}','_blank')">`).join('')}
+          </div>` : ''}
+          ${docsMap[a.AchievementID]?.length ? `
+          <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;">
+            ${docsMap[a.AchievementID].map(d => {
+              const ext = d.FileName.split('.').pop().toLowerCase();
+              const icon = {pdf:'📄',ppt:'📊',pptx:'📊',doc:'📝',docx:'📝'}[ext] || '📎';
+              return `<a href="${escHtml(d.FilePath)}" target="_blank" download style="display:flex;align-items:center;gap:5px;background:#ebebdf;border:1px solid #e2e8f0;border-radius:8px;padding:4px 10px;font-size:12px;text-decoration:none;color:#334155;">${icon} ${escHtml(d.FileName)}</a>`;
+            }).join('')}
+          </div>` : ''}
           ${feedbackMap[a.AchievementID]?.length ? `
           <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1.5px solid #f59e0b;border-radius:12px;padding:14px 16px;margin-top:14px;">
             <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;">🔒 ${t('supervisor_feedback_lbl')}</div>

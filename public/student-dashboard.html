@@ -1009,7 +1009,8 @@ async function renderOverview(el) {
   }
 }
 
-function renderTeamPostCard(a) {
+function renderTeamPostCard(a, docs) {
+  docs = docs || [];
   return `
     <div class="achievement-card-full">
       ${a.FirstImage
@@ -1022,6 +1023,14 @@ function renderTeamPostCard(a) {
           <span>${escHtml(a.CreatorName || '')} · ${fmtDate(a.CreatedAt)}</span>
           ${statusBadge(a.Status)}
         </div>
+        ${docs.length ? `
+        <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;">
+          ${docs.map(d => {
+            const ext = d.FileName.split('.').pop().toLowerCase();
+            const icon = {pdf:'📄',ppt:'📊',pptx:'📊',doc:'📝',docx:'📝'}[ext] || '📎';
+            return `<a href="${escHtml(d.FilePath)}" target="_blank" download style="display:flex;align-items:center;gap:5px;background:#ebebdf;border:1px solid #e2e8f0;border-radius:8px;padding:4px 10px;font-size:12px;text-decoration:none;color:#334155;">${icon} ${escHtml(d.FileName)}</a>`;
+          }).join('')}
+        </div>` : ''}
       </div>
     </div>`;
 }
@@ -1035,8 +1044,16 @@ async function renderAllTeamPosts(el) {
   try {
     posts = await fetch('/api/achievements?teamId=' + currentUser.TeamID + '&limit=50').then(r => r.json());
   } catch (e) {}
+
+  const docsMap = {};
+  await Promise.all(posts.map(async a => {
+    try {
+      docsMap[a.AchievementID] = await fetch(`/api/achievements/${a.AchievementID}/documents`).then(r => r.ok ? r.json() : []);
+    } catch (e) { docsMap[a.AchievementID] = []; }
+  }));
+
   el.innerHTML = posts.length
-    ? `<div class="achievement-cards-grid">${posts.map(renderTeamPostCard).join('')}</div>`
+    ? `<div class="achievement-cards-grid">${posts.map(a => renderTeamPostCard(a, docsMap[a.AchievementID])).join('')}</div>`
     : `<div class="full-panel"><div class="empty-state"><div class="empty-icon">🏆</div><h3>${t('no_team_posts')}</h3></div></div>`;
 }
 
