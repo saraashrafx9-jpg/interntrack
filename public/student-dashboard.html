@@ -226,6 +226,14 @@ const T = {
     tab_events: 'Events',
     tab_reminders: 'Reminders',
     no_reminders: 'No reminders yet.',
+    btn_add_event: '+ Add Event',
+    h_add_event: 'Add Event',
+    h_edit_event: 'Edit Event',
+    lbl_event_title: 'Event Title',
+    lbl_time: 'Time',
+    btn_save_event: 'Save Event',
+    err_event_required: 'Title and date are required',
+    confirm_delete_event: 'Delete this event?',
     btn_add_reminder: '+ Add Reminder',
     h_add_reminder: 'Add Reminder',
     lbl_reminder_title: 'Reminder Title',
@@ -396,6 +404,14 @@ const T = {
     tab_events: 'الفعاليات',
     tab_reminders: 'التذكيرات',
     no_reminders: 'لا توجد تذكيرات بعد.',
+    btn_add_event: '+ إضافة فعالية',
+    h_add_event: 'إضافة فعالية',
+    h_edit_event: 'تعديل الفعالية',
+    lbl_event_title: 'عنوان الفعالية',
+    lbl_time: 'الوقت',
+    btn_save_event: 'حفظ الفعالية',
+    err_event_required: 'العنوان والتاريخ مطلوبان',
+    confirm_delete_event: 'حذف هذه الفعالية؟',
     btn_add_reminder: '+ إضافة تذكير',
     h_add_reminder: 'إضافة تذكير',
     lbl_reminder_title: 'عنوان التذكير',
@@ -632,6 +648,8 @@ function openModal(id) { document.getElementById(id).classList.add('open'); }
 
 let calendarViewDate = new Date();
 let calendarEventsCache = [];
+let editingEventId = null;
+function canManageCalendar() { return currentUser?.TeamName === 'Media Team'; }
 let remindersCache = [];
 let calendarSideTab = 'events';
 
@@ -701,6 +719,11 @@ function calSidePanelBody(monthEvents) {
             <div style="font-weight:700;font-size:14px;">${escHtml(ev.Title)}</div>
             <div style="font-size:12px;color:var(--text-muted);margin:2px 0;">${escHtml(ev.EventDate)}${ev.EventTime ? ' • ' + escHtml(ev.EventTime) : ''}</div>
             ${ev.Description ? `<div style="font-size:12px;color:var(--text-muted);">${escHtml(ev.Description)}</div>` : ''}
+            ${canManageCalendar() ? `
+            <div style="margin-top:6px;display:flex;gap:6px;">
+              <button class="btn btn-sm btn-ghost" onclick="openEventModal(${ev.EventID})">✏️</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteCalendarEvent(${ev.EventID})">🗑️</button>
+            </div>` : ''}
           </div>
         </div>`;
       }).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_events_month')}</p>`}
@@ -734,6 +757,7 @@ function renderCalendarUI(el) {
   el.innerHTML = `
     <div class="page-header">
       <div><h2>${t('nav_calendar')}</h2></div>
+      ${canManageCalendar() ? `<button class="btn btn-primary" onclick="openEventModal()">${t('btn_add_event')}</button>` : ''}
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;align-items:start;">
       <div class="panel">
@@ -751,7 +775,7 @@ function renderCalendarUI(el) {
             const key = calDateKey(year, month, d);
             const has = !!eventsByDate[key];
             const isToday = key === todayKey;
-            return `<div style="text-align:center;padding:10px 0;border-radius:10px;${isToday ? 'background:#dce8f5;' : ''}">
+            return `<div ${canManageCalendar() ? `onclick="openEventModal(null,'${key}')" style="cursor:pointer;text-align:center;padding:10px 0;border-radius:10px;${isToday ? 'background:#dce8f5;' : ''}"` : `style="text-align:center;padding:10px 0;border-radius:10px;${isToday ? 'background:#dce8f5;' : ''}"`}>
               <div style="font-size:13px;font-weight:${isToday ? '700' : '500'};">${d}</div>
               ${has ? `<div style="width:5px;height:5px;border-radius:50%;background:var(--primary);margin:4px auto 0;"></div>` : '<div style="height:9px;"></div>'}
             </div>`;
@@ -765,6 +789,32 @@ function renderCalendarUI(el) {
           <button class="btn btn-sm ${calendarSideTab === 'reminders' ? 'btn-primary' : 'btn-ghost'}" onclick="switchCalSideTab('reminders')">${t('tab_reminders')}</button>
         </div>
         ${calSidePanelBody(monthEvents)}
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="eventModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 id="eventModalTitle">${t('h_add_event')}</h3>
+          <button class="modal-close" onclick="closeModal('eventModal')">✕</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_event_title')}</label>
+          <input id="eventTitle" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_description')}</label>
+          <textarea id="eventDescription" class="form-textarea"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('th_date')}</label>
+          <input id="eventDate" type="date" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('lbl_time')}</label>
+          <input id="eventTime" type="time" class="form-input">
+        </div>
+        <button class="btn btn-primary" onclick="saveCalendarEvent()">${t('btn_save_event')}</button>
       </div>
     </div>
 
@@ -805,6 +855,45 @@ function renderCalendarUI(el) {
 function changeCalendarMonth(delta) {
   calendarViewDate.setMonth(calendarViewDate.getMonth() + delta);
   renderCalendarUI(document.getElementById('pageContent'));
+}
+
+function openEventModal(eventId, prefillDate) {
+  if (!canManageCalendar()) return;
+  editingEventId = eventId || null;
+  const ev = eventId ? calendarEventsCache.find(e => e.EventID === eventId) : null;
+  document.getElementById('eventModalTitle').textContent = ev ? t('h_edit_event') : t('h_add_event');
+  document.getElementById('eventTitle').value = ev ? ev.Title : '';
+  document.getElementById('eventDescription').value = ev ? (ev.Description || '') : '';
+  const now = new Date();
+  document.getElementById('eventDate').value = ev ? ev.EventDate : (prefillDate || calDateKey(now.getFullYear(), now.getMonth(), now.getDate()));
+  document.getElementById('eventTime').value = ev ? (ev.EventTime || '') : '';
+  openModal('eventModal');
+}
+
+async function saveCalendarEvent() {
+  const title = document.getElementById('eventTitle').value.trim();
+  const description = document.getElementById('eventDescription').value.trim();
+  const eventDate = document.getElementById('eventDate').value;
+  const eventTime = document.getElementById('eventTime').value;
+  if (!title || !eventDate) return showToast(t('err_event_required'), 'error');
+
+  const url = editingEventId ? '/api/admin/calendar-events/' + editingEventId : '/api/admin/calendar-events';
+  const method = editingEventId ? 'PUT' : 'POST';
+  const r = await fetch(url, { method, headers: getHeaders(), body: JSON.stringify({ title, description, eventDate, eventTime }) });
+  if (r.ok) {
+    closeModal('eventModal');
+    showToast(editingEventId ? t('toast_updated') : t('toast_created'), 'success');
+    renderCalendar(document.getElementById('pageContent'));
+  } else {
+    showToast(t('toast_failed'), 'error');
+  }
+}
+
+async function deleteCalendarEvent(id) {
+  if (!confirm(t('confirm_delete_event'))) return;
+  const r = await fetch('/api/admin/calendar-events/' + id, { method: 'DELETE', headers: getHeaders() });
+  if (r.ok) { showToast(t('toast_deleted'), 'info'); renderCalendar(document.getElementById('pageContent')); }
+  else showToast(t('toast_failed'), 'error');
 }
 
 function openReminderModal() {

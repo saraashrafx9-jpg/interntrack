@@ -258,6 +258,11 @@ app.get("/api/auth/me", authenticateToken, (req, res) => {
       user.Role = req.user.role;
     }
 
+    if (user.TeamID && !user.TeamName) {
+      const team = dbHelpers.getTeamById(user.TeamID);
+      if (team) user.TeamName = team.TeamName;
+    }
+
     res.json(user);
   } catch (error) {
     res.status(500).json({
@@ -334,7 +339,17 @@ app.get("/api/statistics", (req, res) => {
 });
 
 // ==================== CALENDAR EVENTS ====================
-// Shared calendar: any logged-in role can view, only Admin can create/edit/delete.
+// Shared calendar: any logged-in role can view. Admin/Supervisor can always
+// create/edit/delete; Media Team's leader and students can too.
+
+function authorizeCalendarWrite(req, res, next) {
+  if (["Admin", "Supervisor"].includes(req.user.role)) return next();
+  if (["Leader", "Student"].includes(req.user.role) && req.user.teamId) {
+    const team = dbHelpers.getTeamById(req.user.teamId);
+    if (team && team.TeamName === "Media Team") return next();
+  }
+  return res.status(403).json({ error: "Insufficient permissions." });
+}
 
 app.get("/api/calendar-events", authenticateToken, (req, res) => {
   try {
@@ -349,7 +364,7 @@ app.get("/api/calendar-events", authenticateToken, (req, res) => {
 app.post(
   "/api/admin/calendar-events",
   authenticateToken,
-  authorizeRole("Admin", "Supervisor"),
+  authorizeCalendarWrite,
   (req, res) => {
     try {
       const { title, description, eventDate, eventTime } = req.body;
@@ -375,7 +390,7 @@ app.post(
 app.put(
   "/api/admin/calendar-events/:id",
   authenticateToken,
-  authorizeRole("Admin", "Supervisor"),
+  authorizeCalendarWrite,
   (req, res) => {
     try {
       const { title, description, eventDate, eventTime } = req.body;
@@ -401,7 +416,7 @@ app.put(
 app.delete(
   "/api/admin/calendar-events/:id",
   authenticateToken,
-  authorizeRole("Admin", "Supervisor"),
+  authorizeCalendarWrite,
   (req, res) => {
     try {
       dbHelpers.deleteCalendarEvent(req.params.id);
