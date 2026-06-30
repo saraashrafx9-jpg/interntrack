@@ -181,6 +181,7 @@ const T = {
     no_todos: 'No tasks yet.',
     todo_ph: 'Add a task…',
     btn_add_todo: '+ Add',
+    btn_delete_task: 'Delete',
     welcome: 'Welcome back,',
     dash_subtitle: "Here's what's happening with your team today.",
     lbl_team: 'Team:',
@@ -338,6 +339,7 @@ const T = {
     no_todos: 'لا توجد مهام بعد.',
     todo_ph: 'أضف مهمة…',
     btn_add_todo: '+ إضافة',
+    btn_delete_task: 'حذف',
     welcome: 'مرحباً،',
     dash_subtitle: 'هذا ما يحدث في فريقك اليوم.',
     lbl_team: 'الفريق:',
@@ -473,10 +475,16 @@ new MutationObserver(mutations => {
 }).observe(document.documentElement, { childList: true, subtree: true });
 
 // Real-time updates
+let _suppressNextRefresh = false;
+function suppressNextAutoRefresh() { _suppressNextRefresh = true; }
 (function() {
   const es = new EventSource('/api/events');
   let _rt;
-  es.onmessage = () => { clearTimeout(_rt); _rt = setTimeout(() => switchTab(currentTabName), 300); };
+  es.onmessage = () => {
+    if (_suppressNextRefresh) { _suppressNextRefresh = false; return; }
+    clearTimeout(_rt);
+    _rt = setTimeout(() => switchTab(currentTabName), 300);
+  };
 })();
 
 // ── CORE ──────────────────────────────────────────────────────────────────────
@@ -1218,6 +1226,53 @@ async function renderAllTeamPosts(el) {
       </div>`;
 }
 
+let todosByUserCache = {}, teamMembersCache = [];
+
+function renderTodoCard(m) {
+  const isOwn = Number(m.UserID) === Number(currentUser?.UserID);
+  const items = todosByUserCache[m.UserID] || [];
+  const doneCount = items.filter(td => td.Completed).length;
+  const percent = items.length ? Math.round((doneCount / items.length) * 100) : 0;
+  return `
+    <div class="full-panel" id="todo-card-${m.UserID}">
+      <div style="margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          ${memberAvatarHtml(m, 30)}
+          <h3 style="font-size:14px;margin:0;flex:1;min-width:0;line-height:1.3;overflow-wrap:break-word;">${escHtml(m.Name)}</h3>
+        </div>
+        <span class="badge ${m.Role === 'Leader' ? 'badge-blue' : 'badge-green'}" style="margin-bottom:10px;display:inline-block;">${m.Role === 'Leader' ? t('leader_badge') : t('member_badge')}</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="flex:1;height:6px;background:var(--border);border-radius:99px;overflow:hidden;">
+            <div style="width:${percent}%;height:100%;background:var(--primary);border-radius:99px;"></div>
+          </div>
+          <span style="font-size:11px;color:var(--text-muted);flex-shrink:0;">${percent}%</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:${isOwn ? '12px' : '0'};">
+        ${items.length ? items.map(td => `
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input type="checkbox" ${td.Completed ? 'checked' : ''} ${isOwn ? `onchange="toggleMemberTodo(${td.TodoID},this.checked)"` : 'disabled'}>
+            <span style="flex:1;font-size:13px;${td.Completed ? 'text-decoration:line-through;color:var(--text-muted);' : ''}">${escHtml(td.Title)}</span>
+            ${isOwn ? `<button class="btn btn-sm btn-danger" onclick="deleteMemberTodo(${td.TodoID})">${t('btn_delete_task')}</button>` : ''}
+          </div>`).join('') : `<p class="text-muted" style="font-size:12px;margin:0;">${t('no_todos')}</p>`}
+      </div>
+      ${isOwn ? `
+      <div style="display:flex;gap:8px;">
+        <input id="ownTodoInput" class="form-input" placeholder="${t('todo_ph')}" onkeydown="if(event.key==='Enter'){addMemberTodo();}">
+        <button class="btn btn-primary btn-sm" onclick="addMemberTodo()">${t('btn_add_todo')}</button>
+      </div>` : ''}
+    </div>`;
+}
+
+function updateTodoCardDOM(userId) {
+  const member = teamMembersCache.find(m => Number(m.UserID) === Number(userId));
+  const cardEl = document.getElementById('todo-card-' + userId);
+  if (member && cardEl) {
+    cardEl.outerHTML = renderTodoCard(member);
+    document.getElementById('ownTodoInput')?.focus();
+  }
+}
+
 async function renderOverviewSub(el) {
   let members = [], upcomingEvents = [], teamTodos = [], teamLinks = [];
 
@@ -1239,46 +1294,11 @@ async function renderOverviewSub(el) {
     teamLinks = linksRes || [];
   } catch (e) {}
 
-  const todosByUser = {};
+  teamMembersCache = members;
+  todosByUserCache = {};
   teamTodos.forEach(td => {
-    (todosByUser[td.UserID] = todosByUser[td.UserID] || []).push(td);
+    (todosByUserCache[td.UserID] = todosByUserCache[td.UserID] || []).push(td);
   });
-
-  const renderTodoCard = (m) => {
-    const isOwn = Number(m.UserID) === Number(currentUser?.UserID);
-    const items = todosByUser[m.UserID] || [];
-    const doneCount = items.filter(td => td.Completed).length;
-    const percent = items.length ? Math.round((doneCount / items.length) * 100) : 0;
-    return `
-      <div class="full-panel">
-        <div style="margin-bottom:14px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-            ${memberAvatarHtml(m, 30)}
-            <h3 style="font-size:14px;margin:0;flex:1;min-width:0;line-height:1.3;overflow-wrap:break-word;">${escHtml(m.Name)}</h3>
-          </div>
-          <span class="badge ${m.Role === 'Leader' ? 'badge-blue' : 'badge-green'}" style="margin-bottom:10px;display:inline-block;">${m.Role === 'Leader' ? t('leader_badge') : t('member_badge')}</span>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <div style="flex:1;height:6px;background:var(--border);border-radius:99px;overflow:hidden;">
-              <div style="width:${percent}%;height:100%;background:var(--primary);border-radius:99px;"></div>
-            </div>
-            <span style="font-size:11px;color:var(--text-muted);flex-shrink:0;">${percent}%</span>
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:${isOwn ? '12px' : '0'};">
-          ${items.length ? items.map(td => `
-            <div style="display:flex;align-items:center;gap:8px;">
-              <input type="checkbox" ${td.Completed ? 'checked' : ''} ${isOwn ? `onchange="toggleMemberTodo(${td.TodoID},this.checked)"` : 'disabled'}>
-              <span style="flex:1;font-size:13px;${td.Completed ? 'text-decoration:line-through;color:var(--text-muted);' : ''}">${escHtml(td.Title)}</span>
-              ${isOwn ? `<button class="btn btn-sm btn-ghost" onclick="deleteMemberTodo(${td.TodoID})">🗑️</button>` : ''}
-            </div>`).join('') : `<p class="text-muted" style="font-size:12px;margin:0;">${t('no_todos')}</p>`}
-        </div>
-        ${isOwn ? `
-        <div style="display:flex;gap:8px;">
-          <input id="ownTodoInput" class="form-input" placeholder="${t('todo_ph')}" onkeydown="if(event.key==='Enter'){addMemberTodo();}">
-          <button class="btn btn-primary btn-sm" onclick="addMemberTodo()">${t('btn_add_todo')}</button>
-        </div>` : ''}
-      </div>`;
-  };
 
   el.innerHTML = `
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-bottom:20px;">
@@ -1342,18 +1362,36 @@ async function addMemberTodo() {
   const input = document.getElementById('ownTodoInput');
   const title = input.value.trim();
   if (!title) return;
-  await fetch('/api/todos', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ title }) });
-  renderOverview(document.getElementById('pageContent'));
+  input.value = '';
+  const uid = currentUser.UserID;
+  suppressNextAutoRefresh();
+  try {
+    const r = await fetch('/api/todos', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ title }) });
+    const data = await r.json();
+    (todosByUserCache[uid] = todosByUserCache[uid] || []).push({ TodoID: data.todoId, UserID: uid, Title: title, Completed: 0 });
+    updateTodoCardDOM(uid);
+  } catch (e) { showToast(t('toast_failed'), 'error'); }
 }
 
 async function toggleMemberTodo(id, completed) {
-  await fetch('/api/todos/' + id + '/toggle', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ completed }) });
-  renderOverview(document.getElementById('pageContent'));
+  const uid = currentUser.UserID;
+  suppressNextAutoRefresh();
+  try {
+    await fetch('/api/todos/' + id + '/toggle', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ completed }) });
+    const item = (todosByUserCache[uid] || []).find(td => Number(td.TodoID) === Number(id));
+    if (item) item.Completed = completed ? 1 : 0;
+    updateTodoCardDOM(uid);
+  } catch (e) { showToast(t('toast_failed'), 'error'); }
 }
 
 async function deleteMemberTodo(id) {
-  await fetch('/api/todos/' + id, { method: 'DELETE', headers: getHeaders() });
-  renderOverview(document.getElementById('pageContent'));
+  const uid = currentUser.UserID;
+  suppressNextAutoRefresh();
+  try {
+    await fetch('/api/todos/' + id, { method: 'DELETE', headers: getHeaders() });
+    todosByUserCache[uid] = (todosByUserCache[uid] || []).filter(td => Number(td.TodoID) !== Number(id));
+    updateTodoCardDOM(uid);
+  } catch (e) { showToast(t('toast_failed'), 'error'); }
 }
 
 async function addTeamLink() {

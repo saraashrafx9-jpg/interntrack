@@ -1052,9 +1052,9 @@ app.post("/api/todos", authenticateToken, (req, res) => {
     if (!title) {
       return res.status(400).json({ error: "Title is required" });
     }
-    dbHelpers.createTodo(req.user.userId, title);
+    const result = dbHelpers.createTodo(req.user.userId, title);
     broadcast('team-workspace');
-    res.json({ message: "To-do created" });
+    res.json({ message: "To-do created", todoId: result.lastInsertRowid });
   } catch (error) {
     res.status(500).json({ error: "Failed to create to-do item" });
   }
