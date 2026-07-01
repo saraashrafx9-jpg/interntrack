@@ -343,12 +343,8 @@ app.get("/api/statistics", (req, res) => {
 // create/edit/delete; Media Team's leader and students can too.
 
 function authorizeCalendarWrite(req, res, next) {
-  if (["Admin", "Supervisor"].includes(req.user.role)) return next();
-  if (["Leader", "Student"].includes(req.user.role) && req.user.teamId) {
-    const team = dbHelpers.getTeamById(req.user.teamId);
-    if (team && team.TeamName === "Media Team") return next();
-  }
-  return res.status(403).json({ error: "Insufficient permissions." });
+  if (req.user.role === "Admin") return next();
+  return res.status(403).json({ error: "Only administrators can manage calendar events." });
 }
 
 app.get("/api/calendar-events", authenticateToken, (req, res) => {
@@ -367,7 +363,7 @@ app.post(
   authorizeCalendarWrite,
   (req, res) => {
     try {
-      const { title, description, eventDate, eventTime } = req.body;
+      const { title, description, eventDate, eventTime, eventPoster, eventSpeakers, eventLocation } = req.body;
 
       if (!title || !eventDate) {
         return res.status(400).json({
@@ -375,7 +371,7 @@ app.post(
         });
       }
 
-      dbHelpers.createCalendarEvent(title, description, eventDate, eventTime, req.user.userId);
+      dbHelpers.createCalendarEvent(title, description, eventDate, eventTime, req.user.userId, eventPoster, eventSpeakers, eventLocation);
 
       broadcast("calendar");
       res.json({ message: "Event created" });
@@ -393,7 +389,7 @@ app.put(
   authorizeCalendarWrite,
   (req, res) => {
     try {
-      const { title, description, eventDate, eventTime } = req.body;
+      const { title, description, eventDate, eventTime, eventPoster, eventSpeakers, eventLocation } = req.body;
 
       if (!title || !eventDate) {
         return res.status(400).json({
@@ -401,7 +397,7 @@ app.put(
         });
       }
 
-      dbHelpers.updateCalendarEvent(req.params.id, title, description, eventDate, eventTime);
+      dbHelpers.updateCalendarEvent(req.params.id, title, description, eventDate, eventTime, eventPoster, eventSpeakers, eventLocation);
 
       broadcast("calendar");
       res.json({ message: "Event updated" });
@@ -1306,9 +1302,13 @@ app.delete(
     try {
       const achievement = dbHelpers.getAchievementById(req.params.id);
 
-      if (!achievement || achievement.CreatedBy !== req.user.userId) {
+      if (!achievement) {
+        return res.status(404).json({ error: "Not found" });
+      }
+
+      if (achievement.TeamID !== req.user.teamId) {
         return res.status(403).json({
-          error: "Not allowed"
+          error: "Not your team's achievement"
         });
       }
 
@@ -2005,6 +2005,67 @@ app.get(
     }
   }
 );
+
+// ==================== NEWS FEED ROUTES ====================
+
+app.get("/api/news-feed", authenticateToken, (req, res) => {
+  try {
+    res.json(dbHelpers.getAllNewsFeedPosts());
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch news feed" });
+  }
+});
+
+app.post("/api/news-feed", authenticateToken, (req, res) => {
+  try {
+    const { content } = req.body;
+    if (!content || !content.trim()) return res.status(400).json({ error: "Content required" });
+    const user = dbHelpers.getUserByEmail(req.user.email);
+    const authorId = user?.UserID || req.user.userId;
+    const authorName = user?.Name || req.user.email;
+    const authorRole = user?.Role || req.user.role;
+    if (!authorId) return res.status(400).json({ error: "User not found" });
+    dbHelpers.createNewsFeedPost(content.trim(), authorId, authorName, authorRole);
+    broadcast("newsfeed");
+    res.json({ message: "Post created" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create post" });
+  }
+});
+
+app.put("/api/news-feed/:id", authenticateToken, (req, res) => {
+  try {
+    const { content } = req.body;
+    if (!content || !content.trim()) return res.status(400).json({ error: "Content required" });
+    const post = dbHelpers.getNewsFeedPostById(req.params.id);
+    if (!post) return res.status(404).json({ error: "Post not found" });
+    const user = dbHelpers.getUserByEmail(req.user.email);
+    const userId = user?.UserID || req.user.userId;
+    if (post.AuthorID !== userId) return res.status(403).json({ error: "Not your post" });
+    dbHelpers.updateNewsFeedPost(req.params.id, content.trim(), userId);
+    broadcast("newsfeed");
+    res.json({ message: "Post updated" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update post" });
+  }
+});
+
+app.delete("/api/news-feed/:id", authenticateToken, (req, res) => {
+  try {
+    const post = dbHelpers.getNewsFeedPostById(req.params.id);
+    if (!post) return res.status(404).json({ error: "Post not found" });
+    const user = dbHelpers.getUserByEmail(req.user.email);
+    const userId = user?.UserID || req.user.userId;
+    if (post.AuthorID !== userId && req.user.role !== "Admin") {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+    dbHelpers.deleteNewsFeedPost(req.params.id);
+    broadcast("newsfeed");
+    res.json({ message: "Post deleted" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete post" });
+  }
+});
 
 // ==================== STATIC FILES / PAGE ROUTES ====================
 

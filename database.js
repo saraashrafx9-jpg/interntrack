@@ -255,6 +255,9 @@ db.run(`
   )
 `);
 db.run('CREATE INDEX IF NOT EXISTS idx_calendar_events_date ON CalendarEvents(EventDate)');
+try { db.run('ALTER TABLE CalendarEvents ADD COLUMN EventPoster TEXT DEFAULT NULL'); } catch(e) {}
+try { db.run('ALTER TABLE CalendarEvents ADD COLUMN EventSpeakers TEXT DEFAULT NULL'); } catch(e) {}
+try { db.run('ALTER TABLE CalendarEvents ADD COLUMN EventLocation TEXT DEFAULT NULL'); } catch(e) {}
 
 // Personal reminders and to-do items (private per-user, every role can manage their own)
 db.run(`
@@ -284,6 +287,21 @@ db.run(`
   )
 `);
 db.run('CREATE INDEX IF NOT EXISTS idx_todos_user ON TodoItems(UserID)');
+
+// News Feed — Twitter-like posts visible to all logged-in users
+db.run(`
+  CREATE TABLE IF NOT EXISTS NewsFeed (
+    PostID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Content TEXT NOT NULL,
+    AuthorID INTEGER NOT NULL,
+    AuthorName TEXT NOT NULL,
+    AuthorRole TEXT NOT NULL,
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (AuthorID) REFERENCES Users(UserID) ON DELETE CASCADE
+  )
+`);
+db.run('CREATE INDEX IF NOT EXISTS idx_newsfeed_author ON NewsFeed(AuthorID)');
 
   // Migration: allow Supervisor role if DB already exists with old constraint
   try {
@@ -465,19 +483,19 @@ getAllCalendarEvents: () => {
   );
 },
 
-createCalendarEvent: (title, description, eventDate, eventTime, createdBy) => {
+createCalendarEvent: (title, description, eventDate, eventTime, createdBy, eventPoster, eventSpeakers, eventLocation) => {
   const result = runQuery(
-    "INSERT INTO CalendarEvents (Title, Description, EventDate, EventTime, CreatedBy) VALUES (?, ?, ?, ?, ?)",
-    [title, description || '', eventDate, eventTime || null, createdBy || null]
+    "INSERT INTO CalendarEvents (Title, Description, EventDate, EventTime, CreatedBy, EventPoster, EventSpeakers, EventLocation) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    [title, description || '', eventDate, eventTime || null, createdBy || null, eventPoster || null, eventSpeakers || null, eventLocation || null]
   );
   saveDatabase();
   return result;
 },
 
-updateCalendarEvent: (id, title, description, eventDate, eventTime) => {
+updateCalendarEvent: (id, title, description, eventDate, eventTime, eventPoster, eventSpeakers, eventLocation) => {
   const result = runQuery(
-    "UPDATE CalendarEvents SET Title = ?, Description = ?, EventDate = ?, EventTime = ? WHERE EventID = ?",
-    [title, description || '', eventDate, eventTime || null, id]
+    "UPDATE CalendarEvents SET Title = ?, Description = ?, EventDate = ?, EventTime = ?, EventPoster = ?, EventSpeakers = ?, EventLocation = ? WHERE EventID = ?",
+    [title, description || '', eventDate, eventTime || null, eventPoster || null, eventSpeakers || null, eventLocation || null, id]
   );
   saveDatabase();
   return result;
@@ -487,6 +505,47 @@ deleteCalendarEvent: (id) => {
   const result = runQuery("DELETE FROM CalendarEvents WHERE EventID = ?", [id]);
   saveDatabase();
   return result;
+},
+
+getCalendarEventById: (id) => {
+  return queryOne("SELECT * FROM CalendarEvents WHERE EventID = ?", [id]);
+},
+
+getAllNewsFeedPosts: () => {
+  return queryAll(`
+    SELECT nf.*, u.ProfilePicture as AuthorPic
+    FROM NewsFeed nf
+    LEFT JOIN Users u ON nf.AuthorID = u.UserID
+    ORDER BY nf.CreatedAt DESC
+  `);
+},
+
+createNewsFeedPost: (content, authorId, authorName, authorRole) => {
+  const result = runQuery(
+    "INSERT INTO NewsFeed (Content, AuthorID, AuthorName, AuthorRole) VALUES (?, ?, ?, ?)",
+    [content, authorId, authorName, authorRole]
+  );
+  saveDatabase();
+  return result;
+},
+
+updateNewsFeedPost: (postId, content, authorId) => {
+  const result = runQuery(
+    "UPDATE NewsFeed SET Content = ?, UpdatedAt = CURRENT_TIMESTAMP WHERE PostID = ? AND AuthorID = ?",
+    [content, postId, authorId]
+  );
+  saveDatabase();
+  return result;
+},
+
+deleteNewsFeedPost: (postId) => {
+  const result = runQuery("DELETE FROM NewsFeed WHERE PostID = ?", [postId]);
+  saveDatabase();
+  return result;
+},
+
+getNewsFeedPostById: (postId) => {
+  return queryOne("SELECT * FROM NewsFeed WHERE PostID = ?", [postId]);
 },
 
 createHelpMessage: (senderId, senderName, senderRole, message) => {

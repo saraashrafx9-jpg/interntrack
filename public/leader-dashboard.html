@@ -171,6 +171,16 @@ const T = {
     // Overview
     subtab_overview: 'Overview',
     subtab_all_posts: 'All Team Posts',
+    subtab_news: 'News Feed',
+    h_news_feed: 'News Feed',
+    news_feed_sub: 'Share news and updates with everyone in the program',
+    news_post_ph: "What's happening? Share news with everyone...",
+    news_post_btn: 'Post',
+    no_news: 'No posts yet. Be the first to share!',
+    confirm_delete_post: 'Delete this post?',
+    toast_posted: 'Posted!',
+    toast_post_updated: 'Post updated!',
+    edit_post: 'Edit Post',
     no_team_posts: 'No posts yet.',
     h_team_members: 'Team Members',
     leader_badge: 'Leader',
@@ -329,6 +339,16 @@ const T = {
     toast_password_updated: 'تم تحديث كلمة المرور!',
     subtab_overview: 'نظرة عامة',
     subtab_all_posts: 'جميع منشورات الفريق',
+    subtab_news: 'موجز الأخبار',
+    h_news_feed: 'موجز الأخبار',
+    news_feed_sub: 'شارك الأخبار والتحديثات مع الجميع في البرنامج',
+    news_post_ph: 'ماذا يحدث؟ شارك خبراً مع الجميع...',
+    news_post_btn: 'نشر',
+    no_news: 'لا توجد منشورات بعد. كن أول من يشارك!',
+    confirm_delete_post: 'حذف هذا المنشور؟',
+    toast_posted: 'تم النشر!',
+    toast_post_updated: 'تم تحديث المنشور!',
+    edit_post: 'تعديل المنشور',
     no_team_posts: 'لا توجد منشورات بعد.',
     h_team_members: 'أعضاء الفريق',
     leader_badge: 'قائد',
@@ -604,7 +624,7 @@ let calendarEventsCache = [];
 let remindersCache = [];
 let calendarSideTab = 'events';
 let editingEventId = null;
-function canManageCalendar() { return currentUser?.TeamName === 'Media Team'; }
+function canManageCalendar() { return false; }
 
 function calLocale() { return currentLang === 'ar' ? 'ar-AE' : 'en-US'; }
 
@@ -744,6 +764,28 @@ function renderCalendarUI(el) {
         </div>
         ${calSidePanelBody(monthEvents)}
       </div>
+    </div>
+
+    <div style="margin-top:24px;">
+      <h3 style="margin-bottom:12px;">📋 All Events Details</h3>
+      ${calendarEventsCache.length ? `
+      <div class="table-wrapper"><table>
+        <thead><tr>
+          <th>Event Poster</th><th>Event Name</th><th>Speakers / Holders</th>
+          <th>Description</th><th>Date</th><th>Time</th><th>Location</th>
+        </tr></thead>
+        <tbody>
+          ${calendarEventsCache.map(ev => `<tr>
+            <td>${escHtml(ev.EventPoster || ev.CreatedByName || '—')}</td>
+            <td><strong>${escHtml(ev.Title)}</strong></td>
+            <td>${escHtml(ev.EventSpeakers || '—')}</td>
+            <td style="max-width:200px;">${escHtml(ev.Description || '—')}</td>
+            <td>${escHtml(ev.EventDate)}</td>
+            <td>${escHtml(ev.EventTime || '—')}</td>
+            <td>${escHtml(ev.EventLocation || '—')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table></div>` : `<p class="text-muted">No events yet.</p>`}
     </div>
 
     <div class="modal-overlay" id="eventModal">
@@ -1125,12 +1167,15 @@ async function renderOverview(el) {
     <div class="tabs">
       <button class="tab-btn ${dashboardSubTab === 'overview' ? 'active' : ''}" onclick="switchDashboardSubTab('overview')">${t('subtab_overview')}</button>
       <button class="tab-btn ${dashboardSubTab === 'posts' ? 'active' : ''}" onclick="switchDashboardSubTab('posts')">${t('subtab_all_posts')}</button>
+      <button class="tab-btn ${dashboardSubTab === 'news' ? 'active' : ''}" onclick="switchDashboardSubTab('news')">${t('subtab_news')}</button>
     </div>
     <div id="dashboardSubContent"><div class="loading"><div class="spinner"></div></div></div>`;
 
   const subEl = document.getElementById('dashboardSubContent');
   if (dashboardSubTab === 'posts') {
     await renderAllTeamPosts(subEl);
+  } else if (dashboardSubTab === 'news') {
+    await renderNewsFeed(subEl);
   } else {
     await renderOverviewSub(subEl);
   }
@@ -1618,6 +1663,7 @@ async function renderApprovals(el) {
         <div style="display:flex;flex-direction:column;gap:8px;min-width:160px;">
           <button class="btn btn-success" onclick="reviewAchievement(${a.AchievementID},'approve')">${t('btn_approve_publish')}</button>
           <button class="btn btn-danger" onclick="promptReject(${a.AchievementID})">${t('btn_reject_feedback')}</button>
+          <button class="btn btn-sm btn-danger" style="background:#6b7280;" onclick="deleteAchievement(${a.AchievementID})">🗑️ ${t('btn_delete')}</button>
         </div>
       </div>
     </div>`).join('') : `
@@ -1682,6 +1728,129 @@ async function deleteAchievement(id) {
   } catch(e) {}
   switchTab(localStorage.getItem('leaderCurrentTab') || 'overview');
 })();
+
+// ── NEWS FEED ──────────────────────────────────────────────────────────────────
+let newsFeedCache = [];
+let editingPostId = null;
+
+async function renderNewsFeed(el) {
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    newsFeedCache = await fetch('/api/news-feed', { headers: getHeaders() }).then(r => r.json());
+  } catch(e) { newsFeedCache = []; }
+  const isAdmin = currentUser?.Role === 'Admin';
+  el.innerHTML = `
+    <div class="page-header" style="margin-top:16px;">
+      <div><h2>📰 ${t('h_news_feed')}</h2><p>${t('news_feed_sub')}</p></div>
+    </div>
+    <div class="full-panel" style="margin-bottom:16px;">
+      <textarea id="newPostContent" class="form-textarea" placeholder="${t('news_post_ph')}" rows="3" style="resize:vertical;width:100%;"></textarea>
+      <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+        <button class="btn btn-primary" onclick="submitNewsFeedPost()">${t('news_post_btn')}</button>
+      </div>
+    </div>
+    <div id="newsFeedPosts">
+      ${newsFeedCache.length
+        ? newsFeedCache.map(p => renderNewsFeedPostCard(p, isAdmin)).join('')
+        : `<div class="full-panel"><div class="empty-state"><div class="empty-icon">📰</div><h3>${t('no_news')}</h3></div></div>`}
+    </div>
+    <div class="modal-overlay" id="editPostModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>${t('edit_post')}</h3>
+          <button class="modal-close" onclick="closeModal('editPostModal')">✕</button>
+        </div>
+        <div class="form-group">
+          <textarea id="editPostContent" class="form-textarea" rows="5" style="resize:vertical;width:100%;"></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="saveEditedPost()">${t('btn_save')}</button>
+      </div>
+    </div>`;
+}
+
+function renderNewsFeedPostCard(p, isAdmin) {
+  const isOwn = Number(p.AuthorID) === Number(currentUser?.UserID);
+  const roleColors = { Admin:'#dc2626', Leader:'#2563eb', Supervisor:'#7c3aed', Student:'#059669' };
+  const badgeColor = roleColors[p.AuthorRole] || '#64748b';
+  const edited = p.UpdatedAt && p.UpdatedAt !== p.CreatedAt;
+  return `
+    <div class="full-panel" style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <div style="width:38px;height:38px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#4a7099,#355a7d);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;">
+              ${p.AuthorPic ? `<img src="${escHtml(p.AuthorPic)}" style="width:100%;height:100%;object-fit:cover;">` : escHtml((p.AuthorName||'?').charAt(0).toUpperCase())}
+            </div>
+            <div>
+              <div style="font-weight:700;font-size:14px;">${escHtml(p.AuthorName)}</div>
+              <div style="font-size:11px;display:flex;align-items:center;gap:6px;">
+                <span style="background:${badgeColor};color:#fff;border-radius:4px;padding:1px 6px;font-weight:600;">${escHtml(p.AuthorRole)}</span>
+                <span style="color:var(--text-muted);">${fmtDate(p.CreatedAt)}${edited ? ' · edited' : ''}</span>
+              </div>
+            </div>
+          </div>
+          <p style="font-size:14px;line-height:1.7;white-space:pre-wrap;margin:0;">${escHtml(p.Content)}</p>
+        </div>
+        ${(isOwn || isAdmin) ? `
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          ${isOwn ? `<button class="btn btn-sm btn-ghost" onclick="openEditPost(${p.PostID})">✏️</button>` : ''}
+          <button class="btn btn-sm btn-danger" onclick="deleteNewsFeedPost(${p.PostID})">🗑️</button>
+        </div>` : ''}
+      </div>
+    </div>`;
+}
+
+async function submitNewsFeedPost() {
+  const content = document.getElementById('newPostContent').value.trim();
+  if (!content) return showToast(t('toast_failed'), 'error');
+  const r = await fetch('/api/news-feed', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ content }) });
+  if (r.ok) {
+    document.getElementById('newPostContent').value = '';
+    showToast(t('toast_posted'), 'success');
+    newsFeedCache = await fetch('/api/news-feed', { headers: getHeaders() }).then(r => r.json());
+    const isAdmin = currentUser?.Role === 'Admin';
+    const el = document.getElementById('newsFeedPosts');
+    if (el) el.innerHTML = newsFeedCache.length
+      ? newsFeedCache.map(p => renderNewsFeedPostCard(p, isAdmin)).join('')
+      : `<div class="full-panel"><div class="empty-state"><div class="empty-icon">📰</div><h3>${t('no_news')}</h3></div></div>`;
+  } else showToast(t('toast_failed'), 'error');
+}
+
+function openEditPost(id) {
+  const post = newsFeedCache.find(p => p.PostID === id);
+  if (!post) return;
+  editingPostId = id;
+  document.getElementById('editPostContent').value = post.Content;
+  openModal('editPostModal');
+}
+
+async function saveEditedPost() {
+  const content = document.getElementById('editPostContent').value.trim();
+  if (!content) return showToast(t('toast_failed'), 'error');
+  const r = await fetch('/api/news-feed/' + editingPostId, { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ content }) });
+  if (r.ok) {
+    closeModal('editPostModal');
+    showToast(t('toast_post_updated'), 'success');
+    newsFeedCache = await fetch('/api/news-feed', { headers: getHeaders() }).then(r => r.json());
+    const isAdmin = currentUser?.Role === 'Admin';
+    const el = document.getElementById('newsFeedPosts');
+    if (el) el.innerHTML = newsFeedCache.map(p => renderNewsFeedPostCard(p, isAdmin)).join('');
+  } else showToast(t('toast_failed'), 'error');
+}
+
+async function deleteNewsFeedPost(id) {
+  if (!confirm(t('confirm_delete_post'))) return;
+  const r = await fetch('/api/news-feed/' + id, { method: 'DELETE', headers: getHeaders() });
+  if (r.ok) {
+    showToast(t('toast_deleted'), 'info');
+    newsFeedCache = newsFeedCache.filter(p => p.PostID !== id);
+    const isAdmin = currentUser?.Role === 'Admin';
+    const el = document.getElementById('newsFeedPosts');
+    if (el) el.innerHTML = newsFeedCache.length
+      ? newsFeedCache.map(p => renderNewsFeedPostCard(p, isAdmin)).join('')
+      : `<div class="full-panel"><div class="empty-state"><div class="empty-icon">📰</div><h3>${t('no_news')}</h3></div></div>`;
+  } else showToast(t('toast_failed'), 'error');
+}
 </script>
 </body>
 </html>

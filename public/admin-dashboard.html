@@ -48,6 +48,11 @@
       <span data-i18n="nav_calendar">Calendar</span>
     </a>
 
+    <a class="nav-item" onclick="switchTab('newsfeed')" href="#">
+      <span class="nav-icon"><i class="fa-solid fa-newspaper"></i></span>
+      <span>News Feed</span>
+    </a>
+
     <a class="nav-item" onclick="switchTab('requests')" href="#">
       <span class="nav-icon"><i class="fa-solid fa-envelope"></i></span>
       <span data-i18n="nav_messages">Requests</span>
@@ -796,8 +801,9 @@ function switchTab(tab) {
     users: 1,
     teams: 2,
     calendar: 3,
-    requests: 4,
-    settings: 5
+    newsfeed: 4,
+    requests: 5,
+    settings: 6
   };
 
   document.querySelectorAll('.sidebar-nav .nav-item')[idx[tab]]?.classList.add('active');
@@ -807,6 +813,7 @@ function switchTab(tab) {
     users: t('tb_users'),
     teams: t('tb_teams'),
     calendar: t('nav_calendar'),
+    newsfeed: 'News Feed',
     requests: t('nav_messages'),
     settings: t('tb_settings')
   };
@@ -860,6 +867,10 @@ async function loadTab(tab) {
 
       case 'calendar':
         renderCalendar(el);
+        break;
+
+      case 'newsfeed':
+        renderNewsFeed(el);
         break;
 
       case 'requests':
@@ -1821,27 +1832,67 @@ function renderCalendarUI(el) {
       </div>
     </div>
 
+    <div style="margin-top:24px;">
+      <h3 style="margin-bottom:12px;">📋 All Events Details</h3>
+      ${calendarEventsCache.length ? `
+      <div class="table-wrapper"><table>
+        <thead><tr>
+          <th>Event Poster</th><th>Event Name</th><th>Speakers / Holders</th>
+          <th>Description</th><th>Date</th><th>Time</th><th>Location</th><th>Actions</th>
+        </tr></thead>
+        <tbody>
+          ${calendarEventsCache.map(ev => `<tr>
+            <td>${escHtml(ev.EventPoster || ev.CreatedByName || '—')}</td>
+            <td><strong>${escHtml(ev.Title)}</strong></td>
+            <td>${escHtml(ev.EventSpeakers || '—')}</td>
+            <td style="max-width:200px;">${escHtml(ev.Description || '—')}</td>
+            <td>${escHtml(ev.EventDate)}</td>
+            <td>${escHtml(ev.EventTime || '—')}</td>
+            <td>${escHtml(ev.EventLocation || '—')}</td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-sm btn-ghost" onclick="openEventModal(${ev.EventID})">✏️</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteCalendarEvent(${ev.EventID})">🗑️</button>
+              </div>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table></div>` : `<p class="text-muted">No events yet.</p>`}
+    </div>
+
     <div class="modal-overlay" id="eventModal">
-      <div class="modal-box">
+      <div class="modal-box" style="max-width:560px;">
         <div class="modal-header">
           <h3 id="eventModalTitle">${t('h_add_event')}</h3>
           <button class="modal-close" onclick="closeModal('eventModal')">✕</button>
         </div>
         <div class="form-group">
-          <label class="form-label">${t('lbl_event_title')}</label>
+          <label class="form-label">Event Poster</label>
+          <input id="eventPoster" class="form-input" placeholder="Who is posting this event?">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Event Name *</label>
           <input id="eventTitle" class="form-input">
         </div>
         <div class="form-group">
-          <label class="form-label">${t('lbl_description')}</label>
+          <label class="form-label">Event Speakers / Holders</label>
+          <input id="eventSpeakers" class="form-input" placeholder="Names of speakers or event holders">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Event Description</label>
           <textarea id="eventDescription" class="form-textarea"></textarea>
         </div>
         <div class="form-group">
-          <label class="form-label">${t('th_date')}</label>
+          <label class="form-label">${t('th_date')} *</label>
           <input id="eventDate" type="date" class="form-input">
         </div>
         <div class="form-group">
-          <label class="form-label">${t('lbl_time')}</label>
+          <label class="form-label">Event Time</label>
           <input id="eventTime" type="time" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Event Location</label>
+          <input id="eventLocation" class="form-input" placeholder="Where will the event be held?">
         </div>
         <button class="btn btn-primary" onclick="saveCalendarEvent()">${t('btn_save_event')}</button>
       </div>
@@ -1930,11 +1981,14 @@ function openEventModal(eventId, prefillDate) {
   editingEventId = eventId || null;
   const ev = eventId ? calendarEventsCache.find(e => e.EventID === eventId) : null;
   document.getElementById('eventModalTitle').textContent = ev ? t('h_edit_event') : t('h_add_event');
+  document.getElementById('eventPoster').value = ev ? (ev.EventPoster || '') : '';
   document.getElementById('eventTitle').value = ev ? ev.Title : '';
+  document.getElementById('eventSpeakers').value = ev ? (ev.EventSpeakers || '') : '';
   document.getElementById('eventDescription').value = ev ? (ev.Description || '') : '';
   const now = new Date();
   document.getElementById('eventDate').value = ev ? ev.EventDate : (prefillDate || calDateKey(now.getFullYear(), now.getMonth(), now.getDate()));
   document.getElementById('eventTime').value = ev ? (ev.EventTime || '') : '';
+  document.getElementById('eventLocation').value = ev ? (ev.EventLocation || '') : '';
   openModal('eventModal');
 }
 
@@ -1943,11 +1997,14 @@ async function saveCalendarEvent() {
   const description = document.getElementById('eventDescription').value.trim();
   const eventDate = document.getElementById('eventDate').value;
   const eventTime = document.getElementById('eventTime').value;
+  const eventPoster = document.getElementById('eventPoster').value.trim();
+  const eventSpeakers = document.getElementById('eventSpeakers').value.trim();
+  const eventLocation = document.getElementById('eventLocation').value.trim();
   if (!title || !eventDate) return showToast(t('err_event_required'), 'error');
 
   const url = editingEventId ? '/api/admin/calendar-events/' + editingEventId : '/api/admin/calendar-events';
   const method = editingEventId ? 'PUT' : 'POST';
-  const r = await fetch(url, { method, headers: getHeaders(), body: JSON.stringify({ title, description, eventDate, eventTime }) });
+  const r = await fetch(url, { method, headers: getHeaders(), body: JSON.stringify({ title, description, eventDate, eventTime, eventPoster, eventSpeakers, eventLocation }) });
   if (r.ok) {
     closeModal('eventModal');
     showToast(editingEventId ? t('toast_updated') : t('toast_created'), 'success');
@@ -2573,6 +2630,124 @@ async function deleteAchievement(id) {
 window.addEventListener("scroll", () => {
   localStorage.setItem("adminScrollY", window.scrollY);
 });
+
+// ── NEWS FEED ──────────────────────────────────────────────────────────────────
+let newsFeedCache = [];
+let editingPostId = null;
+
+async function renderNewsFeed(el) {
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    newsFeedCache = await fetch('/api/news-feed', { headers: getHeaders() }).then(r => r.json());
+  } catch(e) { newsFeedCache = []; }
+  el.innerHTML = `
+    <div class="page-header">
+      <div><h2>📰 News Feed</h2><p>Share news and updates with everyone in the program</p></div>
+    </div>
+    <div class="full-panel" style="margin-bottom:16px;">
+      <textarea id="newPostContent" class="form-textarea" placeholder="What's happening? Share news with everyone..." rows="3" style="resize:vertical;width:100%;"></textarea>
+      <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+        <button class="btn btn-primary" onclick="submitNewsFeedPost()">Post</button>
+      </div>
+    </div>
+    <div id="newsFeedPosts">
+      ${newsFeedCache.length
+        ? newsFeedCache.map(p => renderNewsFeedPostCard(p, true)).join('')
+        : '<div class="full-panel"><div class="empty-state"><div class="empty-icon">📰</div><h3>No posts yet. Be the first to share!</h3></div></div>'}
+    </div>
+    <div class="modal-overlay" id="editPostModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>Edit Post</h3>
+          <button class="modal-close" onclick="closeModal('editPostModal')">✕</button>
+        </div>
+        <div class="form-group">
+          <textarea id="editPostContent" class="form-textarea" rows="5" style="resize:vertical;width:100%;"></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="saveEditedPost()">Save</button>
+      </div>
+    </div>`;
+}
+
+function renderNewsFeedPostCard(p, isAdmin) {
+  const isOwn = Number(p.AuthorID) === Number(currentAdmin?.UserID);
+  const roleColors = { Admin:'#dc2626', Leader:'#2563eb', Supervisor:'#7c3aed', Student:'#059669' };
+  const badgeColor = roleColors[p.AuthorRole] || '#64748b';
+  const edited = p.UpdatedAt && p.UpdatedAt !== p.CreatedAt;
+  return `
+    <div class="full-panel" style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <div style="width:38px;height:38px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#4a7099,#355a7d);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;">
+              ${p.AuthorPic ? `<img src="${escHtml(p.AuthorPic)}" style="width:100%;height:100%;object-fit:cover;">` : escHtml((p.AuthorName||'?').charAt(0).toUpperCase())}
+            </div>
+            <div>
+              <div style="font-weight:700;font-size:14px;">${escHtml(p.AuthorName)}</div>
+              <div style="font-size:11px;display:flex;align-items:center;gap:6px;">
+                <span style="background:${badgeColor};color:#fff;border-radius:4px;padding:1px 6px;font-weight:600;">${escHtml(p.AuthorRole)}</span>
+                <span style="color:var(--text-muted);">${fmtDate(p.CreatedAt)}${edited ? ' · edited' : ''}</span>
+              </div>
+            </div>
+          </div>
+          <p style="font-size:14px;line-height:1.7;white-space:pre-wrap;margin:0;">${escHtml(p.Content)}</p>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          ${isOwn ? `<button class="btn btn-sm btn-ghost" onclick="openEditPost(${p.PostID})">✏️</button>` : ''}
+          <button class="btn btn-sm btn-danger" onclick="deleteNewsFeedPost(${p.PostID})">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function submitNewsFeedPost() {
+  const content = document.getElementById('newPostContent').value.trim();
+  if (!content) return showToast('Write something first', 'error');
+  const r = await fetch('/api/news-feed', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ content }) });
+  if (r.ok) {
+    document.getElementById('newPostContent').value = '';
+    showToast('Posted!', 'success');
+    newsFeedCache = await fetch('/api/news-feed', { headers: getHeaders() }).then(r => r.json());
+    const el = document.getElementById('newsFeedPosts');
+    if (el) el.innerHTML = newsFeedCache.length
+      ? newsFeedCache.map(p => renderNewsFeedPostCard(p, true)).join('')
+      : '<div class="full-panel"><div class="empty-state"><div class="empty-icon">📰</div><h3>No posts yet.</h3></div></div>';
+  } else showToast('Failed to post', 'error');
+}
+
+function openEditPost(id) {
+  const post = newsFeedCache.find(p => p.PostID === id);
+  if (!post) return;
+  editingPostId = id;
+  document.getElementById('editPostContent').value = post.Content;
+  openModal('editPostModal');
+}
+
+async function saveEditedPost() {
+  const content = document.getElementById('editPostContent').value.trim();
+  if (!content) return showToast('Content required', 'error');
+  const r = await fetch('/api/news-feed/' + editingPostId, { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ content }) });
+  if (r.ok) {
+    closeModal('editPostModal');
+    showToast('Updated!', 'success');
+    newsFeedCache = await fetch('/api/news-feed', { headers: getHeaders() }).then(r => r.json());
+    const el = document.getElementById('newsFeedPosts');
+    if (el) el.innerHTML = newsFeedCache.map(p => renderNewsFeedPostCard(p, true)).join('');
+  } else showToast('Failed to update', 'error');
+}
+
+async function deleteNewsFeedPost(id) {
+  if (!confirm('Delete this post?')) return;
+  const r = await fetch('/api/news-feed/' + id, { method: 'DELETE', headers: getHeaders() });
+  if (r.ok) {
+    showToast('Deleted', 'info');
+    newsFeedCache = newsFeedCache.filter(p => p.PostID !== id);
+    const el = document.getElementById('newsFeedPosts');
+    if (el) el.innerHTML = newsFeedCache.length
+      ? newsFeedCache.map(p => renderNewsFeedPostCard(p, true)).join('')
+      : '<div class="full-panel"><div class="empty-state"><div class="empty-icon">📰</div><h3>No posts yet.</h3></div></div>';
+  } else showToast('Failed to delete', 'error');
+}
 </script>
 </body>
 </html>
