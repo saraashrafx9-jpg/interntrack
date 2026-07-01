@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -206,15 +206,15 @@ const T = {
     lbl_desc: 'Description *',
     desc_ph: 'Describe what your team achieved this week…',
     lbl_status: 'Status',
-    opt_publish: '📢 Publish Now',
-    opt_draft: '📝 Save as Draft',
+    opt_publish: ' Publish Now',
+    opt_draft: ' Save as Draft',
     lbl_docs: 'Documents (PDF, PowerPoint, Word)',
     docs_hint: 'Attach reports, presentations, or documents',
     lbl_current_attachments: 'Current attachments',
     lbl_images: 'Images (optional, max 5)',
     img_hint: 'Supported: JPG, PNG, GIF, WebP — max 5MB each',
-    btn_post: '📢 Post Achievement',
-    btn_update: '💾 Update Achievement',
+    btn_post: ' Post Achievement',
+    btn_update: ' Update Achievement',
     btn_cancel: 'Cancel',
     saving: 'Saving…',
     // Manage
@@ -224,7 +224,7 @@ const T = {
     th_status: 'Status',
     th_date: 'Date',
     th_actions: 'Actions',
-    btn_edit: '✏️ Edit',
+    btn_edit: '✏ Edit',
     no_ach_empty: 'No achievements yet',
     h_shared_links: 'Shared Links',
     no_shared_links: 'No links shared yet.',
@@ -244,12 +244,12 @@ const T = {
     lbl_pending_badge: '⏳ Pending',
     submitted_by: 'Submitted by',
     // Status badges
-    badge_published: '📢 Published',
-    badge_draft: '📝 Draft',
+    badge_published: ' Published',
+    badge_draft: ' Draft',
     badge_pending: '⏳ Pending',
     badge_rejected: '❌ Rejected',
     // Toasts
-    toast_saved: 'Achievement saved! 🎉',
+    toast_saved: 'Achievement saved! ',
     toast_deleted: 'Deleted',
     toast_fail_delete: 'Failed to delete',
     toast_fail_load: 'Failed to submit',
@@ -369,7 +369,7 @@ const T = {
     lbl_published: 'منشورة',
     lbl_drafts: 'المسودات',
     lbl_pending_review: 'بانتظار المراجعة',
-    h_students_waiting: '⚠️ طلاب ينتظرون الموافقة',
+    h_students_waiting: '⚠ طلاب ينتظرون الموافقة',
     review_all: 'مراجعة الكل ←',
     by: 'بقلم',
     submitted: 'قُدِّم',
@@ -387,15 +387,15 @@ const T = {
     lbl_desc: 'الوصف *',
     desc_ph: 'صف ما حققه فريقك هذا الأسبوع…',
     lbl_status: 'الحالة',
-    opt_publish: '📢 نشر الآن',
-    opt_draft: '📝 حفظ كمسودة',
+    opt_publish: ' نشر الآن',
+    opt_draft: ' حفظ كمسودة',
     lbl_docs: 'مستندات (PDF، PowerPoint، Word)',
     docs_hint: 'أرفق تقارير أو عروض تقديمية أو مستندات',
     lbl_current_attachments: 'المرفقات الحالية',
     lbl_images: 'صور (اختياري، بحد أقصى 5)',
     img_hint: 'المدعوم: JPG، PNG، GIF، WebP — بحد أقصى 5MB لكل صورة',
-    btn_post: '📢 نشر الإنجاز',
-    btn_update: '💾 تحديث الإنجاز',
+    btn_post: ' نشر الإنجاز',
+    btn_update: ' تحديث الإنجاز',
     btn_cancel: 'إلغاء',
     saving: 'جارٍ الحفظ…',
     h_my_ach: 'إنجازاتي',
@@ -404,7 +404,7 @@ const T = {
     th_status: 'الحالة',
     th_date: 'التاريخ',
     th_actions: 'الإجراءات',
-    btn_edit: '✏️ تعديل',
+    btn_edit: '✏ تعديل',
     no_ach_empty: 'لا توجد إنجازات بعد',
     h_team_notes: 'ملاحظات الفريق',
     no_team_notes: 'لا توجد ملاحظات للفريق بعد.',
@@ -434,11 +434,11 @@ const T = {
     no_pending: 'لا توجد تقديمات طلاب بانتظار المراجعة.',
     lbl_pending_badge: '⏳ معلق',
     submitted_by: 'قُدِّم بواسطة',
-    badge_published: '📢 منشور',
-    badge_draft: '📝 مسودة',
+    badge_published: ' منشور',
+    badge_draft: ' مسودة',
     badge_pending: '⏳ معلق',
     badge_rejected: '❌ مرفوض',
-    toast_saved: 'تم حفظ الإنجاز! 🎉',
+    toast_saved: 'تم حفظ الإنجاز! ',
     toast_deleted: 'تم الحذف',
     toast_fail_delete: 'فشل في الحذف',
     toast_fail_load: 'فشل في التقديم',
@@ -624,7 +624,7 @@ let calendarEventsCache = [];
 let remindersCache = [];
 let calendarSideTab = 'events';
 let editingEventId = null;
-function canManageCalendar() { return false; }
+function canManageCalendar() { return currentUser?.TeamName?.toLowerCase().includes('media'); }
 
 function calLocale() { return currentLang === 'ar' ? 'ar-AE' : 'en-US'; }
 
@@ -671,7 +671,7 @@ function calSidePanelBody(monthEvents) {
               </div>
               <div style="display:flex;gap:6px;flex-shrink:0;">
                 <button class="btn btn-sm btn-ghost" onclick="toggleReminder(${r.ReminderID},${r.Completed ? 0 : 1})">${r.Completed ? '↺' : '✓'}</button>
-                <button class="btn btn-sm btn-danger" onclick="deleteReminderItem(${r.ReminderID})">🗑️</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteReminderItem(${r.ReminderID})"></button>
               </div>
             </div>
           </div>`).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_reminders')}</p>`}
@@ -695,8 +695,8 @@ function calSidePanelBody(monthEvents) {
             ${ev.Description ? `<div style="font-size:12px;color:var(--text-muted);">${escHtml(ev.Description)}</div>` : ''}
             ${canManageCalendar() ? `
             <div style="margin-top:6px;display:flex;gap:6px;">
-              <button class="btn btn-sm btn-ghost" onclick="openEventModal(${ev.EventID})">✏️</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteCalendarEvent(${ev.EventID})">🗑️</button>
+              <button class="btn btn-sm btn-ghost" onclick="openEventModal(${ev.EventID})">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteCalendarEvent(${ev.EventID})">Delete</button>
             </div>` : ''}
           </div>
         </div>`;
@@ -767,7 +767,7 @@ function renderCalendarUI(el) {
     </div>
 
     <div style="margin-top:24px;">
-      <h3 style="margin-bottom:12px;">📋 All Events Details</h3>
+      <h3 style="margin-bottom:12px;"> All Events Details</h3>
       ${calendarEventsCache.length ? `
       <div class="table-wrapper"><table>
         <thead><tr>
@@ -1091,7 +1091,7 @@ async function renderSupervisorFeedback(el) {
     </div>
 
     <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1.5px solid #f59e0b;border-radius:14px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px;">
-      <span style="font-size:26px;">🔒</span>
+      <span style="font-size:26px;"></span>
       <div>
         <strong style="color:#92400e;">${t('supervisor_feedback_lbl')}</strong>
         <p style="font-size:13px;color:#78350f;margin-top:2px;">${t('sub_supervisor_fb')}</p>
@@ -1102,7 +1102,7 @@ async function renderSupervisorFeedback(el) {
     ${achievementsWithFeedback.length === 0 ? `
       <div class="full-panel">
         <div class="empty-state">
-          <div class="empty-icon">💬</div>
+          <div class="empty-icon"></div>
           <h3>${t('no_supervisor_fb')}</h3>
           <p>${t('no_supervisor_fb_sub')}</p>
         </div>
@@ -1116,14 +1116,14 @@ async function renderSupervisorFeedback(el) {
               <p style="font-size:12px;color:var(--text-muted);margin-top:2px;">${statusBadge(a.Status)} · ${fmtDate(a.CreatedAt)}</p>
             </div>
             <span style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:12px;padding:3px 12px;font-size:12px;font-weight:700;flex-shrink:0;">
-              💬 ${feedbackMap[a.AchievementID].length}
+               ${feedbackMap[a.AchievementID].length}
             </span>
           </div>
           <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1.5px solid #f59e0b;border-radius:12px;padding:14px 16px;">
-            <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">🔒 ${t('supervisor_feedback_lbl')}</div>
+            <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;"> ${t('supervisor_feedback_lbl')}</div>
             ${feedbackMap[a.AchievementID].map(f=>`
               <div style="background:#fff;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin-bottom:8px;">
-                <div style="font-size:12px;color:#92400e;font-weight:600;margin-bottom:4px;">🎓 ${escHtml(f.AuthorName)} · ${fmtDate(f.CreatedAt)}</div>
+                <div style="font-size:12px;color:#92400e;font-weight:600;margin-bottom:4px;"> ${escHtml(f.AuthorName)} · ${fmtDate(f.CreatedAt)}</div>
                 <div style="font-size:14px;color:#1e293b;line-height:1.6;">${escHtml(f.Content)}</div>
               </div>`).join('')}
           </div>
@@ -1189,7 +1189,7 @@ function renderTeamPostCard(a, docs) {
     <div class="achievement-card-full" style="cursor:pointer;" onclick="openPostDetail(${a.AchievementID})">
       ${a.FirstImage
         ? `<img class="card-image" src="${escHtml(a.FirstImage)}" style="width:100%;height:180px;object-fit:cover;" onerror="this.style.display='none'">`
-        : `<div class="card-image">🏆</div>`}
+        : `<div class="card-image"></div>`}
       <div class="card-body">
         <div class="card-title">${escHtml(a.Title)}</div>
         <div class="card-desc">${escHtml(a.Description || '')}</div>
@@ -1201,7 +1201,7 @@ function renderTeamPostCard(a, docs) {
         <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;">
           ${docs.map(d => {
             const ext = d.FileName.split('.').pop().toLowerCase();
-            const icon = {pdf:'📄',ppt:'📊',pptx:'📊',doc:'📝',docx:'📝'}[ext] || '📎';
+            const icon = {pdf:'',ppt:'',pptx:'',doc:'',docx:''}[ext] || '';
             return `<a href="${escHtml(d.FilePath)}" target="_blank" download onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;background:#ebebdf;border:1px solid #e2e8f0;border-radius:8px;padding:4px 10px;font-size:12px;text-decoration:none;color:#334155;">${icon} ${escHtml(d.FileName)}</a>`;
           }).join('')}
         </div>` : ''}
@@ -1234,7 +1234,7 @@ async function openPostDetail(id) {
     <div style="display:flex;flex-wrap:wrap;gap:6px;">
       ${docs.map(d => {
         const ext = d.FileName.split('.').pop().toLowerCase();
-        const icon = {pdf:'📄',ppt:'📊',pptx:'📊',doc:'📝',docx:'📝'}[ext] || '📎';
+        const icon = {pdf:'',ppt:'',pptx:'',doc:'',docx:''}[ext] || '';
         return `<a href="${escHtml(d.FilePath)}" target="_blank" download style="display:flex;align-items:center;gap:5px;background:#ebebdf;border:1px solid #e2e8f0;border-radius:8px;padding:4px 10px;font-size:12px;text-decoration:none;color:#334155;">${icon} ${escHtml(d.FileName)}</a>`;
       }).join('')}
     </div>` : ''}`;
@@ -1243,7 +1243,7 @@ async function openPostDetail(id) {
 
 async function renderAllTeamPosts(el) {
   if (!currentUser?.TeamID) {
-    el.innerHTML = `<div class="full-panel"><div class="empty-state"><div class="empty-icon">🏆</div><p>${t('not_assigned')}</p></div></div>`;
+    el.innerHTML = `<div class="full-panel"><div class="empty-state"><div class="empty-icon"></div><p>${t('not_assigned')}</p></div></div>`;
     return;
   }
   let posts = [];
@@ -1262,7 +1262,7 @@ async function renderAllTeamPosts(el) {
 
   el.innerHTML = (posts.length
     ? `<div class="achievement-cards-grid">${posts.map(a => renderTeamPostCard(a, teamPostsDocsMap[a.AchievementID])).join('')}</div>`
-    : `<div class="full-panel"><div class="empty-state"><div class="empty-icon">🏆</div><h3>${t('no_team_posts')}</h3></div></div>`)
+    : `<div class="full-panel"><div class="empty-state"><div class="empty-icon"></div><h3>${t('no_team_posts')}</h3></div></div>`)
     + `<div class="modal-overlay" id="postDetailModal">
         <div class="modal-box" style="max-width:700px;">
           <div class="modal-header"><h3 id="postDetailTitle"></h3><button class="modal-close" onclick="closeModal('postDetailModal')">✕</button></div>
@@ -1397,7 +1397,7 @@ async function renderOverviewSub(el) {
               <a href="${escHtml(l.URL)}" target="_blank" rel="noopener" style="font-size:13px;font-weight:600;color:var(--text);text-decoration:none;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(l.Title || l.URL)}</a>
               <div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(l.AdderName || '')} · ${fmtDate(l.CreatedAt)}</div>
             </div>
-            <button class="btn btn-sm btn-ghost" onclick="deleteTeamLink(${l.LinkID})">🗑️</button>
+            <button class="btn btn-sm btn-ghost" onclick="deleteTeamLink(${l.LinkID})"></button>
           </div>`).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_shared_links')}</p>`}
       </div>
     </div>`;
@@ -1491,7 +1491,7 @@ function renderPostForm(el, prefill={}) {
             ${(prefill.existingImages || []).map(img => `<img src="${escHtml(img.ImageURL)}" style="width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0;">`).join('')}
             ${(prefill.existingDocuments || []).map(d => {
               const ext = d.FileName.split('.').pop().toLowerCase();
-              const icon = DOC_ICONS[ext] || '📎';
+              const icon = DOC_ICONS[ext] || '';
               return `<a href="${escHtml(d.FilePath)}" target="_blank" style="display:flex;align-items:center;gap:6px;background:#ebebdf;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:13px;text-decoration:none;color:#334155;">${icon} ${escHtml(d.FileName)}</a>`;
             }).join('')}
           </div>
@@ -1499,7 +1499,7 @@ function renderPostForm(el, prefill={}) {
         <div class="form-group">
           <label class="form-label">${t('lbl_docs')}</label>
           <div id="docDropZone" onclick="document.getElementById('aDocs').click()" style="border:2px dashed #cbd5e1;border-radius:12px;padding:24px;text-align:center;cursor:pointer;background:#f2f2ea;transition:border-color .2s;" onmouseover="this.style.borderColor='#4a7099'" onmouseout="this.style.borderColor='#cbd5e1'">
-            <div style="font-size:32px;margin-bottom:8px;">📎</div>
+            <div style="font-size:32px;margin-bottom:8px;"></div>
             <div style="font-weight:600;color:#334155;margin-bottom:4px;">${t('lbl_docs')}</div>
             <div style="font-size:12px;color:#94a3b8;">${t('docs_hint')}</div>
           </div>
@@ -1534,14 +1534,14 @@ function previewImages(input) {
   });
 }
 
-const DOC_ICONS = { pdf: '📄', ppt: '📊', pptx: '📊', doc: '📝', docx: '📝' };
+const DOC_ICONS = { pdf: '', ppt: '', pptx: '', doc: '', docx: '' };
 
 function previewDocs(input) {
   const preview = document.getElementById('docPreview');
   preview.innerHTML = '';
   [...input.files].forEach(f => {
     const ext = f.name.split('.').pop().toLowerCase();
-    const icon = DOC_ICONS[ext] || '📎';
+    const icon = DOC_ICONS[ext] || '';
     const chip = document.createElement('div');
     chip.style.cssText = 'display:flex;align-items:center;gap:6px;background:#ebebdf;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:13px;';
     chip.innerHTML = `${icon} <span style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(f.name)}</span>`;
@@ -1597,10 +1597,10 @@ async function renderManage(el) {
             <td style="color:var(--text-muted);font-size:12px;">${fmtDate(a.CreatedAt)}</td>
             <td><div style="display:flex;gap:6px;">
               <button class="btn btn-sm btn-ghost" onclick="openEdit(${a.AchievementID})">${t('btn_edit')}</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteAchievement(${a.AchievementID})">🗑️</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteAchievement(${a.AchievementID})"></button>
             </div></td>
           </tr>`).join('')}</tbody>
-      </table></div>` : `<div class="empty-state"><div class="empty-icon">🏆</div><h3>${t('no_ach_empty')}</h3><button class="btn btn-primary" style="margin-top:14px;" onclick="switchTab('post')">${t('btn_post_first')}</button></div>`}
+      </table></div>` : `<div class="empty-state"><div class="empty-icon"></div><h3>${t('no_ach_empty')}</h3><button class="btn btn-primary" style="margin-top:14px;" onclick="switchTab('post')">${t('btn_post_first')}</button></div>`}
     </div>`;
 }
 
@@ -1646,16 +1646,16 @@ async function renderApprovals(el) {
           <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;">
             ${docsMap[a.AchievementID].map(d => {
               const ext = d.FileName.split('.').pop().toLowerCase();
-              const icon = {pdf:'📄',ppt:'📊',pptx:'📊',doc:'📝',docx:'📝'}[ext] || '📎';
+              const icon = {pdf:'',ppt:'',pptx:'',doc:'',docx:''}[ext] || '';
               return `<a href="${escHtml(d.FilePath)}" target="_blank" download style="display:flex;align-items:center;gap:5px;background:#ebebdf;border:1px solid #e2e8f0;border-radius:8px;padding:4px 10px;font-size:12px;text-decoration:none;color:#334155;">${icon} ${escHtml(d.FileName)}</a>`;
             }).join('')}
           </div>` : ''}
           ${feedbackMap[a.AchievementID]?.length ? `
           <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1.5px solid #f59e0b;border-radius:12px;padding:14px 16px;margin-top:14px;">
-            <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;">🔒 ${t('supervisor_feedback_lbl')}</div>
+            <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;"> ${t('supervisor_feedback_lbl')}</div>
             ${feedbackMap[a.AchievementID].map(f=>`
             <div style="background:#fff;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-bottom:6px;">
-              <div style="font-size:12px;color:#92400e;font-weight:600;margin-bottom:3px;">🎓 ${escHtml(f.AuthorName)} · ${fmtDate(f.CreatedAt)}</div>
+              <div style="font-size:12px;color:#92400e;font-weight:600;margin-bottom:3px;"> ${escHtml(f.AuthorName)} · ${fmtDate(f.CreatedAt)}</div>
               <div style="font-size:13px;color:#374151;">${escHtml(f.Content)}</div>
             </div>`).join('')}
           </div>` : ''}
@@ -1663,7 +1663,7 @@ async function renderApprovals(el) {
         <div style="display:flex;flex-direction:column;gap:8px;min-width:160px;">
           <button class="btn btn-success" onclick="reviewAchievement(${a.AchievementID},'approve')">${t('btn_approve_publish')}</button>
           <button class="btn btn-danger" onclick="promptReject(${a.AchievementID})">${t('btn_reject_feedback')}</button>
-          <button class="btn btn-sm btn-danger" style="background:#6b7280;" onclick="deleteAchievement(${a.AchievementID})">🗑️ ${t('btn_delete')}</button>
+          <button class="btn btn-sm btn-danger" style="background:#6b7280;" onclick="deleteAchievement(${a.AchievementID})"> ${t('btn_delete')}</button>
         </div>
       </div>
     </div>`).join('') : `
@@ -1732,16 +1732,22 @@ async function deleteAchievement(id) {
 // ── NEWS FEED ──────────────────────────────────────────────────────────────────
 let newsFeedCache = [];
 let editingPostId = null;
+let myLikedPosts = new Set();
 
 async function renderNewsFeed(el) {
   el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
   try {
-    newsFeedCache = await fetch('/api/news-feed', { headers: getHeaders() }).then(r => r.json());
+    const [posts, likes] = await Promise.all([
+      fetch('/api/news-feed', { headers: getHeaders() }).then(r => r.json()),
+      fetch('/api/news-feed/my-likes', { headers: getHeaders() }).then(r => r.json()).catch(() => [])
+    ]);
+    newsFeedCache = posts;
+    myLikedPosts = new Set(likes);
   } catch(e) { newsFeedCache = []; }
   const isAdmin = currentUser?.Role === 'Admin';
   el.innerHTML = `
     <div class="page-header" style="margin-top:16px;">
-      <div><h2>📰 ${t('h_news_feed')}</h2><p>${t('news_feed_sub')}</p></div>
+      <div><h2>${t('h_news_feed')}</h2><p>${t('news_feed_sub')}</p></div>
     </div>
     <div class="full-panel" style="margin-bottom:16px;">
       <textarea id="newPostContent" class="form-textarea" placeholder="${t('news_post_ph')}" rows="3" style="resize:vertical;width:100%;"></textarea>
@@ -1752,13 +1758,13 @@ async function renderNewsFeed(el) {
     <div id="newsFeedPosts">
       ${newsFeedCache.length
         ? newsFeedCache.map(p => renderNewsFeedPostCard(p, isAdmin)).join('')
-        : `<div class="full-panel"><div class="empty-state"><div class="empty-icon">📰</div><h3>${t('no_news')}</h3></div></div>`}
+        : `<div class="full-panel"><div class="empty-state"><h3>${t('no_news')}</h3></div></div>`}
     </div>
     <div class="modal-overlay" id="editPostModal">
       <div class="modal-box">
         <div class="modal-header">
           <h3>${t('edit_post')}</h3>
-          <button class="modal-close" onclick="closeModal('editPostModal')">✕</button>
+          <button class="modal-close" onclick="closeModal('editPostModal')">X</button>
         </div>
         <div class="form-group">
           <textarea id="editPostContent" class="form-textarea" rows="5" style="resize:vertical;width:100%;"></textarea>
@@ -1773,9 +1779,10 @@ function renderNewsFeedPostCard(p, isAdmin) {
   const roleColors = { Admin:'#dc2626', Leader:'#2563eb', Supervisor:'#7c3aed', Student:'#059669' };
   const badgeColor = roleColors[p.AuthorRole] || '#64748b';
   const edited = p.UpdatedAt && p.UpdatedAt !== p.CreatedAt;
+  const liked = myLikedPosts.has(p.PostID);
   return `
-    <div class="full-panel" style="margin-bottom:12px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+    <div class="full-panel" style="margin-bottom:12px;" id="nfpost-${p.PostID}">
+      <div style="display:flex;align-items:flex-start;gap:12px;">
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
             <div style="width:38px;height:38px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#4a7099,#355a7d);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;">
@@ -1789,15 +1796,96 @@ function renderNewsFeedPostCard(p, isAdmin) {
               </div>
             </div>
           </div>
-          <p style="font-size:14px;line-height:1.7;white-space:pre-wrap;margin:0;">${escHtml(p.Content)}</p>
+          <p style="font-size:14px;line-height:1.7;white-space:pre-wrap;margin:0 0 12px;">${escHtml(p.Content)}</p>
+          <div style="display:flex;gap:16px;align-items:center;padding-top:8px;border-top:1px solid var(--border);">
+            <button onclick="toggleLike(${p.PostID})" style="background:none;border:none;cursor:pointer;font-size:13px;color:${liked ? '#e11d48' : 'var(--text-muted)'};font-weight:600;display:flex;align-items:center;gap:4px;">
+              ${liked ? '&#9829;' : '&#9825;'} <span id="like-count-${p.PostID}">${p.LikeCount || 0}</span>
+            </button>
+            <button onclick="toggleComments(${p.PostID})" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-muted);font-weight:600;display:flex;align-items:center;gap:4px;">
+              &#128172; <span>${p.CommentCount || 0} comments</span>
+            </button>
+            ${isOwn ? `<button class="btn btn-sm btn-ghost" style="margin-left:auto;" onclick="openEditPost(${p.PostID})">Edit</button>` : ''}
+            ${(isOwn || isAdmin) ? `<button class="btn btn-sm btn-danger" onclick="deleteNewsFeedPost(${p.PostID})">Delete</button>` : ''}
+          </div>
+          <div id="comments-${p.PostID}" style="display:none;margin-top:12px;"></div>
         </div>
-        ${(isOwn || isAdmin) ? `
-        <div style="display:flex;gap:6px;flex-shrink:0;">
-          ${isOwn ? `<button class="btn btn-sm btn-ghost" onclick="openEditPost(${p.PostID})">✏️</button>` : ''}
-          <button class="btn btn-sm btn-danger" onclick="deleteNewsFeedPost(${p.PostID})">🗑️</button>
-        </div>` : ''}
       </div>
     </div>`;
+}
+
+async function toggleLike(postId) {
+  const r = await fetch('/api/news-feed/' + postId + '/like', { method: 'POST', headers: getHeaders() });
+  if (!r.ok) return;
+  const data = await r.json();
+  if (data.liked) myLikedPosts.add(postId); else myLikedPosts.delete(postId);
+  const btn = document.querySelector(`#nfpost-${postId} button[onclick="toggleLike(${postId})"]`);
+  if (btn) {
+    const post = newsFeedCache.find(p => p.PostID === postId);
+    if (post) {
+      post.LikeCount = (post.LikeCount || 0) + (data.liked ? 1 : -1);
+      btn.innerHTML = `${data.liked ? '&#9829;' : '&#9825;'} <span id="like-count-${postId}">${post.LikeCount}</span>`;
+      btn.style.color = data.liked ? '#e11d48' : 'var(--text-muted)';
+    }
+  }
+}
+
+async function toggleComments(postId) {
+  const box = document.getElementById('comments-' + postId);
+  if (!box) return;
+  if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  box.innerHTML = '<p style="font-size:12px;color:var(--text-muted);">Loading...</p>';
+  const comments = await fetch('/api/news-feed/' + postId + '/comments', { headers: getHeaders() }).then(r => r.json()).catch(() => []);
+  const isAdmin = currentUser?.Role === 'Admin';
+  box.innerHTML = `
+    <div id="comment-list-${postId}">
+      ${comments.length ? comments.map(c => renderComment(c, isAdmin)).join('') : '<p style="font-size:12px;color:var(--text-muted);">No comments yet.</p>'}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <input id="comment-input-${postId}" class="form-input" style="flex:1;font-size:13px;" placeholder="Write a comment...">
+      <button class="btn btn-sm btn-primary" onclick="submitComment(${postId})">Post</button>
+    </div>`;
+}
+
+function renderComment(c, isAdmin) {
+  const isOwn = Number(c.AuthorID) === Number(currentUser?.UserID);
+  return `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
+    <div>
+      <span style="font-weight:700;font-size:13px;">${escHtml(c.AuthorName)}</span>
+      <span style="font-size:12px;color:var(--text-muted);margin-left:6px;">${fmtDate(c.CreatedAt)}</span>
+      <p style="font-size:13px;margin:2px 0 0;line-height:1.5;">${escHtml(c.Content)}</p>
+    </div>
+    ${(isOwn || isAdmin) ? `<button onclick="deleteComment(${c.CommentID},${c.PostID})" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px;flex-shrink:0;">Remove</button>` : ''}
+  </div>`;
+}
+
+async function submitComment(postId) {
+  const input = document.getElementById('comment-input-' + postId);
+  const content = input?.value.trim();
+  if (!content) return;
+  const r = await fetch('/api/news-feed/' + postId + '/comments', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ content }) });
+  if (r.ok) {
+    input.value = '';
+    const comments = await fetch('/api/news-feed/' + postId + '/comments', { headers: getHeaders() }).then(r => r.json()).catch(() => []);
+    const isAdmin = currentUser?.Role === 'Admin';
+    const list = document.getElementById('comment-list-' + postId);
+    if (list) list.innerHTML = comments.map(c => renderComment(c, isAdmin)).join('');
+    const post = newsFeedCache.find(p => p.PostID === postId);
+    if (post) post.CommentCount = (post.CommentCount || 0) + 1;
+  }
+}
+
+async function deleteComment(commentId, postId) {
+  if (!confirm('Delete this comment?')) return;
+  const r = await fetch('/api/news-feed/comments/' + commentId, { method: 'DELETE', headers: getHeaders() });
+  if (r.ok) {
+    const comments = await fetch('/api/news-feed/' + postId + '/comments', { headers: getHeaders() }).then(r => r.json()).catch(() => []);
+    const isAdmin = currentUser?.Role === 'Admin';
+    const list = document.getElementById('comment-list-' + postId);
+    if (list) list.innerHTML = comments.length ? comments.map(c => renderComment(c, isAdmin)).join('') : '<p style="font-size:12px;color:var(--text-muted);">No comments yet.</p>';
+    const post = newsFeedCache.find(p => p.PostID === postId);
+    if (post) post.CommentCount = Math.max(0, (post.CommentCount || 1) - 1);
+  }
 }
 
 async function submitNewsFeedPost() {
@@ -1807,13 +1895,17 @@ async function submitNewsFeedPost() {
   if (r.ok) {
     document.getElementById('newPostContent').value = '';
     showToast(t('toast_posted'), 'success');
-    newsFeedCache = await fetch('/api/news-feed', { headers: getHeaders() }).then(r => r.json());
-    const isAdmin = currentUser?.Role === 'Admin';
-    const el = document.getElementById('newsFeedPosts');
-    if (el) el.innerHTML = newsFeedCache.length
-      ? newsFeedCache.map(p => renderNewsFeedPostCard(p, isAdmin)).join('')
-      : `<div class="full-panel"><div class="empty-state"><div class="empty-icon">📰</div><h3>${t('no_news')}</h3></div></div>`;
+    await refreshNewsFeedList();
   } else showToast(t('toast_failed'), 'error');
+}
+
+async function refreshNewsFeedList() {
+  newsFeedCache = await fetch('/api/news-feed', { headers: getHeaders() }).then(r => r.json()).catch(() => []);
+  const isAdmin = currentUser?.Role === 'Admin';
+  const el = document.getElementById('newsFeedPosts');
+  if (el) el.innerHTML = newsFeedCache.length
+    ? newsFeedCache.map(p => renderNewsFeedPostCard(p, isAdmin)).join('')
+    : `<div class="full-panel"><div class="empty-state"><h3>${t('no_news')}</h3></div></div>`;
 }
 
 function openEditPost(id) {
@@ -1831,10 +1923,7 @@ async function saveEditedPost() {
   if (r.ok) {
     closeModal('editPostModal');
     showToast(t('toast_post_updated'), 'success');
-    newsFeedCache = await fetch('/api/news-feed', { headers: getHeaders() }).then(r => r.json());
-    const isAdmin = currentUser?.Role === 'Admin';
-    const el = document.getElementById('newsFeedPosts');
-    if (el) el.innerHTML = newsFeedCache.map(p => renderNewsFeedPostCard(p, isAdmin)).join('');
+    await refreshNewsFeedList();
   } else showToast(t('toast_failed'), 'error');
 }
 
@@ -1843,12 +1932,7 @@ async function deleteNewsFeedPost(id) {
   const r = await fetch('/api/news-feed/' + id, { method: 'DELETE', headers: getHeaders() });
   if (r.ok) {
     showToast(t('toast_deleted'), 'info');
-    newsFeedCache = newsFeedCache.filter(p => p.PostID !== id);
-    const isAdmin = currentUser?.Role === 'Admin';
-    const el = document.getElementById('newsFeedPosts');
-    if (el) el.innerHTML = newsFeedCache.length
-      ? newsFeedCache.map(p => renderNewsFeedPostCard(p, isAdmin)).join('')
-      : `<div class="full-panel"><div class="empty-state"><div class="empty-icon">📰</div><h3>${t('no_news')}</h3></div></div>`;
+    await refreshNewsFeedList();
   } else showToast(t('toast_failed'), 'error');
 }
 </script>

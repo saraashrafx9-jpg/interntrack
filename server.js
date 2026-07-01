@@ -339,12 +339,19 @@ app.get("/api/statistics", (req, res) => {
 });
 
 // ==================== CALENDAR EVENTS ====================
-// Shared calendar: any logged-in role can view. Admin/Supervisor can always
-// create/edit/delete; Media Team's leader and students can too.
+// Admin: full access. Media Team members/leader: can create; leader can edit/delete any
+// team event; members can only edit/delete their own.
+
+function isMediaTeamUser(req) {
+  if (!req.user.teamId) return false;
+  const team = dbHelpers.getTeamById(req.user.teamId);
+  return team && team.TeamName && team.TeamName.toLowerCase().includes("media");
+}
 
 function authorizeCalendarWrite(req, res, next) {
   if (req.user.role === "Admin") return next();
-  return res.status(403).json({ error: "Only administrators can manage calendar events." });
+  if (isMediaTeamUser(req)) return next();
+  return res.status(403).json({ error: "Only administrators and Media Team members can manage calendar events." });
 }
 
 app.get("/api/calendar-events", authenticateToken, (req, res) => {
@@ -397,6 +404,15 @@ app.put(
         });
       }
 
+      // Media Team members can only edit their own events; leaders can edit any
+      if (req.user.role !== "Admin" && isMediaTeamUser(req)) {
+        const ev = dbHelpers.getCalendarEventById(req.params.id);
+        if (!ev) return res.status(404).json({ error: "Event not found" });
+        if (req.user.role !== "Leader" && ev.CreatedBy !== req.user.userId) {
+          return res.status(403).json({ error: "You can only edit your own events." });
+        }
+      }
+
       dbHelpers.updateCalendarEvent(req.params.id, title, description, eventDate, eventTime, eventPoster, eventSpeakers, eventLocation);
 
       broadcast("calendar");
@@ -415,6 +431,14 @@ app.delete(
   authorizeCalendarWrite,
   (req, res) => {
     try {
+      // Media Team members can only delete their own events; leaders can delete any
+      if (req.user.role !== "Admin" && isMediaTeamUser(req)) {
+        const ev = dbHelpers.getCalendarEventById(req.params.id);
+        if (!ev) return res.status(404).json({ error: "Event not found" });
+        if (req.user.role !== "Leader" && ev.CreatedBy !== req.user.userId) {
+          return res.status(403).json({ error: "You can only delete your own events." });
+        }
+      }
       dbHelpers.deleteCalendarEvent(req.params.id);
 
       broadcast("calendar");
@@ -2064,6 +2088,71 @@ app.delete("/api/news-feed/:id", authenticateToken, (req, res) => {
     res.json({ message: "Post deleted" });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete post" });
+  }
+});
+
+// ==================== NEWS FEED LIKES & COMMENTS ====================
+
+app.post("/api/news-feed/:id/like", authenticateToken, (req, res) => {
+  try {
+    const user = dbHelpers.getUserByEmail(req.user.email);
+    const userId = user?.UserID || req.user.userId;
+    const result = dbHelpers.toggleNewsFeedLike(req.params.id, userId);
+    broadcast("newsfeed");
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to toggle like" });
+  }
+});
+
+app.get("/api/news-feed/:id/comments", authenticateToken, (req, res) => {
+  try {
+    res.json(dbHelpers.getNewsFeedComments(req.params.id));
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch comments" });
+  }
+});
+
+app.post("/api/news-feed/:id/comments", authenticateToken, (req, res) => {
+  try {
+    const { content } = req.body;
+    if (!content || !content.trim()) return res.status(400).json({ error: "Content required" });
+    const user = dbHelpers.getUserByEmail(req.user.email);
+    const userId = user?.UserID || req.user.userId;
+    const authorName = user?.Name || req.user.email;
+    dbHelpers.addNewsFeedComment(req.params.id, userId, authorName, content.trim());
+    broadcast("newsfeed");
+    res.json({ message: "Comment added" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to add comment" });
+  }
+});
+
+app.delete("/api/news-feed/comments/:commentId", authenticateToken, (req, res) => {
+  try {
+    const comment = dbHelpers.getNewsFeedCommentById(req.params.commentId);
+    if (!comment) return res.status(404).json({ error: "Comment not found" });
+    const user = dbHelpers.getUserByEmail(req.user.email);
+    const userId = user?.UserID || req.user.userId;
+    if (comment.AuthorID !== userId && req.user.role !== "Admin") {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+    dbHelpers.deleteNewsFeedComment(req.params.commentId);
+    broadcast("newsfeed");
+    res.json({ message: "Comment deleted" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete comment" });
+  }
+});
+
+app.get("/api/news-feed/my-likes", authenticateToken, (req, res) => {
+  try {
+    const user = dbHelpers.getUserByEmail(req.user.email);
+    const userId = user?.UserID || req.user.userId;
+    const likes = dbHelpers.getNewsFeedLikesByUser(userId);
+    res.json(likes.map(l => l.PostID));
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch likes" });
   }
 });
 

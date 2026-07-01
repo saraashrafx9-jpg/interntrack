@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -133,7 +133,7 @@
     </div>
     <div class="topbar-right">
       <button class="lang-btn" onclick="toggleLang()" id="langBtn">عربي</button>
-      <span class="topbar-badge" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;">🎓 <span data-i18n="badge_supervisor">Supervisor</span></span>
+      <span class="topbar-badge" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;"> <span data-i18n="badge_supervisor">Supervisor</span></span>
     </div>
   </header>
 
@@ -260,7 +260,7 @@ const T = {
     adjust_search: 'Try adjusting your search or filter.',
     by: 'by',
     // Feedback section inside achievement
-    lbl_supervisor_feedback: '🔒 Supervisor Feedback (Private)',
+    lbl_supervisor_feedback: ' Supervisor Feedback (Private)',
     lbl_feedback_ph: 'Write private feedback for the team…\n\nThis is only visible to team leaders and students — not to the public.',
     btn_post_feedback: 'Send',
     posting: '…',
@@ -274,9 +274,9 @@ const T = {
     no_my_feedback: 'You have not given any feedback yet.',
     on_achievement: 'On:',
     // Status
-    badge_published: '📢 Published',
+    badge_published: ' Published',
     badge_pending: '⏳ Pending',
-    badge_draft: '📝 Draft',
+    badge_draft: ' Draft',
     badge_rejected: '❌ Rejected',
     // Errors
     err_data: 'Could not load data',
@@ -390,7 +390,7 @@ const T = {
     no_ach_found: 'لا توجد إنجازات',
     adjust_search: 'حاول تعديل البحث أو الفلتر.',
     by: 'بواسطة',
-    lbl_supervisor_feedback: '🔒 ملاحظات المشرف (خاصة)',
+    lbl_supervisor_feedback: ' ملاحظات المشرف (خاصة)',
     lbl_feedback_ph: 'اكتب ملاحظات خاصة للفريق…\n\nهذا مرئي فقط لقادة الفريق والطلاب — وليس للعموم.',
     btn_post_feedback: 'إرسال',
     posting: '…',
@@ -402,9 +402,9 @@ const T = {
     h_my_feedback_history: 'سجل الملاحظات',
     no_my_feedback: 'لم تعطِ أي ملاحظات بعد.',
     on_achievement: 'على:',
-    badge_published: '📢 منشور',
+    badge_published: ' منشور',
     badge_pending: '⏳ قيد الانتظار',
-    badge_draft: '📝 مسودة',
+    badge_draft: ' مسودة',
     badge_rejected: '❌ مرفوض',
     err_data: 'تعذر تحميل البيانات',
     err_server: 'تأكد من أن الخادم يعمل.',
@@ -587,7 +587,7 @@ function calSidePanelBody(monthEvents) {
               </div>
               <div style="display:flex;gap:6px;flex-shrink:0;">
                 <button class="btn btn-sm btn-ghost" onclick="toggleReminder(${r.ReminderID},${r.Completed ? 0 : 1})">${r.Completed ? '↺' : '✓'}</button>
-                <button class="btn btn-sm btn-danger" onclick="deleteReminderItem(${r.ReminderID})">🗑️</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteReminderItem(${r.ReminderID})"></button>
               </div>
             </div>
           </div>`).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_reminders')}</p>`}
@@ -609,7 +609,7 @@ function calSidePanelBody(monthEvents) {
             <div style="font-weight:700;font-size:14px;">${escHtml(ev.Title)}</div>
             <div style="font-size:12px;color:var(--text-muted);margin:2px 0;">${escHtml(ev.EventDate)}${ev.EventTime ? ' • ' + escHtml(ev.EventTime) : ''}</div>
             ${ev.Description ? `<div style="font-size:12px;color:var(--text-muted);">${escHtml(ev.Description)}</div>` : ''}
-            ${ev.EventLocation ? `<div style="font-size:12px;color:var(--text-muted);">📍 ${escHtml(ev.EventLocation)}</div>` : ''}
+            ${ev.EventLocation ? `<div style="font-size:12px;color:var(--text-muted);"> ${escHtml(ev.EventLocation)}</div>` : ''}
           </div>
         </div>`;
       }).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_events_month')}</p>`}
@@ -678,7 +678,7 @@ function renderCalendarUI(el) {
     </div>
 
     <div style="margin-top:24px;">
-      <h3 style="margin-bottom:12px;">📋 All Events Details</h3>
+      <h3 style="margin-bottom:12px;"> All Events Details</h3>
       ${calendarEventsCache.length ? `
       <div class="table-wrapper"><table>
         <thead><tr>
@@ -785,7 +785,7 @@ function renderTeamPostCard(a) {
     <div class="achievement-card-full" style="cursor:pointer;" onclick="openPostDetail(${a.AchievementID})">
       ${a.FirstImage
         ? `<img class="card-image" src="${escHtml(a.FirstImage)}" style="width:100%;height:180px;object-fit:cover;" onerror="this.style.display='none'">`
-        : `<div class="card-image">🏆</div>`}
+        : `<div class="card-image"></div>`}
       <div class="card-body">
         <div class="card-title">${escHtml(a.Title)}</div>
         <div class="card-desc">${escHtml(a.Description || '')}</div>
@@ -797,7 +797,7 @@ function renderTeamPostCard(a) {
         <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;">
           ${docs.map(d => {
             const ext = d.FileName.split('.').pop().toLowerCase();
-            const icon = {pdf:'📄',ppt:'📊',pptx:'📊',doc:'📝',docx:'📝'}[ext] || '📎';
+            const icon = {pdf:'',ppt:'',pptx:'',doc:'',docx:''}[ext] || '';
             return `<a href="${escHtml(d.FilePath)}" target="_blank" download onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;background:#ebebdf;border:1px solid #e2e8f0;border-radius:8px;padding:4px 10px;font-size:12px;text-decoration:none;color:#334155;">${icon} ${escHtml(d.FileName)}</a>`;
           }).join('')}
         </div>` : ''}
@@ -830,7 +830,7 @@ async function openPostDetail(id) {
     <div style="display:flex;flex-wrap:wrap;gap:6px;">
       ${docs.map(d => {
         const ext = d.FileName.split('.').pop().toLowerCase();
-        const icon = {pdf:'📄',ppt:'📊',pptx:'📊',doc:'📝',docx:'📝'}[ext] || '📎';
+        const icon = {pdf:'',ppt:'',pptx:'',doc:'',docx:''}[ext] || '';
         return `<a href="${escHtml(d.FilePath)}" target="_blank" download style="display:flex;align-items:center;gap:5px;background:#ebebdf;border:1px solid #e2e8f0;border-radius:8px;padding:4px 10px;font-size:12px;text-decoration:none;color:#334155;">${icon} ${escHtml(d.FileName)}</a>`;
       }).join('')}
     </div>` : ''}`;
@@ -869,7 +869,7 @@ async function renderOverview(el) {
       </div>
 
       <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1.5px solid #f59e0b;border-radius:14px;padding:18px 22px;margin-bottom:24px;display:flex;align-items:flex-start;gap:14px;">
-        <span style="font-size:28px;">🔒</span>
+        <span style="font-size:28px;"></span>
         <div>
           <strong style="font-size:15px;color:#92400e;">${t('h_private_note')}</strong>
           <p style="color:#78350f;font-size:13px;margin-top:4px;">${t('private_note_desc')}</p>
@@ -878,19 +878,19 @@ async function renderOverview(el) {
 
       <div class="stats-row" style="grid-template-columns:repeat(4,1fr);">
         <div class="stat-card">
-          <div class="stat-icon gold">🏆</div>
+          <div class="stat-icon gold"></div>
           <div class="stat-info"><h3>${achievements.length}</h3><p>${t('lbl_total_ach')}</p></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon green">📢</div>
+          <div class="stat-icon green"></div>
           <div class="stat-info"><h3>${achievements.filter(a=>a.Status==='published').length}</h3><p>${t('lbl_published')}</p></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon blue">👥</div>
+          <div class="stat-icon blue"></div>
           <div class="stat-info"><h3>${stats.totalTeams || 0}</h3><p>${t('lbl_teams')}</p></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon amber">💬</div>
+          <div class="stat-icon amber"></div>
           <div class="stat-info"><h3>${myFeedbackCount}</h3><p>${t('lbl_feedback_given')}</p></div>
         </div>
       </div>
@@ -913,7 +913,7 @@ async function renderOverview(el) {
 
     renderOverviewTeamSections();
   } catch (e) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('err_data')}</h3><p>${t('err_server')}</p></div>`;
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠</div><h3>${t('err_data')}</h3><p>${t('err_server')}</p></div>`;
   }
 }
 
@@ -963,7 +963,7 @@ function filterAndRender() {
   const list = document.getElementById('achievementsList');
   if (!list) return;
   if (!filtered.length) {
-    list.innerHTML = `<div class="empty-state"><div class="empty-icon">🏆</div><h3>${t('no_ach_found')}</h3><p>${t('adjust_search')}</p></div>`;
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon"></div><h3>${t('no_ach_found')}</h3><p>${t('adjust_search')}</p></div>`;
     return;
   }
   list.innerHTML = `<div class="ach-board">${filtered.map(a => renderAchCard(a)).join('')}</div>`;
@@ -971,13 +971,13 @@ function filterAndRender() {
 }
 
 function renderAchCard(a) {
-  const DOC_ICON = { pdf:'📄', ppt:'📊', pptx:'📊', doc:'📝', docx:'📝' };
+  const DOC_ICON = { pdf:'', ppt:'', pptx:'', doc:'', docx:'' };
   return `
     <div class="ach-card" id="card-${a.AchievementID}">
       <div class="ach-card-images" id="card-imgs-${a.AchievementID}"></div>
       <div class="ach-card-body">
         <div class="ach-card-toprow">
-          ${a.WeekLabel ? `<span class="ach-week-badge">📅 ${escHtml(a.WeekLabel)}</span>` : ''}
+          ${a.WeekLabel ? `<span class="ach-week-badge"> ${escHtml(a.WeekLabel)}</span>` : ''}
           ${statusBadge(a.Status)}
         </div>
         <h3 class="ach-card-title">${escHtml(a.Title)}</h3>
@@ -990,7 +990,7 @@ function renderAchCard(a) {
           <div style="font-size:12px;color:#94a3b8;padding:4px 0;">Loading notes…</div>
         </div>
         <div class="ach-fb-row">
-          <input class="ach-fb-input" id="fb-input-${a.AchievementID}" placeholder="🔒 Leave a private note…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();postFeedback(${a.AchievementID});}">
+          <input class="ach-fb-input" id="fb-input-${a.AchievementID}" placeholder=" Leave a private note…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();postFeedback(${a.AchievementID});}">
           <button class="ach-fb-btn" id="fb-btn-${a.AchievementID}" onclick="postFeedback(${a.AchievementID})">${t('btn_post_feedback')}</button>
         </div>
       </div>
@@ -998,7 +998,7 @@ function renderAchCard(a) {
 }
 
 async function loadCardDetails(id) {
-  const DOC_ICON = { pdf:'📄', ppt:'📊', pptx:'📊', doc:'📝', docx:'📝' };
+  const DOC_ICON = { pdf:'', ppt:'', pptx:'', doc:'', docx:'' };
   try {
     const [detail, docs, feedback] = await Promise.all([
       fetch('/api/achievements/' + id).then(r => r.json()),
@@ -1019,7 +1019,7 @@ async function loadCardDetails(id) {
     if (docsEl && docs.length) {
       docsEl.innerHTML = docs.map(d => {
         const ext = d.FileName.split('.').pop().toLowerCase();
-        const icon = DOC_ICON[ext] || '📎';
+        const icon = DOC_ICON[ext] || '';
         return `<a class="ach-doc-chip" href="${escHtml(d.FilePath)}" target="_blank" download>${icon} ${escHtml(d.FileName)}</a>`;
       }).join('');
     }
@@ -1037,11 +1037,11 @@ function renderFeedbackList(id, feedback) {
   if (!el) return;
   if (!feedback.length) { el.innerHTML = ''; return; }
   el.innerHTML = `
-    <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">🔒 ${t('lbl_supervisor_feedback')}</div>
+    <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;"> ${t('lbl_supervisor_feedback')}</div>
     <div class="ach-fb-existing">
       ${feedback.map(f => `
         <div class="ach-fb-note">
-          <div class="ach-fb-note-who">🎓 ${escHtml(f.AuthorName)} · ${fmtDate(f.CreatedAt)}</div>
+          <div class="ach-fb-note-who"> ${escHtml(f.AuthorName)} · ${fmtDate(f.CreatedAt)}</div>
           <div class="ach-fb-note-text">${escHtml(f.Content)}</div>
         </div>`).join('')}
     </div>`;
@@ -1092,7 +1092,7 @@ async function renderMyFeedback(el) {
         <div><h2>${t('h_my_feedback')}</h2><p>${t('my_feedback_desc')}</p></div>
       </div>
       <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1.5px solid #f59e0b;border-radius:12px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#78350f;display:flex;gap:8px;align-items:center;">
-        🔒 ${t('private_note_desc')}
+         ${t('private_note_desc')}
       </div>
       <div class="search-filters" style="margin-bottom:14px;">
         <input class="search-input" id="searchInput" placeholder="${t('search_ph')}" oninput="filterAndRender()">
@@ -1109,16 +1109,16 @@ async function renderMyFeedback(el) {
           <div style="padding:16px 0;border-bottom:1px solid var(--border);">
             <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">${t('on_achievement')} <strong>${escHtml(f.AchievementTitle)}</strong> · ${escHtml(f.TeamName || '')} · ${fmtDate(f.CreatedAt)}</div>
             <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;">
-              <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:4px;">🔒 ${t('lbl_supervisor_feedback')}</div>
+              <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:4px;"> ${t('lbl_supervisor_feedback')}</div>
               <div style="font-size:14px;color:#374151;">${escHtml(f.Content)}</div>
             </div>
           </div>`).join('') + '<style>div[style*="border-bottom"]:last-child{border-bottom:none;}</style>'
-        : `<div class="empty-state"><div class="empty-icon">💬</div><h3>${t('no_my_feedback')}</h3></div>`}
+        : `<div class="empty-state"><div class="empty-icon"></div><h3>${t('no_my_feedback')}</h3></div>`}
       </div>`;
 
     filterAndRender();
   } catch (e) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('err_data')}</h3></div>`;
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠</div><h3>${t('err_data')}</h3></div>`;
   }
 }
 
@@ -1152,7 +1152,7 @@ async function renderSupTeams(el) {
     supUsersCache = users;
     renderSupTeamsUI(el);
   } catch (e) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('err_load')}</h3></div>`;
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠</div><h3>${t('err_load')}</h3></div>`;
   }
 }
 
@@ -1187,7 +1187,7 @@ function renderSupTeamsUI(el) {
           </div>
         </div>`;
       }).join('')}
-    </div>` : `<div class="full-panel"><div class="empty-state"><div class="empty-icon">👥</div><h3>${t('no_teams')}</h3></div></div>`}`;
+    </div>` : `<div class="full-panel"><div class="empty-state"><div class="empty-icon"></div><h3>${t('no_teams')}</h3></div></div>`}`;
 }
 
 async function viewSupTeamDetail(teamId) {
@@ -1234,9 +1234,9 @@ async function viewSupTeamDetail(teamId) {
               <p style="font-size:14px;line-height:1.6;margin:0;white-space:pre-wrap;">${escHtml(a.Description || '')}</p>
             </div>
           </div>`).join('')}
-        </div>` : `<div class="full-panel"><div class="empty-state"><div class="empty-icon">📄</div><h3>${t('no_posts_yet')}</h3></div></div>`}`;
+        </div>` : `<div class="full-panel"><div class="empty-state"><div class="empty-icon"></div><h3>${t('no_posts_yet')}</h3></div></div>`}`;
   } catch (e) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('err_load')}</h3></div>`;
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠</div><h3>${t('err_load')}</h3></div>`;
   }
 }
 
@@ -1252,7 +1252,7 @@ async function renderSupUsers(el) {
     supUsersCache = users;
     renderSupUsersUI(el);
   } catch (e) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('err_load')}</h3></div>`;
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠</div><h3>${t('err_load')}</h3></div>`;
   }
 }
 
@@ -1273,10 +1273,10 @@ function renderSupUsersUI(el) {
     </div>
 
     <div class="stats-row" style="grid-template-columns:repeat(4,1fr);">
-      <div class="stat-card"><div class="stat-icon blue">🏢</div><div class="stat-info"><h3>${allUsers.length}</h3><p>${t('h_users')}</p></div></div>
-      <div class="stat-card"><div class="stat-icon green">🎓</div><div class="stat-info"><h3>${students.length}</h3><p>${t('lbl_students')}</p></div></div>
-      <div class="stat-card"><div class="stat-icon gold">🛡️</div><div class="stat-info"><h3>${supervisors.length}</h3><p>${t('h_supervisors')}</p></div></div>
-      <div class="stat-card"><div class="stat-icon purple">👥</div><div class="stat-info"><h3>${teams.length}</h3><p>${t('lbl_teams')}</p></div></div>
+      <div class="stat-card"><div class="stat-icon blue"></div><div class="stat-info"><h3>${allUsers.length}</h3><p>${t('h_users')}</p></div></div>
+      <div class="stat-card"><div class="stat-icon green"></div><div class="stat-info"><h3>${students.length}</h3><p>${t('lbl_students')}</p></div></div>
+      <div class="stat-card"><div class="stat-icon gold"></div><div class="stat-info"><h3>${supervisors.length}</h3><p>${t('h_supervisors')}</p></div></div>
+      <div class="stat-card"><div class="stat-icon purple"></div><div class="stat-info"><h3>${teams.length}</h3><p>${t('lbl_teams')}</p></div></div>
     </div>
 
     <div class="full-panel">
@@ -1309,7 +1309,7 @@ function renderSupUsersUI(el) {
             </tr>`).join('')}
           </tbody>
         </table>
-      </div>` : `<div class="empty-state"><div class="empty-icon">👥</div><h3>${t('no_users')}</h3></div>`}
+      </div>` : `<div class="empty-state"><div class="empty-icon"></div><h3>${t('no_users')}</h3></div>`}
     </div>
 
     <div id="supUserSidePanel" class="user-side-panel">
@@ -1508,12 +1508,18 @@ async function savePassword() {
 // ── NEWS FEED ─────────────────────────────────────────────────────────────────
 let newsFeedCache = [];
 let editingPostId = null;
+let myLikedPosts = new Set();
 
 async function renderNewsFeed(el) {
   el.innerHTML = `<div class="page-header"><div><h2>News Feed</h2></div></div><p>Loading…</p>`;
-  const r = await fetch('/api/news-feed', { headers: getHeaders() });
-  if (!r.ok) { el.querySelector('p').textContent = 'Failed to load news feed.'; return; }
-  newsFeedCache = await r.json();
+  try {
+    const [posts, likes] = await Promise.all([
+      fetch('/api/news-feed', { headers: getHeaders() }).then(r => r.json()),
+      fetch('/api/news-feed/my-likes', { headers: getHeaders() }).then(r => r.json()).catch(() => [])
+    ]);
+    newsFeedCache = posts;
+    myLikedPosts = new Set(likes);
+  } catch(e) { newsFeedCache = []; }
 
   el.innerHTML = `
     <div class="page-header"><div><h2>News Feed</h2><p class="text-muted">Share updates with everyone</p></div></div>
@@ -1532,21 +1538,105 @@ async function renderNewsFeed(el) {
 
 function renderNewsFeedPostCard(p) {
   const isOwn = currentUser && p.AuthorID === currentUser.UserID;
-  const isAdmin = false;
+  const liked = myLikedPosts.has(p.PostID);
+  const roleColors = { Admin:'#dc2626', Leader:'#2563eb', Supervisor:'#7c3aed', Student:'#059669' };
+  const badgeColor = roleColors[p.AuthorRole] || '#64748b';
   return `<div class="panel" style="margin-bottom:14px;" id="nfpost-${p.PostID}">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-      <div>
-        <strong>${escHtml(p.AuthorName)}</strong>
-        <span style="font-size:11px;color:var(--text-muted);margin-left:8px;">${escHtml(p.AuthorRole)}</span>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4a7099,#355a7d);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;">
+        ${escHtml((p.AuthorName||'?').charAt(0).toUpperCase())}
+      </div>
+      <div style="flex:1;">
+        <strong style="font-size:14px;">${escHtml(p.AuthorName)}</strong>
+        <span style="background:${badgeColor};color:#fff;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:600;margin-left:6px;">${escHtml(p.AuthorRole)}</span>
         <div style="font-size:11px;color:var(--text-muted);">${fmtDate(p.CreatedAt)}${p.UpdatedAt !== p.CreatedAt ? ' (edited)' : ''}</div>
       </div>
-      <div style="display:flex;gap:6px;">
-        ${isOwn ? `<button class="btn btn-sm btn-ghost" onclick="openEditPost(${p.PostID})">✏️ Edit</button>` : ''}
-        ${(isOwn || isAdmin) ? `<button class="btn btn-sm btn-danger" onclick="deleteNewsFeedPost(${p.PostID})">🗑️</button>` : ''}
-      </div>
     </div>
-    <p style="white-space:pre-wrap;line-height:1.7;margin:0;">${escHtml(p.Content)}</p>
+    <p style="white-space:pre-wrap;line-height:1.7;margin:0 0 12px;">${escHtml(p.Content)}</p>
+    <div style="display:flex;gap:16px;align-items:center;padding-top:8px;border-top:1px solid var(--border);">
+      <button onclick="toggleLike(${p.PostID})" style="background:none;border:none;cursor:pointer;font-size:13px;color:${liked ? '#e11d48' : 'var(--text-muted)'};font-weight:600;display:flex;align-items:center;gap:4px;">
+        ${liked ? '&#9829;' : '&#9825;'} <span id="like-count-${p.PostID}">${p.LikeCount || 0}</span>
+      </button>
+      <button onclick="toggleComments(${p.PostID})" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-muted);font-weight:600;display:flex;align-items:center;gap:4px;">
+        &#128172; <span>${p.CommentCount || 0} comments</span>
+      </button>
+      ${isOwn ? `<button class="btn btn-sm btn-ghost" style="margin-left:auto;" onclick="openEditPost(${p.PostID})">Edit</button>` : ''}
+      ${isOwn ? `<button class="btn btn-sm btn-danger" onclick="deleteNewsFeedPost(${p.PostID})">Delete</button>` : ''}
+    </div>
+    <div id="comments-${p.PostID}" style="display:none;margin-top:12px;"></div>
   </div>`;
+}
+
+async function toggleLike(postId) {
+  const r = await fetch('/api/news-feed/' + postId + '/like', { method: 'POST', headers: getHeaders() });
+  if (!r.ok) return;
+  const data = await r.json();
+  if (data.liked) myLikedPosts.add(postId); else myLikedPosts.delete(postId);
+  const btn = document.querySelector(`#nfpost-${postId} button[onclick="toggleLike(${postId})"]`);
+  if (btn) {
+    const post = newsFeedCache.find(p => p.PostID === postId);
+    if (post) {
+      post.LikeCount = (post.LikeCount || 0) + (data.liked ? 1 : -1);
+      btn.innerHTML = `${data.liked ? '&#9829;' : '&#9825;'} <span id="like-count-${postId}">${post.LikeCount}</span>`;
+      btn.style.color = data.liked ? '#e11d48' : 'var(--text-muted)';
+    }
+  }
+}
+
+async function toggleComments(postId) {
+  const box = document.getElementById('comments-' + postId);
+  if (!box) return;
+  if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  box.innerHTML = '<p style="font-size:12px;color:var(--text-muted);">Loading...</p>';
+  const comments = await fetch('/api/news-feed/' + postId + '/comments', { headers: getHeaders() }).then(r => r.json()).catch(() => []);
+  box.innerHTML = `
+    <div id="comment-list-${postId}">
+      ${comments.length ? comments.map(c => renderComment(c)).join('') : '<p style="font-size:12px;color:var(--text-muted);">No comments yet.</p>'}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <input id="comment-input-${postId}" class="form-input" style="flex:1;font-size:13px;" placeholder="Write a comment...">
+      <button class="btn btn-sm btn-primary" onclick="submitComment(${postId})">Post</button>
+    </div>`;
+}
+
+function renderComment(c) {
+  const isOwn = currentUser && c.AuthorID === currentUser.UserID;
+  return `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
+    <div>
+      <span style="font-weight:700;font-size:13px;">${escHtml(c.AuthorName)}</span>
+      <span style="font-size:12px;color:var(--text-muted);margin-left:6px;">${fmtDate(c.CreatedAt)}</span>
+      <p style="font-size:13px;margin:2px 0 0;line-height:1.5;">${escHtml(c.Content)}</p>
+    </div>
+    ${isOwn ? `<button onclick="deleteComment(${c.CommentID},${c.PostID})" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px;flex-shrink:0;">Remove</button>` : ''}
+  </div>`;
+}
+
+async function submitComment(postId) {
+  const input = document.getElementById('comment-input-' + postId);
+  const content = input?.value.trim();
+  if (!content) return;
+  const r = await fetch('/api/news-feed/' + postId + '/comments', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ content }) });
+  if (r.ok) {
+    input.value = '';
+    const comments = await fetch('/api/news-feed/' + postId + '/comments', { headers: getHeaders() }).then(r => r.json()).catch(() => []);
+    const list = document.getElementById('comment-list-' + postId);
+    if (list) list.innerHTML = comments.map(c => renderComment(c)).join('');
+    const post = newsFeedCache.find(p => p.PostID === postId);
+    if (post) post.CommentCount = (post.CommentCount || 0) + 1;
+  }
+}
+
+async function deleteComment(commentId, postId) {
+  if (!confirm('Delete this comment?')) return;
+  const r = await fetch('/api/news-feed/comments/' + commentId, { method: 'DELETE', headers: getHeaders() });
+  if (r.ok) {
+    const comments = await fetch('/api/news-feed/' + postId + '/comments', { headers: getHeaders() }).then(r => r.json()).catch(() => []);
+    const list = document.getElementById('comment-list-' + postId);
+    if (list) list.innerHTML = comments.length ? comments.map(c => renderComment(c)).join('') : '<p style="font-size:12px;color:var(--text-muted);">No comments yet.</p>';
+    const post = newsFeedCache.find(p => p.PostID === postId);
+    if (post) post.CommentCount = Math.max(0, (post.CommentCount || 1) - 1);
+  }
 }
 
 async function submitNewsFeedPost() {
@@ -1555,6 +1645,7 @@ async function submitNewsFeedPost() {
   if (editingPostId) { await saveEditedPost(content); return; }
   const r = await fetch('/api/news-feed', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ content }) });
   if (r.ok) {
+    document.getElementById('newsFeedInput').value = '';
     showToast('Posted!', 'success');
     renderNewsFeed(document.getElementById('pageContent'));
   } else showToast('Failed to post.', 'error');
@@ -1581,6 +1672,7 @@ async function saveEditedPost(content) {
   const r = await fetch('/api/news-feed/' + editingPostId, { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ content }) });
   if (r.ok) {
     editingPostId = null;
+    cancelEditPost();
     showToast('Post updated!', 'success');
     renderNewsFeed(document.getElementById('pageContent'));
   } else showToast('Failed to update.', 'error');

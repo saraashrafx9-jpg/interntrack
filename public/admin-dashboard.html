@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -244,7 +244,7 @@
       <button class="modal-close" onclick="closeModal('supervisorModal')">✕</button>
     </div>
     <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#92400e;">
-      🔒 <strong data-i18n="supervisor_modal_note">Supervisors can give private feedback on achievements — visible only to team members, not the public.</strong>
+       <strong data-i18n="supervisor_modal_note">Supervisors can give private feedback on achievements — visible only to team members, not the public.</strong>
     </div>
     <div class="form-group">
       <label class="form-label" data-i18n="lbl_full_name">Full Name *</label>
@@ -305,7 +305,7 @@ const T = {
     nav_achievements: 'Achievements',
     lbl_administrator: 'Administrator',
     btn_signout: 'Sign Out',
-    badge_admin: '⚙️ Admin',
+    badge_admin: '⚙ Admin',
     footer: '© 2026 InternTrack — Sharjah Government Media Bureau. All rights reserved.',
     modal_create_team: 'Create Team',
     modal_edit_team: 'Edit Team',
@@ -422,9 +422,9 @@ const T = {
     no_data: 'No data yet.',
     err_load: 'Error loading data',
     no_team_label: 'No team',
-    h_announcements: '📢 Recent Announcements',
+    h_announcements: ' Recent Announcements',
     btn_add: '+ Add',
-    h_calendar: '📅 Internship Calendar',
+    h_calendar: ' Internship Calendar',
     h_add_announcement: 'Add Announcement',
     lbl_title: 'Title',
     lbl_message: 'Message',
@@ -512,7 +512,7 @@ const T = {
     nav_achievements: 'الإنجازات',
     lbl_administrator: 'مسؤول',
     btn_signout: 'تسجيل الخروج',
-    badge_admin: '⚙️ مسؤول',
+    badge_admin: '⚙ مسؤول',
     footer: '© 2026 InternTrack — دائرة الإعلام الحكومي في الشارقة. جميع الحقوق محفوظة.',
     modal_create_team: 'إنشاء فريق',
     modal_edit_team: 'تعديل الفريق',
@@ -621,9 +621,9 @@ const T = {
     no_data: 'لا توجد بيانات بعد.',
     err_load: 'خطأ في تحميل البيانات',
     no_team_label: 'بدون فريق',
-    h_announcements: '📢 آخر الإعلانات',
+    h_announcements: ' آخر الإعلانات',
     btn_add: '+ إضافة',
-    h_calendar: '📅 تقويم التدريب',
+    h_calendar: ' تقويم التدريب',
     h_add_announcement: 'إضافة إعلان',
     lbl_title: 'العنوان',
     lbl_message: 'الرسالة',
@@ -886,7 +886,7 @@ async function loadTab(tab) {
     }
 
   } catch(e) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('err_load')}</h3><p>${e.message}</p></div>`;
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠</div><h3>${t('err_load')}</h3><p>${e.message}</p></div>`;
   }
 }
 
@@ -927,21 +927,21 @@ async function renderOverview(el, {stats, teams, users}) {
 
   <!-- USERS -->
   <div class="stat-card-hero accent-blue tooltip-card">
-    <div class="stat-icon-hero blue">👥</div>
+    <div class="stat-icon-hero blue"></div>
 
     <div class="stat-info-hero">
       <h3>${(stats.totalStudents || 0) + (stats.totalLeaders || 0) + (stats.totalSupervisors || 0)}</h3>
       <p>${t('lbl_users_card')}</p>
     </div>
 <div class="card-tooltip">
-  🎓 ${t('lbl_interns')}: ${(stats.totalStudents || 0) + (stats.totalLeaders || 0)}<br>
-  🛡️ ${t('nav_supervisors')}: ${supervisors.length}
+   ${t('lbl_interns')}: ${(stats.totalStudents || 0) + (stats.totalLeaders || 0)}<br>
+   ${t('nav_supervisors')}: ${supervisors.length}
 </div>
 </div>
 
   <!-- TEAMS -->
   <div class="stat-card-hero accent-purple tooltip-card">
-    <div class="stat-icon-hero purple">👥</div>
+    <div class="stat-icon-hero purple"></div>
 
     <div class="stat-info-hero">
       <h3>${stats.totalTeams || teams.length || 0}</h3>
@@ -963,7 +963,7 @@ async function renderOverview(el, {stats, teams, users}) {
 
   <!-- POSTS -->
   <div class="stat-card-hero accent-gold tooltip-card">
-    <div class="stat-icon-hero gold">📄</div>
+    <div class="stat-icon-hero gold"></div>
 
     <div class="stat-info-hero">
       <h3>${(stats.totalAchievements || 0) + (stats.totalPending || 0) + (stats.totalRejected || 0)}</h3>
@@ -1035,7 +1035,7 @@ async function renderOverview(el, {stats, teams, users}) {
     <div class="announcement-list">
       ${announcements.map((a, index) => `
         <div class="announcement-item">
-          <div class="announcement-icon">📢</div>
+          <div class="announcement-icon"></div>
 
           <div class="announcement-text">
             <h4>${escHtml(a.title)}</h4>
@@ -1043,7 +1043,7 @@ async function renderOverview(el, {stats, teams, users}) {
             <small>${escHtml(a.date)}</small>
           </div>
 
-          <button class="mini-delete" onclick="deleteAnnouncement(${index})">🗑️</button>
+          <button class="mini-delete" onclick="deleteAnnouncement(${index})"></button>
         </div>
       `).join("")}
     </div>
@@ -1180,11 +1180,11 @@ function renderTeams(el, {teams}) {
               <div style="display:flex;gap:6px;flex-shrink:0;" onclick="event.stopPropagation()">
                 <button class="btn btn-sm btn-ghost"
                   onclick="openEditTeam(${tm.TeamID},'${escHtml(tm.TeamName)}','${escHtml(tm.Description||'')}')">
-                  ✏️
+                  ✏
                 </button>
                 <button class="btn btn-sm btn-danger"
                   onclick="deleteTeam(${tm.TeamID})">
-                  🗑️
+                  
                 </button>
               </div>
             </div>
@@ -1199,7 +1199,7 @@ function renderTeams(el, {teams}) {
           </div>
         </div>`;
       }).join('')}
-    </div>` : `<div class="full-panel"><div class="empty-state"><div class="empty-icon">👥</div><h3>${t('no_teams')}</h3></div></div>`}`;
+    </div>` : `<div class="full-panel"><div class="empty-state"><div class="empty-icon"></div><h3>${t('no_teams')}</h3></div></div>`}`;
 }
 
 async function viewTeamDetail(teamId) {
@@ -1261,7 +1261,7 @@ async function viewTeamDetail(teamId) {
             <div style="padding:18px 20px;">
               <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;">
                 ${statusBadge(a.Status)}
-                <button class="btn btn-sm btn-danger" onclick="deleteAchievementInTeamDetail(${a.AchievementID})">🗑️</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteAchievementInTeamDetail(${a.AchievementID})"></button>
               </div>
               <h3 style="margin:0 0 4px;">${escHtml(a.Title)}</h3>
               <p class="text-muted" style="font-size:13px;margin:0 0 12px;">${escHtml(a.CreatorName || '—')} · ${fmtDate(a.CreatedAt)}</p>
@@ -1269,11 +1269,11 @@ async function viewTeamDetail(teamId) {
               <div id="post-docs-${a.AchievementID}" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
             </div>
           </div>`).join('')}
-        </div>` : `<div class="full-panel"><div class="empty-state"><div class="empty-icon">📄</div><h3>${t('no_posts_yet')}</h3></div></div>`}`;
+        </div>` : `<div class="full-panel"><div class="empty-state"><div class="empty-icon"></div><h3>${t('no_posts_yet')}</h3></div></div>`}`;
 
     teamAchievements.forEach(a => loadPostDocuments(a.AchievementID));
   } catch (e) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('err_load')}</h3></div>`;
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠</div><h3>${t('err_load')}</h3></div>`;
   }
 }
 
@@ -1345,11 +1345,11 @@ function renderLeaders(el, {teams, users}) {
             <td style="color:var(--text-muted);">${escHtml(l.Email)}</td>
             <td>${l.TeamName?`<span class="badge badge-blue">${escHtml(l.TeamName)}</span>`:`<span style="color:#f59e0b;font-size:12px;">${t('unassigned')}</span>`}</td>
             <td><div style="display:flex;gap:6px;">
-              <button class="btn btn-sm btn-ghost" onclick="openEditLeader(${l.UserID},'${escHtml(l.Name)}','${escHtml(l.Email)}',${l.TeamID||'null'})">✏️</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteLeader(${l.UserID})">🗑️</button>
+              <button class="btn btn-sm btn-ghost" onclick="openEditLeader(${l.UserID},'${escHtml(l.Name)}','${escHtml(l.Email)}',${l.TeamID||'null'})">✏</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteLeader(${l.UserID})"></button>
             </div></td>
           </tr>`).join('')}</tbody>
-      </table></div>` : `<div class="empty-state"><div class="empty-icon">👤</div><h3>${t('no_leaders')}</h3></div>`}
+      </table></div>` : `<div class="empty-state"><div class="empty-icon"></div><h3>${t('no_leaders')}</h3></div>`}
     </div>`;
 }
 
@@ -1373,11 +1373,11 @@ function renderStudents(el, {teams, users}) {
             <td style="color:var(--text-muted);">${escHtml(s.Email)}</td>
             <td>${s.TeamName?`<span class="badge badge-blue">${escHtml(s.TeamName)}</span>`:`<span style="color:#f59e0b;font-size:12px;">${t('unassigned')}</span>`}</td>
             <td><div style="display:flex;gap:6px;">
-              <button class="btn btn-sm btn-ghost" onclick="openEditStudent(${s.UserID},'${escHtml(s.Name)}','${escHtml(s.Email)}',${s.TeamID||'null'},'${escHtml(s.Phone||'')}','${escHtml(s.ProfilePicture||'')}')">✏️</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteStudent(${s.UserID})">🗑️</button>
+              <button class="btn btn-sm btn-ghost" onclick="openEditStudent(${s.UserID},'${escHtml(s.Name)}','${escHtml(s.Email)}',${s.TeamID||'null'},'${escHtml(s.Phone||'')}','${escHtml(s.ProfilePicture||'')}')">✏</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteStudent(${s.UserID})"></button>
             </div></td>
           </tr>`).join('')}</tbody>
-      </table></div>` : `<div class="empty-state"><div class="empty-icon">🎓</div><h3>${t('no_students')}</h3><p>${t('no_students_sub')}</p><button class="btn btn-primary" style="margin-top:14px;" onclick="openCreateStudent()">${t('btn_add_first')}</button></div>`}
+      </table></div>` : `<div class="empty-state"><div class="empty-icon"></div><h3>${t('no_students')}</h3><p>${t('no_students_sub')}</p><button class="btn btn-primary" style="margin-top:14px;" onclick="openCreateStudent()">${t('btn_add_first')}</button></div>`}
     </div>`;
 }
 function toggleAdminMenu(event) {
@@ -1469,7 +1469,7 @@ async function renderAchievements(el) {
             <td>${escHtml(a.CreatorName||'—')}</td>
             <td>${statusBadge(a.Status)}</td>
             <td style="color:var(--text-muted);font-size:12px;">${fmtDate(a.CreatedAt)}</td>
-            <td><button class="btn btn-sm btn-danger" onclick="deleteAchievement(${a.AchievementID})">🗑️</button></td>
+            <td><button class="btn btn-sm btn-danger" onclick="deleteAchievement(${a.AchievementID})"></button></td>
           </tr>`).join('')}
         </tbody>
       </table></div>
@@ -1513,7 +1513,7 @@ const supervisors = users.supervisors || [];
     <div class="stats-row">
 
   <div class="stat-card tooltip-card">
-    <div class="stat-icon blue">🏢</div>
+    <div class="stat-icon blue"></div>
     <div class="stat-info">
       <h3>${allUsers.length}</h3>
       <p>${t('lbl_total_users')}</p>
@@ -1527,7 +1527,7 @@ const supervisors = users.supervisors || [];
   </div>
 
   <div class="stat-card tooltip-card">
-    <div class="stat-icon green">🎓</div>
+    <div class="stat-icon green"></div>
     <div class="stat-info">
       <h3>${students.length + leaders.length}</h3>
       <p>${t('lbl_interns')}</p>
@@ -1540,7 +1540,7 @@ const supervisors = users.supervisors || [];
   </div>
 
   <div class="stat-card">
-    <div class="stat-icon gold">🛡️</div>
+    <div class="stat-icon gold"></div>
     <div class="stat-info">
       <h3>${supervisors.length}</h3>
       <p>${t('nav_supervisors')}</p>
@@ -1548,7 +1548,7 @@ const supervisors = users.supervisors || [];
   </div>
 
   <div class="stat-card">
-    <div class="stat-icon purple">👥</div>
+    <div class="stat-icon purple"></div>
     <div class="stat-info">
       <h3>${teams.length}</h3>
       <p>${t('lbl_teams')}</p>
@@ -1628,18 +1628,18 @@ onclick="openUserPanel('${escHtml(u.Name)}','${escHtml(u.Email)}','${u.Role}','$
     <div style="display:flex;gap:6px;">
 
       ${u.Role === 'Student' ? `
-        <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openEditStudent(${u.UserID},'${escHtml(u.Name)}','${escHtml(u.Email)}',${u.TeamID||'null'},'${escHtml(u.Phone||'')}','${escHtml(u.ProfilePicture||'')}')">✏️</button>
-        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteStudent(${u.UserID})">🗑️</button>
+        <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openEditStudent(${u.UserID},'${escHtml(u.Name)}','${escHtml(u.Email)}',${u.TeamID||'null'},'${escHtml(u.Phone||'')}','${escHtml(u.ProfilePicture||'')}')">✏</button>
+        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteStudent(${u.UserID})"></button>
       ` : ''}
 
       ${u.Role === 'Leader' ? `
-        <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openEditLeader(${u.UserID},'${escHtml(u.Name)}','${escHtml(u.Email)}',${u.TeamID||'null'})">✏️</button>
-        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteLeader(${u.UserID})">🗑️</button>
+        <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openEditLeader(${u.UserID},'${escHtml(u.Name)}','${escHtml(u.Email)}',${u.TeamID||'null'})">✏</button>
+        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteLeader(${u.UserID})"></button>
       ` : ''}
 
       ${u.Role === 'Supervisor' ? `
-        <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openEditSupervisor(${u.UserID},'${escHtml(u.Name)}','${escHtml(u.Email)}')">✏️</button>
-        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteSupervisor(${u.UserID})">🗑️</button>
+        <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openEditSupervisor(${u.UserID},'${escHtml(u.Name)}','${escHtml(u.Email)}')">✏</button>
+        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteSupervisor(${u.UserID})"></button>
       ` : ''}
 
     </div>
@@ -1649,7 +1649,7 @@ onclick="openUserPanel('${escHtml(u.Name)}','${escHtml(u.Email)}','${u.Role}','$
           </tbody>
         </table>
       </div>
-      ` : `<div class="empty-state"><div class="empty-icon">👥</div><h3>${t('no_users')}</h3></div>`}
+      ` : `<div class="empty-state"><div class="empty-icon"></div><h3>${t('no_users')}</h3></div>`}
     </div>
 
     <div id="userSidePanel" class="user-side-panel">
@@ -1738,7 +1738,7 @@ function calSidePanelBody(monthEvents) {
               </div>
               <div style="display:flex;gap:6px;flex-shrink:0;">
                 <button class="btn btn-sm btn-ghost" onclick="toggleReminder(${r.ReminderID},${r.Completed ? 0 : 1})">${r.Completed ? '↺' : '✓'}</button>
-                <button class="btn btn-sm btn-danger" onclick="deleteReminderItem(${r.ReminderID})">🗑️</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteReminderItem(${r.ReminderID})"></button>
               </div>
             </div>
           </div>`).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_reminders')}</p>`}
@@ -1761,8 +1761,8 @@ function calSidePanelBody(monthEvents) {
             <div style="font-size:12px;color:var(--text-muted);margin:2px 0;">${escHtml(ev.EventDate)}${ev.EventTime ? ' • ' + escHtml(ev.EventTime) : ''}</div>
             ${ev.Description ? `<div style="font-size:12px;color:var(--text-muted);">${escHtml(ev.Description)}</div>` : ''}
             <div style="margin-top:6px;display:flex;gap:6px;">
-              <button class="btn btn-sm btn-ghost" onclick="openEventModal(${ev.EventID})">✏️</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteCalendarEvent(${ev.EventID})">🗑️</button>
+              <button class="btn btn-sm btn-ghost" onclick="openEventModal(${ev.EventID})">✏</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteCalendarEvent(${ev.EventID})"></button>
             </div>
           </div>
         </div>`;
@@ -1833,7 +1833,7 @@ function renderCalendarUI(el) {
     </div>
 
     <div style="margin-top:24px;">
-      <h3 style="margin-bottom:12px;">📋 All Events Details</h3>
+      <h3 style="margin-bottom:12px;"> All Events Details</h3>
       ${calendarEventsCache.length ? `
       <div class="table-wrapper"><table>
         <thead><tr>
@@ -1851,8 +1851,8 @@ function renderCalendarUI(el) {
             <td>${escHtml(ev.EventLocation || '—')}</td>
             <td>
               <div style="display:flex;gap:6px;">
-                <button class="btn btn-sm btn-ghost" onclick="openEventModal(${ev.EventID})">✏️</button>
-                <button class="btn btn-sm btn-danger" onclick="deleteCalendarEvent(${ev.EventID})">🗑️</button>
+                <button class="btn btn-sm btn-ghost" onclick="openEventModal(${ev.EventID})">✏</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteCalendarEvent(${ev.EventID})"></button>
               </div>
             </td>
           </tr>`).join('')}
@@ -2314,17 +2314,17 @@ async function renderRequests(el) {
                 <option value="done" ${m.Status === 'done' ? 'selected' : ''}>${t('status_done')}</option>
                 <option value="rejected" ${m.Status === 'rejected' ? 'selected' : ''}>${t('status_rejected')}</option>
               </select>
-              <button class="btn btn-sm btn-danger" onclick="deleteRequest(${m.MessageID})">🗑️</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteRequest(${m.MessageID})"></button>
             </div>
           </div>
           <p style="margin:10px 0 4px;font-size:14px;">${escHtml(m.Message)}</p>
           <p class="text-muted" style="font-size:12px;margin:0;">${fmtDate(m.CreatedAt)}</p>
         </div>
-      `).join('') : `<div class="full-panel"><div class="empty-state"><div class="empty-icon">📭</div><h3>${t('no_requests')}</h3></div></div>`}
+      `).join('') : `<div class="full-panel"><div class="empty-state"><div class="empty-icon"></div><h3>${t('no_requests')}</h3></div></div>`}
     `;
     updateRequestsBadge(messages);
   } catch (e) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('err_load')}</h3></div>`;
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠</div><h3>${t('err_load')}</h3></div>`;
   }
 }
 
@@ -2543,14 +2543,14 @@ function renderSupervisors(el, {users}) {
         <thead><tr><th>${t('th_name')}</th><th>${t('th_email')}</th><th>${t('th_actions')}</th></tr></thead>
         <tbody>${supervisors.map(s=>`
           <tr>
-            <td><div style="display:flex;align-items:center;gap:10px;"><div style="background:#fef3c7;color:#92400e;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🎓</div><strong>${escHtml(s.Name)}</strong></div></td>
+            <td><div style="display:flex;align-items:center;gap:10px;"><div style="background:#fef3c7;color:#92400e;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;"></div><strong>${escHtml(s.Name)}</strong></div></td>
             <td style="color:var(--text-muted);">${escHtml(s.Email)}</td>
             <td><div style="display:flex;gap:6px;">
               <button class="btn btn-sm btn-ghost" onclick="openEditSupervisor(${s.UserID},'${escHtml(s.Name)}','${escHtml(s.Email)}')">${t('btn_edit')}</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteSupervisor(${s.UserID})">🗑️</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteSupervisor(${s.UserID})"></button>
             </div></td>
           </tr>`).join('')}</tbody>
-      </table></div>` : `<div class="empty-state"><div class="empty-icon">🎓</div><h3>${t('no_supervisors')}</h3><p>${t('no_supervisors_sub')}</p></div>`}
+      </table></div>` : `<div class="empty-state"><div class="empty-icon"></div><h3>${t('no_supervisors')}</h3><p>${t('no_supervisors_sub')}</p></div>`}
     </div>`;
 }
 
@@ -2634,15 +2634,21 @@ window.addEventListener("scroll", () => {
 // ── NEWS FEED ──────────────────────────────────────────────────────────────────
 let newsFeedCache = [];
 let editingPostId = null;
+let myLikedPosts = new Set();
 
 async function renderNewsFeed(el) {
   el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
   try {
-    newsFeedCache = await fetch('/api/news-feed', { headers: getHeaders() }).then(r => r.json());
+    const [posts, likes] = await Promise.all([
+      fetch('/api/news-feed', { headers: getHeaders() }).then(r => r.json()),
+      fetch('/api/news-feed/my-likes', { headers: getHeaders() }).then(r => r.json()).catch(() => [])
+    ]);
+    newsFeedCache = posts;
+    myLikedPosts = new Set(likes);
   } catch(e) { newsFeedCache = []; }
   el.innerHTML = `
     <div class="page-header">
-      <div><h2>📰 News Feed</h2><p>Share news and updates with everyone in the program</p></div>
+      <div><h2>News Feed</h2><p>Share news and updates with everyone in the program</p></div>
     </div>
     <div class="full-panel" style="margin-bottom:16px;">
       <textarea id="newPostContent" class="form-textarea" placeholder="What's happening? Share news with everyone..." rows="3" style="resize:vertical;width:100%;"></textarea>
@@ -2653,13 +2659,13 @@ async function renderNewsFeed(el) {
     <div id="newsFeedPosts">
       ${newsFeedCache.length
         ? newsFeedCache.map(p => renderNewsFeedPostCard(p, true)).join('')
-        : '<div class="full-panel"><div class="empty-state"><div class="empty-icon">📰</div><h3>No posts yet. Be the first to share!</h3></div></div>'}
+        : '<div class="full-panel"><div class="empty-state"><h3>No posts yet. Be the first to share!</h3></div></div>'}
     </div>
     <div class="modal-overlay" id="editPostModal">
       <div class="modal-box">
         <div class="modal-header">
           <h3>Edit Post</h3>
-          <button class="modal-close" onclick="closeModal('editPostModal')">✕</button>
+          <button class="modal-close" onclick="closeModal('editPostModal')">X</button>
         </div>
         <div class="form-group">
           <textarea id="editPostContent" class="form-textarea" rows="5" style="resize:vertical;width:100%;"></textarea>
@@ -2674,9 +2680,10 @@ function renderNewsFeedPostCard(p, isAdmin) {
   const roleColors = { Admin:'#dc2626', Leader:'#2563eb', Supervisor:'#7c3aed', Student:'#059669' };
   const badgeColor = roleColors[p.AuthorRole] || '#64748b';
   const edited = p.UpdatedAt && p.UpdatedAt !== p.CreatedAt;
+  const liked = myLikedPosts.has(p.PostID);
   return `
-    <div class="full-panel" style="margin-bottom:12px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+    <div class="full-panel" style="margin-bottom:12px;" id="nfpost-${p.PostID}">
+      <div style="display:flex;align-items:flex-start;gap:12px;">
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
             <div style="width:38px;height:38px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#4a7099,#355a7d);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;">
@@ -2690,14 +2697,93 @@ function renderNewsFeedPostCard(p, isAdmin) {
               </div>
             </div>
           </div>
-          <p style="font-size:14px;line-height:1.7;white-space:pre-wrap;margin:0;">${escHtml(p.Content)}</p>
-        </div>
-        <div style="display:flex;gap:6px;flex-shrink:0;">
-          ${isOwn ? `<button class="btn btn-sm btn-ghost" onclick="openEditPost(${p.PostID})">✏️</button>` : ''}
-          <button class="btn btn-sm btn-danger" onclick="deleteNewsFeedPost(${p.PostID})">🗑️</button>
+          <p style="font-size:14px;line-height:1.7;white-space:pre-wrap;margin:0 0 12px;">${escHtml(p.Content)}</p>
+          <div style="display:flex;gap:16px;align-items:center;padding-top:8px;border-top:1px solid var(--border);">
+            <button onclick="toggleLike(${p.PostID})" style="background:none;border:none;cursor:pointer;font-size:13px;color:${liked ? '#e11d48' : 'var(--text-muted)'};font-weight:600;display:flex;align-items:center;gap:4px;">
+              ${liked ? '&#9829;' : '&#9825;'} <span id="like-count-${p.PostID}">${p.LikeCount || 0}</span>
+            </button>
+            <button onclick="toggleComments(${p.PostID})" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-muted);font-weight:600;display:flex;align-items:center;gap:4px;">
+              &#128172; <span>${p.CommentCount || 0} comments</span>
+            </button>
+            ${isOwn ? `<button class="btn btn-sm btn-ghost" style="margin-left:auto;" onclick="openEditPost(${p.PostID})">Edit</button>` : ''}
+            <button class="btn btn-sm btn-danger" ${!isOwn ? 'style="margin-left:auto;"' : ''} onclick="deleteNewsFeedPost(${p.PostID})">Delete</button>
+          </div>
+          <div id="comments-${p.PostID}" style="display:none;margin-top:12px;"></div>
         </div>
       </div>
     </div>`;
+}
+
+async function toggleLike(postId) {
+  const r = await fetch('/api/news-feed/' + postId + '/like', { method: 'POST', headers: getHeaders() });
+  if (!r.ok) return;
+  const data = await r.json();
+  if (data.liked) myLikedPosts.add(postId); else myLikedPosts.delete(postId);
+  const btn = document.querySelector(`#nfpost-${postId} button[onclick="toggleLike(${postId})"]`);
+  if (btn) {
+    const post = newsFeedCache.find(p => p.PostID === postId);
+    if (post) {
+      post.LikeCount = (post.LikeCount || 0) + (data.liked ? 1 : -1);
+      btn.innerHTML = `${data.liked ? '&#9829;' : '&#9825;'} <span id="like-count-${postId}">${post.LikeCount}</span>`;
+      btn.style.color = data.liked ? '#e11d48' : 'var(--text-muted)';
+    }
+  }
+}
+
+async function toggleComments(postId) {
+  const box = document.getElementById('comments-' + postId);
+  if (!box) return;
+  if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  box.innerHTML = '<p style="font-size:12px;color:var(--text-muted);">Loading...</p>';
+  const comments = await fetch('/api/news-feed/' + postId + '/comments', { headers: getHeaders() }).then(r => r.json()).catch(() => []);
+  box.innerHTML = `
+    <div id="comment-list-${postId}">
+      ${comments.length ? comments.map(c => renderComment(c)).join('') : '<p style="font-size:12px;color:var(--text-muted);">No comments yet.</p>'}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <input id="comment-input-${postId}" class="form-input" style="flex:1;font-size:13px;" placeholder="Write a comment...">
+      <button class="btn btn-sm btn-primary" onclick="submitComment(${postId})">Post</button>
+    </div>`;
+}
+
+function renderComment(c) {
+  const isOwn = Number(c.AuthorID) === Number(currentAdmin?.UserID);
+  return `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
+    <div>
+      <span style="font-weight:700;font-size:13px;">${escHtml(c.AuthorName)}</span>
+      <span style="font-size:12px;color:var(--text-muted);margin-left:6px;">${fmtDate(c.CreatedAt)}</span>
+      <p style="font-size:13px;margin:2px 0 0;line-height:1.5;">${escHtml(c.Content)}</p>
+    </div>
+    <button onclick="deleteComment(${c.CommentID},${c.PostID})" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px;flex-shrink:0;">Remove</button>
+  </div>`;
+}
+
+async function submitComment(postId) {
+  const input = document.getElementById('comment-input-' + postId);
+  const content = input?.value.trim();
+  if (!content) return;
+  const r = await fetch('/api/news-feed/' + postId + '/comments', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ content }) });
+  if (r.ok) {
+    input.value = '';
+    const comments = await fetch('/api/news-feed/' + postId + '/comments', { headers: getHeaders() }).then(r => r.json()).catch(() => []);
+    const list = document.getElementById('comment-list-' + postId);
+    if (list) list.innerHTML = comments.map(c => renderComment(c)).join('');
+    const post = newsFeedCache.find(p => p.PostID === postId);
+    if (post) post.CommentCount = (post.CommentCount || 0) + 1;
+  }
+}
+
+async function deleteComment(commentId, postId) {
+  if (!confirm('Delete this comment?')) return;
+  const r = await fetch('/api/news-feed/comments/' + commentId, { method: 'DELETE', headers: getHeaders() });
+  if (r.ok) {
+    const comments = await fetch('/api/news-feed/' + postId + '/comments', { headers: getHeaders() }).then(r => r.json()).catch(() => []);
+    const list = document.getElementById('comment-list-' + postId);
+    if (list) list.innerHTML = comments.length ? comments.map(c => renderComment(c)).join('') : '<p style="font-size:12px;color:var(--text-muted);">No comments yet.</p>';
+    const post = newsFeedCache.find(p => p.PostID === postId);
+    if (post) post.CommentCount = Math.max(0, (post.CommentCount || 1) - 1);
+  }
 }
 
 async function submitNewsFeedPost() {
@@ -2707,12 +2793,16 @@ async function submitNewsFeedPost() {
   if (r.ok) {
     document.getElementById('newPostContent').value = '';
     showToast('Posted!', 'success');
-    newsFeedCache = await fetch('/api/news-feed', { headers: getHeaders() }).then(r => r.json());
-    const el = document.getElementById('newsFeedPosts');
-    if (el) el.innerHTML = newsFeedCache.length
-      ? newsFeedCache.map(p => renderNewsFeedPostCard(p, true)).join('')
-      : '<div class="full-panel"><div class="empty-state"><div class="empty-icon">📰</div><h3>No posts yet.</h3></div></div>';
+    await refreshNewsFeedList();
   } else showToast('Failed to post', 'error');
+}
+
+async function refreshNewsFeedList() {
+  newsFeedCache = await fetch('/api/news-feed', { headers: getHeaders() }).then(r => r.json()).catch(() => []);
+  const el = document.getElementById('newsFeedPosts');
+  if (el) el.innerHTML = newsFeedCache.length
+    ? newsFeedCache.map(p => renderNewsFeedPostCard(p, true)).join('')
+    : '<div class="full-panel"><div class="empty-state"><h3>No posts yet.</h3></div></div>';
 }
 
 function openEditPost(id) {
@@ -2730,9 +2820,7 @@ async function saveEditedPost() {
   if (r.ok) {
     closeModal('editPostModal');
     showToast('Updated!', 'success');
-    newsFeedCache = await fetch('/api/news-feed', { headers: getHeaders() }).then(r => r.json());
-    const el = document.getElementById('newsFeedPosts');
-    if (el) el.innerHTML = newsFeedCache.map(p => renderNewsFeedPostCard(p, true)).join('');
+    await refreshNewsFeedList();
   } else showToast('Failed to update', 'error');
 }
 
@@ -2741,11 +2829,7 @@ async function deleteNewsFeedPost(id) {
   const r = await fetch('/api/news-feed/' + id, { method: 'DELETE', headers: getHeaders() });
   if (r.ok) {
     showToast('Deleted', 'info');
-    newsFeedCache = newsFeedCache.filter(p => p.PostID !== id);
-    const el = document.getElementById('newsFeedPosts');
-    if (el) el.innerHTML = newsFeedCache.length
-      ? newsFeedCache.map(p => renderNewsFeedPostCard(p, true)).join('')
-      : '<div class="full-panel"><div class="empty-state"><div class="empty-icon">📰</div><h3>No posts yet.</h3></div></div>';
+    await refreshNewsFeedList();
   } else showToast('Failed to delete', 'error');
 }
 </script>

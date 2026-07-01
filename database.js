@@ -258,6 +258,36 @@ db.run('CREATE INDEX IF NOT EXISTS idx_calendar_events_date ON CalendarEvents(Ev
 try { db.run('ALTER TABLE CalendarEvents ADD COLUMN EventPoster TEXT DEFAULT NULL'); } catch(e) {}
 try { db.run('ALTER TABLE CalendarEvents ADD COLUMN EventSpeakers TEXT DEFAULT NULL'); } catch(e) {}
 try { db.run('ALTER TABLE CalendarEvents ADD COLUMN EventLocation TEXT DEFAULT NULL'); } catch(e) {}
+try { db.run('ALTER TABLE CalendarEvents ADD COLUMN CreatedByTeamID INTEGER DEFAULT NULL'); } catch(e) {}
+
+// News feed likes
+db.run(`
+  CREATE TABLE IF NOT EXISTS NewsFeedLikes (
+    LikeID INTEGER PRIMARY KEY AUTOINCREMENT,
+    PostID INTEGER NOT NULL,
+    UserID INTEGER NOT NULL,
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (PostID) REFERENCES NewsFeed(PostID) ON DELETE CASCADE,
+    FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE,
+    UNIQUE(PostID, UserID)
+  )
+`);
+
+// News feed comments
+db.run(`
+  CREATE TABLE IF NOT EXISTS NewsFeedComments (
+    CommentID INTEGER PRIMARY KEY AUTOINCREMENT,
+    PostID INTEGER NOT NULL,
+    AuthorID INTEGER NOT NULL,
+    AuthorName TEXT NOT NULL,
+    Content TEXT NOT NULL,
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (PostID) REFERENCES NewsFeed(PostID) ON DELETE CASCADE,
+    FOREIGN KEY (AuthorID) REFERENCES Users(UserID) ON DELETE CASCADE
+  )
+`);
+db.run('CREATE INDEX IF NOT EXISTS idx_nf_likes_post ON NewsFeedLikes(PostID)');
+db.run('CREATE INDEX IF NOT EXISTS idx_nf_comments_post ON NewsFeedComments(PostID)');
 
 // Personal reminders and to-do items (private per-user, every role can manage their own)
 db.run(`
@@ -513,11 +543,74 @@ getCalendarEventById: (id) => {
 
 getAllNewsFeedPosts: () => {
   return queryAll(`
-    SELECT nf.*, u.ProfilePicture as AuthorPic
+    SELECT nf.*,
+           u.ProfilePicture as AuthorPic,
+           (SELECT COUNT(*) FROM NewsFeedLikes l WHERE l.PostID = nf.PostID) as LikeCount,
+           (SELECT COUNT(*) FROM NewsFeedComments c WHERE c.PostID = nf.PostID) as CommentCount
     FROM NewsFeed nf
     LEFT JOIN Users u ON nf.AuthorID = u.UserID
     ORDER BY nf.CreatedAt DESC
   `);
+},
+
+getNewsFeedPostWithEngagement: (postId, viewerUserId) => {
+  const post = queryOne(`
+    SELECT nf.*,
+           u.ProfilePicture as AuthorPic,
+           (SELECT COUNT(*) FROM NewsFeedLikes l WHERE l.PostID = nf.PostID) as LikeCount,
+           (SELECT COUNT(*) FROM NewsFeedComments c WHERE c.PostID = nf.PostID) as CommentCount,
+           (SELECT COUNT(*) FROM NewsFeedLikes l WHERE l.PostID = nf.PostID AND l.UserID = ?) as LikedByMe
+    FROM NewsFeed nf
+    LEFT JOIN Users u ON nf.AuthorID = u.UserID
+    WHERE nf.PostID = ?
+  `, [viewerUserId, postId]);
+  return post;
+},
+
+getNewsFeedComments: (postId) => {
+  return queryAll(
+    `SELECT * FROM NewsFeedComments WHERE PostID = ? ORDER BY CreatedAt ASC`,
+    [postId]
+  );
+},
+
+toggleNewsFeedLike: (postId, userId) => {
+  const existing = queryOne(
+    'SELECT LikeID FROM NewsFeedLikes WHERE PostID = ? AND UserID = ?',
+    [postId, userId]
+  );
+  if (existing) {
+    runQuery('DELETE FROM NewsFeedLikes WHERE PostID = ? AND UserID = ?', [postId, userId]);
+    saveDatabase();
+    return { liked: false };
+  } else {
+    runQuery('INSERT INTO NewsFeedLikes (PostID, UserID) VALUES (?, ?)', [postId, userId]);
+    saveDatabase();
+    return { liked: true };
+  }
+},
+
+addNewsFeedComment: (postId, authorId, authorName, content) => {
+  const result = runQuery(
+    'INSERT INTO NewsFeedComments (PostID, AuthorID, AuthorName, Content) VALUES (?, ?, ?, ?)',
+    [postId, authorId, authorName, content]
+  );
+  saveDatabase();
+  return result;
+},
+
+deleteNewsFeedComment: (commentId) => {
+  const result = runQuery('DELETE FROM NewsFeedComments WHERE CommentID = ?', [commentId]);
+  saveDatabase();
+  return result;
+},
+
+getNewsFeedCommentById: (commentId) => {
+  return queryOne('SELECT * FROM NewsFeedComments WHERE CommentID = ?', [commentId]);
+},
+
+getNewsFeedLikesByUser: (userId) => {
+  return queryAll('SELECT PostID FROM NewsFeedLikes WHERE UserID = ?', [userId]);
 },
 
 createNewsFeedPost: (content, authorId, authorName, authorRole) => {
