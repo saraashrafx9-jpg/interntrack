@@ -821,26 +821,40 @@ function renderCalendarUI(el) {
     </div>
 
     <div class="modal-overlay" id="eventModal">
-      <div class="modal-box">
+      <div class="modal-box" style="max-width:560px;">
         <div class="modal-header">
           <h3 id="eventModalTitle">${t('h_add_event')}</h3>
-          <button class="modal-close" onclick="closeModal('eventModal')">✕</button>
+          <button class="modal-close" onclick="closeModal('eventModal')">X</button>
         </div>
         <div class="form-group">
-          <label class="form-label">${t('lbl_event_title')}</label>
-          <input id="eventTitle" class="form-input">
+          <label class="form-label">Event Poster</label>
+          <input id="eventPoster" class="form-input" placeholder="Who is posting this event?">
         </div>
         <div class="form-group">
-          <label class="form-label">${t('lbl_description')}</label>
-          <textarea id="eventDescription" class="form-textarea"></textarea>
+          <label class="form-label">Event Name *</label>
+          <input id="eventTitle" class="form-input" placeholder="Name of the event">
         </div>
         <div class="form-group">
-          <label class="form-label">${t('th_date')}</label>
-          <input id="eventDate" type="date" class="form-input">
+          <label class="form-label">Event Speakers / Holders</label>
+          <input id="eventSpeakers" class="form-input" placeholder="Names of speakers or event holders">
         </div>
         <div class="form-group">
-          <label class="form-label">${t('lbl_time')}</label>
-          <input id="eventTime" type="time" class="form-input">
+          <label class="form-label">Event Description</label>
+          <textarea id="eventDescription" class="form-textarea" placeholder="Describe the event..."></textarea>
+        </div>
+        <div style="display:flex;gap:12px;">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Date *</label>
+            <input id="eventDate" type="date" class="form-input">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Event Time</label>
+            <input id="eventTime" type="time" class="form-input">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Event Location</label>
+          <input id="eventLocation" class="form-input" placeholder="Where will the event be held?">
         </div>
         <button class="btn btn-primary" onclick="saveCalendarEvent()">${t('btn_save_event')}</button>
       </div>
@@ -890,11 +904,14 @@ function openEventModal(eventId, prefillDate) {
   editingEventId = eventId || null;
   const ev = eventId ? calendarEventsCache.find(e => e.EventID === eventId) : null;
   document.getElementById('eventModalTitle').textContent = ev ? t('h_edit_event') : t('h_add_event');
+  document.getElementById('eventPoster').value = ev ? (ev.EventPoster || '') : '';
   document.getElementById('eventTitle').value = ev ? ev.Title : '';
+  document.getElementById('eventSpeakers').value = ev ? (ev.EventSpeakers || '') : '';
   document.getElementById('eventDescription').value = ev ? (ev.Description || '') : '';
   const now = new Date();
   document.getElementById('eventDate').value = ev ? ev.EventDate : (prefillDate || calDateKey(now.getFullYear(), now.getMonth(), now.getDate()));
   document.getElementById('eventTime').value = ev ? (ev.EventTime || '') : '';
+  document.getElementById('eventLocation').value = ev ? (ev.EventLocation || '') : '';
   openModal('eventModal');
 }
 
@@ -903,11 +920,14 @@ async function saveCalendarEvent() {
   const description = document.getElementById('eventDescription').value.trim();
   const eventDate = document.getElementById('eventDate').value;
   const eventTime = document.getElementById('eventTime').value;
+  const eventPoster = document.getElementById('eventPoster').value.trim();
+  const eventSpeakers = document.getElementById('eventSpeakers').value.trim();
+  const eventLocation = document.getElementById('eventLocation').value.trim();
   if (!title || !eventDate) return showToast(t('err_event_required'), 'error');
 
   const url = editingEventId ? '/api/admin/calendar-events/' + editingEventId : '/api/admin/calendar-events';
   const method = editingEventId ? 'PUT' : 'POST';
-  const r = await fetch(url, { method, headers: getHeaders(), body: JSON.stringify({ title, description, eventDate, eventTime }) });
+  const r = await fetch(url, { method, headers: getHeaders(), body: JSON.stringify({ title, description, eventDate, eventTime, eventPoster, eventSpeakers, eventLocation }) });
   if (r.ok) {
     closeModal('eventModal');
     showToast(editingEventId ? t('toast_updated') : t('toast_created'), 'success');
