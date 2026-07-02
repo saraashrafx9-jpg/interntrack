@@ -59,14 +59,17 @@
       <span class="nav-icon"><i class="fa-solid fa-bell"></i></span> <span data-i18n="nav_approvals">Approve Submissions</span>
       <span id="pendingBadge" style="display:none;background:#ef4444;color:#fff;border-radius:20px;padding:1px 7px;font-size:11px;margin-left:4px;"></span>
     </a>
-    <a class="nav-item" onclick="switchTab('helpcenter')" href="#">
-      <span class="nav-icon"><i class="fa-solid fa-circle-question"></i></span> <span>Help Center</span>
-    </a>
     <a class="nav-item" onclick="switchTab('feedback')" href="#" id="feedbackNav">
       <span class="nav-icon"><i class="fa-solid fa-comment-dots"></i></span> <span data-i18n="nav_supervisor_fb">Supervisor Feedback</span>
       <span id="feedbackBadge" style="display:none;background:#f59e0b;color:#fff;border-radius:20px;padding:1px 7px;font-size:11px;margin-left:4px;"></span>
     </a>
   </nav>
+  <div class="help-card">
+    <div class="help-icon"><i class="fa-solid fa-headset"></i></div>
+    <h3>Need Help?</h3>
+    <p>Contact admin.</p>
+    <button class="help-btn" onclick="switchTab('helpcenter')">Help Center</button>
+  </div>
   <div class="sidebar-footer">
     <div class="user-card">
       <div class="user-avatar"><i class="fa-solid fa-user" style="font-size:15px;"></i></div>
@@ -564,7 +567,7 @@ function switchTab(tab) {
   localStorage.setItem('leaderCurrentTab', tab);
   document.querySelectorAll('.sidebar-nav .nav-item').forEach(n=>n.classList.remove('active'));
   const navItems = document.querySelectorAll('.sidebar-nav .nav-item');
-  const idx={overview:0,post:1,manage:2,calendar:3,settings:4,approvals:5,helpcenter:6,feedback:7};
+  const idx={overview:0,post:1,manage:2,calendar:3,settings:4,approvals:5,feedback:6};
   navItems[idx[tab]]?.classList.add('active');
   const titles={
     overview:  t('tb_overview'),
@@ -807,7 +810,7 @@ function renderCalendarUI(el) {
             <td>${escHtml(ev.EventDate)}</td>
             <td>${escHtml(ev.EventTime || '—')}</td>
             <td>${escHtml(ev.EventLocation || '—')}</td>
-            <td><div style="display:flex;gap:6px;"><button class="btn btn-sm btn-ghost" onclick="openEventModal(${ev.EventID})">✏</button><button class="btn btn-sm btn-danger" onclick="deleteCalendarEvent(${ev.EventID})"></button></div></td>
+            <td><div style="display:flex;gap:4px;"><button style="background:#2563eb;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;" onclick="openEventModal(${ev.EventID})">Edit</button><button style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;" onclick="deleteCalendarEvent(${ev.EventID})">Delete</button></div></td>
           </tr>`).join('')}
         </tbody>
       </table></div>` : `<p class="text-muted">No events yet.</p>`}

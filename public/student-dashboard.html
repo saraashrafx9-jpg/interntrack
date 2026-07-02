@@ -837,7 +837,7 @@ function renderCalendarUI(el) {
             <td>${escHtml(ev.EventDate)}</td>
             <td>${escHtml(ev.EventTime || '—')}</td>
             <td>${escHtml(ev.EventLocation || '—')}</td>
-            <td>${ev.CreatedBy === currentUser?.UserID ? `<div style="display:flex;gap:6px;"><button class="btn btn-sm btn-ghost" onclick="openEventModal(${ev.EventID})">✏</button><button class="btn btn-sm btn-danger" onclick="deleteCalendarEvent(${ev.EventID})"></button></div>` : ''}</td>
+            <td>${ev.CreatedBy === currentUser?.UserID ? `<div style="display:flex;gap:4px;"><button style="background:#2563eb;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;" onclick="openEventModal(${ev.EventID})">Edit</button><button style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;" onclick="deleteCalendarEvent(${ev.EventID})">Delete</button></div>` : ''}</td>
           </tr>`).join('')}
         </tbody>
       </table></div>` : `<p class="text-muted">No events yet.</p>`}
