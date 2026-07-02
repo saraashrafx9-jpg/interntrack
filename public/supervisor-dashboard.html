@@ -1670,7 +1670,7 @@ async function savePassword() {
     window.location.href = '/login.html';
     return;
   }
-  switchTab(localStorage.getItem('supervisorCurrentTab') || 'overview');
+  switchTab('overview');
 })();
 
 // ── NEWS FEED ─────────────────────────────────────────────────────────────────
