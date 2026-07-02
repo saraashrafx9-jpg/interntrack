@@ -68,7 +68,7 @@
     <div class="help-icon"><i class="fa-solid fa-headset"></i></div>
     <h3>Need Help?</h3>
     <p>Contact admin.</p>
-    <button class="help-btn" onclick="switchTab('helpcenter')">Help Center</button>
+    <button class="help-btn" onclick="openHelpModal()">Help Center</button>
   </div>
   <div class="sidebar-footer">
     <div class="user-card">
@@ -2014,6 +2014,68 @@ async function deleteNewsFeedPost(id) {
     await refreshNewsFeedList();
   } else showToast(t('toast_failed'), 'error');
 }
+
+function openHelpModal() {
+  document.getElementById('helpModal').classList.add('open');
+  loadMyRequests();
+}
+function closeHelpModal() {
+  document.getElementById('helpModal').classList.remove('open');
+}
+const REQUEST_STATUS_STYLE = {
+  pending: 'background:#fef3c7;color:#92400e;',
+  done: 'background:#dcfce7;color:#15803d;',
+  rejected: 'background:#fee2e2;color:#991b1b;'
+};
+async function loadMyRequests() {
+  const list = document.getElementById('myRequestsList');
+  list.innerHTML = '<p class="text-muted" style="font-size:12px;">Loading…</p>';
+  try {
+    const requests = await fetch('/api/help-messages/mine', { headers: getHeaders() }).then(r => r.json());
+    list.innerHTML = requests.length ? requests.map(r => `
+      <div style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px;">
+          <span class="badge" style="${REQUEST_STATUS_STYLE[r.Status] || ''}">${r.Status}</span>
+          <span style="font-size:11px;color:var(--text-muted);flex-shrink:0;">${new Date(r.CreatedAt).toLocaleDateString()}</span>
+        </div>
+        <p style="font-size:13px;margin:0;">${escHtml(r.Message)}</p>
+      </div>`).join('') : '<p class="text-muted" style="font-size:12px;">You haven\'t sent any requests yet.</p>';
+  } catch (e) {
+    list.innerHTML = '<p class="text-muted" style="font-size:12px;">Failed to load.</p>';
+  }
+}
+async function sendHelpMessage() {
+  const message = document.getElementById('helpMessage').value.trim();
+  if (!message) { showToast('Please write a message.', 'error'); return; }
+  try {
+    const res = await fetch('/api/help-messages', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ message })
+    });
+    if (!res.ok) throw new Error();
+    showToast('Message sent!', 'success');
+    document.getElementById('helpMessage').value = '';
+    loadMyRequests();
+  } catch (err) {
+    showToast('Failed to send message.', 'error');
+  }
+}
 </script>
+<div id="helpModal" class="modal-overlay">
+  <div class="modal-box" style="max-width:480px;">
+    <div class="modal-header">
+      <h3>Contact Admin</h3>
+      <button class="modal-close" onclick="closeHelpModal()">✕</button>
+    </div>
+    <p class="text-muted" style="margin:0 0 14px;">Write your message and admin will receive it.</p>
+    <h4 style="margin:0 0 8px;font-size:13px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;">My Requests</h4>
+    <div id="myRequestsList" style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;margin-bottom:16px;"></div>
+    <div class="form-group">
+      <textarea id="helpMessage" class="form-textarea" placeholder="Write your message here..."></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="sendHelpMessage()">Send Message</button>
+  </div>
+</div>
 </body>
 </html>
