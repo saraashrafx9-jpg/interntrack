@@ -1028,7 +1028,7 @@ async function renderOverview(el, {stats, teams, users}) {
             <small>${escHtml(a.date)}</small>
           </div>
 
-          <button class="mini-delete" onclick="deleteAnnouncement(${index})"></button>
+          <button class="mini-delete" onclick="deleteAnnouncement(${index})">Delete</button>
         </div>
       `).join("")}
     </div>
@@ -1163,14 +1163,10 @@ function renderTeams(el, {teams}) {
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
               <h3 style="margin:0;font-size:15px;">${escHtml(tm.TeamName)}</h3>
               <div style="display:flex;gap:6px;flex-shrink:0;" onclick="event.stopPropagation()">
-                <button class="btn btn-sm btn-ghost"
-                  onclick="openEditTeam(${tm.TeamID},'${escHtml(tm.TeamName)}','${escHtml(tm.Description||'')}')">
-                  ✏
-                </button>
+                <button class="btn btn-sm btn-primary"
+                  onclick="openEditTeam(${tm.TeamID},'${escHtml(tm.TeamName)}','${escHtml(tm.Description||'')}')">Edit</button>
                 <button class="btn btn-sm btn-danger"
-                  onclick="deleteTeam(${tm.TeamID})">
-                  
-                </button>
+                  onclick="deleteTeam(${tm.TeamID})">Delete</button>
               </div>
             </div>
             <p class="text-muted" style="font-size:12px;margin:4px 0 10px;">${t('th_leader')}: ${leader ? escHtml(leader.Name) : t('no_leader')}</p>
@@ -1246,7 +1242,7 @@ async function viewTeamDetail(teamId) {
             <div style="padding:18px 20px;">
               <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;">
                 ${statusBadge(a.Status)}
-                <button class="btn btn-sm btn-danger" onclick="deleteAchievementInTeamDetail(${a.AchievementID})"></button>
+                <button class="btn btn-sm btn-danger" onclick="deleteAchievementInTeamDetail(${a.AchievementID})">Delete</button>
               </div>
               <h3 style="margin:0 0 4px;">${escHtml(a.Title)}</h3>
               <p class="text-muted" style="font-size:13px;margin:0 0 12px;">${escHtml(a.CreatorName || '—')} · ${fmtDate(a.CreatedAt)}</p>
@@ -1330,8 +1326,8 @@ function renderLeaders(el, {teams, users}) {
             <td style="color:var(--text-muted);">${escHtml(l.Email)}</td>
             <td>${l.TeamName?`<span class="badge badge-blue">${escHtml(l.TeamName)}</span>`:`<span style="color:#f59e0b;font-size:12px;">${t('unassigned')}</span>`}</td>
             <td><div style="display:flex;gap:6px;">
-              <button class="btn btn-sm btn-ghost" onclick="openEditLeader(${l.UserID},'${escHtml(l.Name)}','${escHtml(l.Email)}',${l.TeamID||'null'})">✏</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteLeader(${l.UserID})"></button>
+              <button class="btn btn-sm btn-primary" onclick="openEditLeader(${l.UserID},'${escHtml(l.Name)}','${escHtml(l.Email)}',${l.TeamID||'null'})">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteLeader(${l.UserID})">Delete</button>
             </div></td>
           </tr>`).join('')}</tbody>
       </table></div>` : `<div class="empty-state"><div class="empty-icon"></div><h3>${t('no_leaders')}</h3></div>`}
@@ -1358,8 +1354,8 @@ function renderStudents(el, {teams, users}) {
             <td style="color:var(--text-muted);">${escHtml(s.Email)}</td>
             <td>${s.TeamName?`<span class="badge badge-blue">${escHtml(s.TeamName)}</span>`:`<span style="color:#f59e0b;font-size:12px;">${t('unassigned')}</span>`}</td>
             <td><div style="display:flex;gap:6px;">
-              <button class="btn btn-sm btn-ghost" onclick="openEditStudent(${s.UserID},'${escHtml(s.Name)}','${escHtml(s.Email)}',${s.TeamID||'null'},'${escHtml(s.Phone||'')}','${escHtml(s.ProfilePicture||'')}')">✏</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteStudent(${s.UserID})"></button>
+              <button class="btn btn-sm btn-primary" onclick="openEditStudent(${s.UserID},'${escHtml(s.Name)}','${escHtml(s.Email)}',${s.TeamID||'null'},'${escHtml(s.Phone||'')}','${escHtml(s.ProfilePicture||'')}')">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteStudent(${s.UserID})">Delete</button>
             </div></td>
           </tr>`).join('')}</tbody>
       </table></div>` : `<div class="empty-state"><div class="empty-icon"></div><h3>${t('no_students')}</h3><p>${t('no_students_sub')}</p><button class="btn btn-primary" style="margin-top:14px;" onclick="openCreateStudent()">${t('btn_add_first')}</button></div>`}
@@ -1454,7 +1450,7 @@ async function renderAchievements(el) {
             <td>${escHtml(a.CreatorName||'—')}</td>
             <td>${statusBadge(a.Status)}</td>
             <td style="color:var(--text-muted);font-size:12px;">${fmtDate(a.CreatedAt)}</td>
-            <td><button class="btn btn-sm btn-danger" onclick="deleteAchievement(${a.AchievementID})"></button></td>
+            <td><button class="btn btn-sm btn-danger" onclick="deleteAchievement(${a.AchievementID})">Delete</button></td>
           </tr>`).join('')}
         </tbody>
       </table></div>
@@ -1613,18 +1609,18 @@ onclick="openUserPanel('${escHtml(u.Name)}','${escHtml(u.Email)}','${u.Role}','$
     <div style="display:flex;gap:6px;">
 
       ${u.Role === 'Student' ? `
-        <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openEditStudent(${u.UserID},'${escHtml(u.Name)}','${escHtml(u.Email)}',${u.TeamID||'null'},'${escHtml(u.Phone||'')}','${escHtml(u.ProfilePicture||'')}')">✏</button>
-        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteStudent(${u.UserID})"></button>
+        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();openEditStudent(${u.UserID},'${escHtml(u.Name)}','${escHtml(u.Email)}',${u.TeamID||'null'},'${escHtml(u.Phone||'')}','${escHtml(u.ProfilePicture||'')}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteStudent(${u.UserID})">Delete</button>
       ` : ''}
 
       ${u.Role === 'Leader' ? `
-        <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openEditLeader(${u.UserID},'${escHtml(u.Name)}','${escHtml(u.Email)}',${u.TeamID||'null'})">✏</button>
-        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteLeader(${u.UserID})"></button>
+        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();openEditLeader(${u.UserID},'${escHtml(u.Name)}','${escHtml(u.Email)}',${u.TeamID||'null'})">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteLeader(${u.UserID})">Delete</button>
       ` : ''}
 
       ${u.Role === 'Supervisor' ? `
-        <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openEditSupervisor(${u.UserID},'${escHtml(u.Name)}','${escHtml(u.Email)}')">✏</button>
-        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteSupervisor(${u.UserID})"></button>
+        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();openEditSupervisor(${u.UserID},'${escHtml(u.Name)}','${escHtml(u.Email)}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteSupervisor(${u.UserID})">Delete</button>
       ` : ''}
 
     </div>
@@ -1724,7 +1720,7 @@ function calSidePanelBody(monthEvents) {
               </div>
               <div style="display:flex;gap:6px;flex-shrink:0;">
                 <button class="btn btn-sm btn-ghost" onclick="toggleReminder(${r.ReminderID},${r.Completed ? 0 : 1})">${r.Completed ? '↺' : '✓'}</button>
-                <button class="btn btn-sm btn-danger" onclick="deleteReminderItem(${r.ReminderID})"></button>
+                <button class="btn btn-sm btn-danger" onclick="deleteReminderItem(${r.ReminderID})">Delete</button>
               </div>
             </div>
           </div>`).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_reminders')}</p>`}
@@ -2328,7 +2324,7 @@ async function renderRequests(el) {
                 <option value="done" ${m.Status === 'done' ? 'selected' : ''}>${t('status_done')}</option>
                 <option value="rejected" ${m.Status === 'rejected' ? 'selected' : ''}>${t('status_rejected')}</option>
               </select>
-              <button class="btn btn-sm btn-danger" onclick="deleteRequest(${m.MessageID})"></button>
+              <button class="btn btn-sm btn-danger" onclick="deleteRequest(${m.MessageID})">Delete</button>
             </div>
           </div>
           <p style="margin:10px 0 4px;font-size:14px;">${escHtml(m.Message)}</p>
@@ -2560,8 +2556,8 @@ function renderSupervisors(el, {users}) {
             <td><div style="display:flex;align-items:center;gap:10px;"><div style="background:#fef3c7;color:#92400e;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;"></div><strong>${escHtml(s.Name)}</strong></div></td>
             <td style="color:var(--text-muted);">${escHtml(s.Email)}</td>
             <td><div style="display:flex;gap:6px;">
-              <button class="btn btn-sm btn-ghost" onclick="openEditSupervisor(${s.UserID},'${escHtml(s.Name)}','${escHtml(s.Email)}')">${t('btn_edit')}</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteSupervisor(${s.UserID})"></button>
+              <button class="btn btn-sm btn-primary" onclick="openEditSupervisor(${s.UserID},'${escHtml(s.Name)}','${escHtml(s.Email)}')">${t('btn_edit')}</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteSupervisor(${s.UserID})">Delete</button>
             </div></td>
           </tr>`).join('')}</tbody>
       </table></div>` : `<div class="empty-state"><div class="empty-icon"></div><h3>${t('no_supervisors')}</h3><p>${t('no_supervisors_sub')}</p></div>`}
@@ -2719,7 +2715,7 @@ function renderNewsFeedPostCard(p, isAdmin) {
             <button onclick="toggleComments(${p.PostID})" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-muted);font-weight:600;display:flex;align-items:center;gap:4px;">
               &#128172; <span>${p.CommentCount || 0} comments</span>
             </button>
-            ${isOwn ? `<button class="btn btn-sm btn-ghost" style="margin-left:auto;" onclick="openEditPost(${p.PostID})">Edit</button>` : ''}
+            ${isOwn ? `<button class="btn btn-sm btn-primary" style="margin-left:auto;" onclick="openEditPost(${p.PostID})">Edit</button>` : ''}
             <button class="btn btn-sm btn-danger" ${!isOwn ? 'style="margin-left:auto;"' : ''} onclick="deleteNewsFeedPost(${p.PostID})">Delete</button>
           </div>
           <div id="comments-${p.PostID}" style="display:none;margin-top:12px;"></div>
@@ -2769,7 +2765,7 @@ function renderComment(c) {
       <span style="font-size:12px;color:var(--text-muted);margin-left:6px;">${fmtDate(c.CreatedAt)}</span>
       <p style="font-size:13px;margin:2px 0 0;line-height:1.5;">${escHtml(c.Content)}</p>
     </div>
-    <button onclick="deleteComment(${c.CommentID},${c.PostID})" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px;flex-shrink:0;">Remove</button>
+    <button onclick="deleteComment(${c.CommentID},${c.PostID})" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px;flex-shrink:0;">Delete</button>
   </div>`;
 }
 

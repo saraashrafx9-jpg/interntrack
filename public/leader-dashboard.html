@@ -250,7 +250,7 @@ const T = {
     th_status: 'Status',
     th_date: 'Date',
     th_actions: 'Actions',
-    btn_edit: '✏ Edit',
+    btn_edit: 'Edit',
     no_ach_empty: 'No achievements yet',
     h_shared_links: 'Shared Links',
     no_shared_links: 'No links shared yet.',
@@ -430,7 +430,7 @@ const T = {
     th_status: 'الحالة',
     th_date: 'التاريخ',
     th_actions: 'الإجراءات',
-    btn_edit: '✏ تعديل',
+    btn_edit: 'تعديل',
     no_ach_empty: 'لا توجد إنجازات بعد',
     h_team_notes: 'ملاحظات الفريق',
     no_team_notes: 'لا توجد ملاحظات للفريق بعد.',
@@ -722,7 +722,7 @@ function calSidePanelBody(monthEvents) {
               </div>
               <div style="display:flex;gap:6px;flex-shrink:0;">
                 <button class="btn btn-sm btn-ghost" onclick="toggleReminder(${r.ReminderID},${r.Completed ? 0 : 1})">${r.Completed ? '↺' : '✓'}</button>
-                <button class="btn btn-sm btn-danger" onclick="deleteReminderItem(${r.ReminderID})"></button>
+                <button class="btn btn-sm btn-danger" onclick="deleteReminderItem(${r.ReminderID})">Delete</button>
               </div>
             </div>
           </div>`).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_reminders')}</p>`}
@@ -1501,7 +1501,7 @@ async function renderOverviewSub(el) {
               <a href="${escHtml(l.URL)}" target="_blank" rel="noopener" style="font-size:13px;font-weight:600;color:var(--text);text-decoration:none;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(l.Title || l.URL)}</a>
               <div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(l.AdderName || '')} · ${fmtDate(l.CreatedAt)}</div>
             </div>
-            <button class="btn btn-sm btn-ghost" onclick="deleteTeamLink(${l.LinkID})"></button>
+            <button class="btn btn-sm btn-danger" onclick="deleteTeamLink(${l.LinkID})">Delete</button>
           </div>`).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_shared_links')}</p>`}
       </div>
     </div>`;
@@ -1700,8 +1700,8 @@ async function renderManage(el) {
             <td>${statusBadge(a.Status)}</td>
             <td style="color:var(--text-muted);font-size:12px;">${fmtDate(a.CreatedAt)}</td>
             <td><div style="display:flex;gap:6px;">
-              <button class="btn btn-sm btn-ghost" onclick="openEdit(${a.AchievementID})">${t('btn_edit')}</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteAchievement(${a.AchievementID})"></button>
+              <button class="btn btn-sm btn-primary" onclick="openEdit(${a.AchievementID})">${t('btn_edit')}</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteAchievement(${a.AchievementID})">Delete</button>
             </div></td>
           </tr>`).join('')}</tbody>
       </table></div>` : `<div class="empty-state"><div class="empty-icon"></div><h3>${t('no_ach_empty')}</h3><button class="btn btn-primary" style="margin-top:14px;" onclick="switchTab('post')">${t('btn_post_first')}</button></div>`}
@@ -1908,7 +1908,7 @@ function renderNewsFeedPostCard(p, isAdmin) {
             <button onclick="toggleComments(${p.PostID})" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-muted);font-weight:600;display:flex;align-items:center;gap:4px;">
               &#128172; <span>${p.CommentCount || 0} comments</span>
             </button>
-            ${isOwn ? `<button class="btn btn-sm btn-ghost" style="margin-left:auto;" onclick="openEditPost(${p.PostID})">Edit</button>` : ''}
+            ${isOwn ? `<button class="btn btn-sm btn-primary" style="margin-left:auto;" onclick="openEditPost(${p.PostID})">Edit</button>` : ''}
             ${(isOwn || isAdmin) ? `<button class="btn btn-sm btn-danger" onclick="deleteNewsFeedPost(${p.PostID})">Delete</button>` : ''}
           </div>
           <div id="comments-${p.PostID}" style="display:none;margin-top:12px;"></div>
@@ -1959,7 +1959,7 @@ function renderComment(c, isAdmin) {
       <span style="font-size:12px;color:var(--text-muted);margin-left:6px;">${fmtDate(c.CreatedAt)}</span>
       <p style="font-size:13px;margin:2px 0 0;line-height:1.5;">${escHtml(c.Content)}</p>
     </div>
-    ${(isOwn || isAdmin) ? `<button onclick="deleteComment(${c.CommentID},${c.PostID})" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px;flex-shrink:0;">Remove</button>` : ''}
+    ${(isOwn || isAdmin) ? `<button onclick="deleteComment(${c.CommentID},${c.PostID})" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px;flex-shrink:0;">Delete</button>` : ''}
   </div>`;
 }
 

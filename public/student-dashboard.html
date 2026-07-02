@@ -193,8 +193,8 @@ const T = {
     pending_title: '⏳ Waiting for leader approval',
     pending_note: 'Your team leader will review this soon.',
     btn_resubmit: ' Edit & Resubmit',
-    btn_edit: '✏ Edit',
-    btn_delete: ' Delete',
+    btn_edit: 'Edit',
+    btn_delete: 'Delete',
     btn_delete_task: 'Delete',
     // Empty state
     no_subs_title: 'No submissions yet',
@@ -388,8 +388,8 @@ const T = {
     pending_title: '⏳ بانتظار موافقة القائد',
     pending_note: 'سيراجع قائد فريقك هذا قريباً.',
     btn_resubmit: ' تعديل وإعادة التقديم',
-    btn_edit: '✏ تعديل',
-    btn_delete: ' حذف',
+    btn_edit: 'تعديل',
+    btn_delete: 'حذف',
     btn_delete_task: 'حذف',
     no_subs_title: 'لا توجد تقديمات بعد',
     no_subs_desc: 'قدّم أول ملخص أسبوعي وانتظر مراجعة قائد فريقك.',
@@ -727,7 +727,7 @@ function calSidePanelBody(monthEvents) {
               </div>
               <div style="display:flex;gap:6px;flex-shrink:0;">
                 <button class="btn btn-sm btn-ghost" onclick="toggleReminder(${r.ReminderID},${r.Completed ? 0 : 1})">${r.Completed ? '↺' : '✓'}</button>
-                <button class="btn btn-sm btn-danger" onclick="deleteReminderItem(${r.ReminderID})"></button>
+                <button class="btn btn-sm btn-danger" onclick="deleteReminderItem(${r.ReminderID})">Delete</button>
               </div>
             </div>
           </div>`).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_reminders')}</p>`}
@@ -1460,7 +1460,7 @@ async function renderOverviewSub(el) {
               <a href="${escHtml(l.URL)}" target="_blank" rel="noopener" style="font-size:13px;font-weight:600;color:var(--text);text-decoration:none;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(l.Title || l.URL)}</a>
               <div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(l.AdderName || '')} · ${fmtDate(l.CreatedAt)}</div>
             </div>
-            <button class="btn btn-sm btn-ghost" onclick="deleteTeamLink(${l.LinkID})"></button>
+            <button class="btn btn-sm btn-danger" onclick="deleteTeamLink(${l.LinkID})">Delete</button>
           </div>`).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_shared_links')}</p>`}
       </div>
     </div>`;
@@ -1736,7 +1736,7 @@ async function renderMySubmissions(el) {
             </div>
             <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
               ${a.Status === 'rejected' ? `<button class="btn btn-sm btn-primary" onclick="openEdit(${a.AchievementID})">${t('btn_resubmit')}</button>` : ''}
-              ${a.Status === 'draft' ? `<button class="btn btn-sm btn-ghost" onclick="openEdit(${a.AchievementID})">${t('btn_edit')}</button>` : ''}
+              ${a.Status === 'draft' ? `<button class="btn btn-sm btn-primary" onclick="openEdit(${a.AchievementID})">${t('btn_edit')}</button>` : ''}
               ${a.Status !== 'published' ? `<button class="btn btn-sm btn-danger" onclick="deleteSubmission(${a.AchievementID})">${t('btn_delete')}</button>` : ''}
             </div>
           </div>
@@ -1953,7 +1953,7 @@ function renderNewsFeedPostCard(p, isAdmin) {
             <button onclick="toggleComments(${p.PostID})" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-muted);font-weight:600;display:flex;align-items:center;gap:4px;">
               &#128172; <span>${p.CommentCount || 0} comments</span>
             </button>
-            ${isOwn ? `<button class="btn btn-sm btn-ghost" style="margin-left:auto;" onclick="openEditPost(${p.PostID})">Edit</button>` : ''}
+            ${isOwn ? `<button class="btn btn-sm btn-primary" style="margin-left:auto;" onclick="openEditPost(${p.PostID})">Edit</button>` : ''}
             ${(isOwn || isAdmin) ? `<button class="btn btn-sm btn-danger" onclick="deleteNewsFeedPost(${p.PostID})">Delete</button>` : ''}
           </div>
           <div id="comments-${p.PostID}" style="display:none;margin-top:12px;"></div>
@@ -2004,7 +2004,7 @@ function renderComment(c, isAdmin) {
       <span style="font-size:12px;color:var(--text-muted);margin-left:6px;">${fmtDate(c.CreatedAt)}</span>
       <p style="font-size:13px;margin:2px 0 0;line-height:1.5;">${escHtml(c.Content)}</p>
     </div>
-    ${(isOwn || isAdmin) ? `<button onclick="deleteComment(${c.CommentID},${c.PostID})" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px;flex-shrink:0;">Remove</button>` : ''}
+    ${(isOwn || isAdmin) ? `<button onclick="deleteComment(${c.CommentID},${c.PostID})" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px;flex-shrink:0;">Delete</button>` : ''}
   </div>`;
 }
 
