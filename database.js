@@ -1220,6 +1220,10 @@ getTeamTodos: (teamId) => {
     return queryAll("SELECT * FROM EventRequests ORDER BY CreatedAt DESC");
   },
 
+  getMyEventRequests: (userId) => {
+    return queryAll("SELECT * FROM EventRequests WHERE RequesterID = ? ORDER BY CreatedAt DESC", [userId]);
+  },
+
   getPendingEventRequests: () => {
     return queryAll("SELECT * FROM EventRequests WHERE Status = 'pending' ORDER BY CreatedAt DESC");
   },

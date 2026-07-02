@@ -1119,6 +1119,16 @@ app.get("/api/event-requests", authenticateToken, (req, res) => {
   }
 });
 
+app.get("/api/event-requests/my", authenticateToken, (req, res) => {
+  try {
+    const user = dbHelpers.getUserById(req.user.userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json(dbHelpers.getMyEventRequests(user.UserID));
+  } catch (err) {
+    res.status(500).json({ error: "Failed to load requests" });
+  }
+});
+
 app.put("/api/event-requests/:id", authenticateToken, (req, res) => {
   try {
     const user = dbHelpers.getUserById(req.user.userId);
