@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>InternTrack – SGMB Admin Portal</title>
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/interntrack-32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/interntrack-16.png">
+  <title>InTrack – SGMB Admin Portal</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/InTrack-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/InTrack-16.png">
   <link rel="stylesheet" href="/css/style.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script>
     (function() {
-      const lang = localStorage.getItem('interntrack_lang') || 'en';
+      const lang = localStorage.getItem('InTrack_lang') || 'en';
       document.documentElement.lang = lang;
       document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     })();
@@ -21,9 +21,9 @@
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-brand">
-    <img src="/images/interntrack-128.png" alt="InternTrack" onerror="this.style.display='none'">
+    <img src="/images/InTrack-128.png" alt="InTrack" onerror="this.style.display='none'">
     <div class="sidebar-brand-text">
-      <h2>InternTrack</h2>
+      <h2>InTrack</h2>
       <p data-i18n="admin_dashboard">SGMB · Admin Portal</p>
     </div>
   </div>
@@ -93,7 +93,7 @@
   </div>
 
   <footer class="footer">
-    <p data-i18n="footer">© 2026 InternTrack — Admin Panel. All rights reserved.</p>
+    <p data-i18n="footer">© 2026 InTrack — Admin Panel. All rights reserved.</p>
   </footer>
 </div>
 
@@ -247,7 +247,7 @@
 
 <script>
 // ── I18N ──────────────────────────────────────────────────────────────────────
-let currentLang = localStorage.getItem('interntrack_lang') || 'en';
+let currentLang = localStorage.getItem('InTrack_lang') || 'en';
 const savedSettings =
   JSON.parse(localStorage.getItem("admin_settings")) || {};
 
@@ -286,7 +286,7 @@ const T = {
     lbl_administrator: 'Administrator',
     btn_signout: 'Sign Out',
     badge_admin: '⚙ Admin',
-    footer: '© 2026 InternTrack — Sharjah Government Media Bureau. All rights reserved.',
+    footer: '© 2026 InTrack — Sharjah Government Media Bureau. All rights reserved.',
     modal_create_team: 'Create Team',
     modal_edit_team: 'Edit Team',
     lbl_team_name: 'Team Name *',
@@ -493,7 +493,7 @@ const T = {
     lbl_administrator: 'مسؤول',
     btn_signout: 'تسجيل الخروج',
     badge_admin: '⚙ مسؤول',
-    footer: '© 2026 InternTrack — دائرة الإعلام الحكومي في الشارقة. جميع الحقوق محفوظة.',
+    footer: '© 2026 InTrack — دائرة الإعلام الحكومي في الشارقة. جميع الحقوق محفوظة.',
     modal_create_team: 'إنشاء فريق',
     modal_edit_team: 'تعديل الفريق',
     lbl_team_name: 'اسم الفريق *',
@@ -682,7 +682,7 @@ function t(k) { return T[currentLang]?.[k] ?? T.en[k] ?? k; }
 
 function setLang(lang) {
   currentLang = lang;
-  localStorage.setItem('interntrack_lang', lang);
+  localStorage.setItem('InTrack_lang', lang);
   document.documentElement.lang = lang;
   document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
   const btn = document.getElementById('langBtn');
@@ -2087,13 +2087,13 @@ function renderSettings(el) {
 }
 function getAdminSettings() {
   return JSON.parse(localStorage.getItem("admin_settings")) || {
-    systemName: "InternTrack",
+    systemName: "InTrack",
     language: "English / Arabic",
     duration: "16",
     appearance: "Light Mode",
     notifications: "Enabled",
     adminName: document.getElementById("adminName")?.textContent || "Admin",
-    adminEmail: "admin@interntrack.com"
+    adminEmail: "admin@InTrack.com"
   };
 }
 
@@ -2609,7 +2609,7 @@ async function deleteAchievement(id) {
 // ── INIT ──────────────────────────────────────────────────────────────────────
 // ── INIT ──────────────────────────────────────────────────────────────────────
 (async () => {
-  const savedLang = localStorage.getItem('interntrack_lang') || 'en';
+  const savedLang = localStorage.getItem('InTrack_lang') || 'en';
   currentLang = savedLang;
 
   const langBtn = document.getElementById('langBtn');

@@ -306,6 +306,45 @@ db.run(`
 `);
 db.run('CREATE INDEX IF NOT EXISTS idx_reminders_user ON Reminders(UserID)');
 
+// Notifications
+db.run(`
+  CREATE TABLE IF NOT EXISTS Notifications (
+    NotificationID INTEGER PRIMARY KEY AUTOINCREMENT,
+    UserID INTEGER NOT NULL,
+    Type TEXT NOT NULL,
+    Title TEXT NOT NULL,
+    Message TEXT NOT NULL,
+    IsRead INTEGER DEFAULT 0,
+    RelatedID INTEGER,
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE
+  )
+`);
+db.run('CREATE INDEX IF NOT EXISTS idx_notifications_user ON Notifications(UserID)');
+
+// Event Requests (submitted by non-media teams, reviewed by media team)
+db.run(`
+  CREATE TABLE IF NOT EXISTS EventRequests (
+    RequestID INTEGER PRIMARY KEY AUTOINCREMENT,
+    RequesterID INTEGER NOT NULL,
+    RequesterName TEXT NOT NULL,
+    RequesterTeamID INTEGER,
+    RequesterTeamName TEXT,
+    EventName TEXT NOT NULL,
+    EventSpeaker TEXT,
+    EventDate TEXT NOT NULL,
+    EventTime TEXT,
+    Description TEXT,
+    Status TEXT DEFAULT 'pending',
+    ReviewerID INTEGER,
+    ReviewNote TEXT,
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    ReviewedAt DATETIME,
+    FOREIGN KEY (RequesterID) REFERENCES Users(UserID) ON DELETE CASCADE
+  )
+`);
+db.run('CREATE INDEX IF NOT EXISTS idx_event_requests_status ON EventRequests(Status)');
+
 db.run(`
   CREATE TABLE IF NOT EXISTS TodoItems (
     TodoID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1123,6 +1162,79 @@ getTeamTodos: (teamId) => {
       "SELECT * FROM SupervisorFeedback WHERE AchievementID = ? ORDER BY CreatedAt ASC",
       [achievementId]
     );
+  },
+
+  getHelpMessageById: (id) => {
+    return queryOne("SELECT * FROM HelpMessages WHERE MessageID = ?", [id]);
+  },
+
+  // ── Notifications ──────────────────────────────────────────────────────────
+  createNotification: (userId, type, title, message, relatedId = null) => {
+    const result = runQuery(
+      "INSERT INTO Notifications (UserID, Type, Title, Message, RelatedID) VALUES (?, ?, ?, ?, ?)",
+      [userId, type, title, message, relatedId || null]
+    );
+    saveDatabase();
+    return result;
+  },
+
+  getNotificationsByUser: (userId) => {
+    return queryAll(
+      "SELECT * FROM Notifications WHERE UserID = ? ORDER BY CreatedAt DESC LIMIT 60",
+      [userId]
+    );
+  },
+
+  getUnreadNotificationCount: (userId) => {
+    const r = queryOne("SELECT COUNT(*) as count FROM Notifications WHERE UserID = ? AND IsRead = 0", [userId]);
+    return r ? r.count : 0;
+  },
+
+  markNotificationRead: (notifId, userId) => {
+    const result = runQuery(
+      "UPDATE Notifications SET IsRead = 1 WHERE NotificationID = ? AND UserID = ?",
+      [notifId, userId]
+    );
+    saveDatabase();
+    return result;
+  },
+
+  markAllNotificationsRead: (userId) => {
+    const result = runQuery("UPDATE Notifications SET IsRead = 1 WHERE UserID = ?", [userId]);
+    saveDatabase();
+    return result;
+  },
+
+  // ── Event Requests ─────────────────────────────────────────────────────────
+  createEventRequest: (requesterId, requesterName, requesterTeamId, requesterTeamName, eventName, eventSpeaker, eventDate, eventTime, description) => {
+    const result = runQuery(
+      `INSERT INTO EventRequests (RequesterID, RequesterName, RequesterTeamID, RequesterTeamName, EventName, EventSpeaker, EventDate, EventTime, Description)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [requesterId, requesterName, requesterTeamId || null, requesterTeamName || null, eventName, eventSpeaker || null, eventDate, eventTime || null, description || null]
+    );
+    saveDatabase();
+    return result;
+  },
+
+  getAllEventRequests: () => {
+    return queryAll("SELECT * FROM EventRequests ORDER BY CreatedAt DESC");
+  },
+
+  getPendingEventRequests: () => {
+    return queryAll("SELECT * FROM EventRequests WHERE Status = 'pending' ORDER BY CreatedAt DESC");
+  },
+
+  getEventRequestById: (id) => {
+    return queryOne("SELECT * FROM EventRequests WHERE RequestID = ?", [id]);
+  },
+
+  updateEventRequestStatus: (id, status, reviewerId, reviewNote) => {
+    const result = runQuery(
+      "UPDATE EventRequests SET Status = ?, ReviewerID = ?, ReviewNote = ?, ReviewedAt = CURRENT_TIMESTAMP WHERE RequestID = ?",
+      [status, reviewerId || null, reviewNote || null, id]
+    );
+    saveDatabase();
+    return result;
   }
 };
 

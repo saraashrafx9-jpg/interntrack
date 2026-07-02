@@ -989,6 +989,13 @@ app.put(
         });
       }
       dbHelpers.updateHelpMessageStatus(req.params.id, status);
+      // Notify the sender
+      const hm = dbHelpers.getHelpMessageById(req.params.id);
+      if (hm && hm.SenderID) {
+        const label = status === 'done' ? 'resolved' : status === 'rejected' ? 'rejected' : 'updated';
+        dbHelpers.createNotification(hm.SenderID, 'help_reply', 'Admin replied to your request', `Your help request has been ${label}.`, hm.MessageID);
+        broadcast("notifications");
+      }
       broadcast("help-messages");
       res.json({ message: "Status updated" });
     } catch (error) {
@@ -1015,6 +1022,131 @@ app.delete(
     }
   }
 );
+
+// ==================== NOTIFICATIONS ====================
+
+app.get("/api/notifications", authenticateToken, (req, res) => {
+  try {
+    const stored = dbHelpers.getNotificationsByUser(req.user.userId);
+
+    // Dynamic: personal reminders due today
+    const today = new Date().toISOString().slice(0, 10);
+    const reminders = dbHelpers.getRemindersByUser(req.user.userId)
+      .filter(r => r.ReminderDate === today && !r.Completed)
+      .map(r => ({ NotificationID: `r_${r.ReminderID}`, Type: 'reminder', Title: '⏰ Reminder', Message: r.Title, IsRead: 0, CreatedAt: r.CreatedAt, dynamic: true }));
+
+    // Dynamic: events happening tomorrow (all users see these)
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+    const events = dbHelpers.getAllCalendarEvents()
+      .filter(e => e.EventDate === tomorrowStr)
+      .map(e => ({ NotificationID: `e_${e.EventID}`, Type: 'event_tomorrow', Title: '📅 Event Tomorrow', Message: `"${e.Title}" is tomorrow${e.EventTime ? ' at ' + e.EventTime : ''}`, IsRead: 0, CreatedAt: e.CreatedAt, dynamic: true }));
+
+    const all = [...stored, ...reminders, ...events]
+      .sort((a, b) => new Date(b.CreatedAt) - new Date(a.CreatedAt));
+    res.json(all);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to load notifications" });
+  }
+});
+
+app.get("/api/notifications/count", authenticateToken, (req, res) => {
+  try {
+    const stored = dbHelpers.getUnreadNotificationCount(req.user.userId);
+
+    const today = new Date().toISOString().slice(0, 10);
+    const reminderCount = dbHelpers.getRemindersByUser(req.user.userId)
+      .filter(r => r.ReminderDate === today && !r.Completed).length;
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+    const eventCount = dbHelpers.getAllCalendarEvents().filter(e => e.EventDate === tomorrowStr).length;
+
+    res.json({ count: stored + reminderCount + eventCount });
+  } catch (err) {
+    res.json({ count: 0 });
+  }
+});
+
+app.put("/api/notifications/mark-all-read", authenticateToken, (req, res) => {
+  try {
+    dbHelpers.markAllNotificationsRead(req.user.userId);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
+app.put("/api/notifications/:id/read", authenticateToken, (req, res) => {
+  try {
+    dbHelpers.markNotificationRead(req.params.id, req.user.userId);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
+// ==================== EVENT REQUESTS ====================
+
+app.post("/api/event-requests", authenticateToken, (req, res) => {
+  try {
+    const { eventName, eventSpeaker, eventDate, eventTime, description } = req.body;
+    if (!eventName || !eventDate) return res.status(400).json({ error: "Event name and date are required" });
+    const user = dbHelpers.getUserById(req.user.userId);
+    dbHelpers.createEventRequest(
+      req.user.userId, user.Name, user.TeamID, user.TeamName,
+      eventName, eventSpeaker, eventDate, eventTime, description
+    );
+    broadcast("event-requests");
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to submit request" });
+  }
+});
+
+app.get("/api/event-requests", authenticateToken, (req, res) => {
+  try {
+    const user = dbHelpers.getUserById(req.user.userId);
+    const isMedia = user.TeamName && user.TeamName.toLowerCase().includes('media');
+    if (req.user.role !== 'Admin' && req.user.role !== 'Supervisor' && !isMedia) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+    res.json(dbHelpers.getAllEventRequests());
+  } catch (err) {
+    res.status(500).json({ error: "Failed to load requests" });
+  }
+});
+
+app.put("/api/event-requests/:id", authenticateToken, (req, res) => {
+  try {
+    const user = dbHelpers.getUserById(req.user.userId);
+    const isMedia = user.TeamName && user.TeamName.toLowerCase().includes('media');
+    if (req.user.role !== 'Admin' && req.user.role !== 'Supervisor' && !isMedia) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+    const { status, reviewNote } = req.body;
+    if (!['accepted', 'declined'].includes(status)) return res.status(400).json({ error: "Invalid status" });
+
+    const request = dbHelpers.getEventRequestById(req.params.id);
+    if (!request) return res.status(404).json({ error: "Request not found" });
+
+    dbHelpers.updateEventRequestStatus(req.params.id, status, req.user.userId, reviewNote);
+
+    const title = status === 'accepted' ? '✅ Event Request Accepted' : '❌ Event Request Declined';
+    const msg = status === 'accepted'
+      ? `Your event request "${request.EventName}" has been accepted by the Media Team!`
+      : `Your event request "${request.EventName}" was declined.${reviewNote ? ' Note: ' + reviewNote : ''}`;
+    dbHelpers.createNotification(request.RequesterID, 'event_request', title, msg, request.RequestID);
+
+    broadcast("event-requests");
+    broadcast("notifications");
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update request" });
+  }
+});
 
 // ==================== PERSONAL REMINDERS & TO-DO (private per user) ====================
 

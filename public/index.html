@@ -1,16 +1,16 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>InternTrack – SGMB Achievement Portal</title>
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/interntrack-32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/interntrack-16.png">
+  <title>InTrack – SGMB Achievement Portal</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/InTrack-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/InTrack-16.png">
   <link rel="stylesheet" href="/css/style.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script>
     (function() {
-      const lang = localStorage.getItem('interntrack_lang') || 'en';
+      const lang = localStorage.getItem('InTrack_lang') || 'en';
       document.documentElement.lang = lang;
       document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     })();
@@ -21,9 +21,9 @@
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-brand">
-    <img src="/images/interntrack-128.png" alt="InternTrack" onerror="this.style.display='none'">
+    <img src="/images/InTrack-128.png" alt="InTrack" onerror="this.style.display='none'">
     <div class="sidebar-brand-text">
-      <h2>InternTrack</h2>
+      <h2>InTrack</h2>
       <p data-i18n="achievement_portal">SGMB · Achievement Portal</p>
     </div>
   </div>
@@ -81,7 +81,7 @@
   </div>
 
   <footer class="footer">
-    <p data-i18n="footer">© 2026 <span>InternTrack</span> — SGMB Achievement Archive. All rights reserved.</p>
+    <p data-i18n="footer">© 2026 <span>InTrack</span> — SGMB Achievement Archive. All rights reserved.</p>
   </footer>
 </div>
 
@@ -105,7 +105,7 @@
 
 <script>
 // ── I18N ──────────────────────────────────────────────────────────────────────
-let currentLang = localStorage.getItem('interntrack_lang') || 'en';
+let currentLang = localStorage.getItem('InTrack_lang') || 'en';
 
 const T = {
   en: {
@@ -122,7 +122,7 @@ const T = {
     tb_groups: 'Groups',
     tb_achievements: 'Achievements',
     tb_login: 'Login',
-    hero_title: 'Welcome to InternTrack',
+    hero_title: 'Welcome to InTrack',
     hero_sub: 'Monitor internship progress, review weekly achievements, and keep all group work organized in one place.',
     view_groups: 'View Groups →',
     browse_achievements: 'Browse Achievements',
@@ -165,7 +165,7 @@ const T = {
     name_ph: 'Your name',
     comment_ph: 'Write a comment…',
     post_comment: '💬 Post Comment',
-    footer: '© 2026 InternTrack — Sharjah Government Media Bureau. All rights reserved.',
+    footer: '© 2026 InTrack — Sharjah Government Media Bureau. All rights reserved.',
     logged_out: 'Logged out',
     welcome: 'Welcome back!',
     comment_added: 'Comment added!',
@@ -214,7 +214,7 @@ const T = {
     tb_groups: 'المجموعات',
     tb_achievements: 'الإنجازات',
     tb_login: 'تسجيل الدخول',
-    hero_title: 'مرحباً بك في InternTrack',
+    hero_title: 'مرحباً بك في InTrack',
     hero_sub: 'تابع تقدم التدريب، راجع الإنجازات الأسبوعية، ونظّم عمل جميع المجموعات في مكان واحد.',
     view_groups: 'عرض المجموعات ←',
     browse_achievements: 'تصفح الإنجازات',
@@ -257,7 +257,7 @@ const T = {
     name_ph: 'اسمك',
     comment_ph: 'اكتب تعليقاً…',
     post_comment: '💬 نشر التعليق',
-    footer: '© 2026 InternTrack — دائرة الإعلام الحكومي في الشارقة. جميع الحقوق محفوظة.',
+    footer: '© 2026 InTrack — دائرة الإعلام الحكومي في الشارقة. جميع الحقوق محفوظة.',
     logged_out: 'تم تسجيل الخروج',
     welcome: 'مرحباً بعودتك!',
     comment_added: 'تم إضافة التعليق!',
@@ -298,7 +298,7 @@ function t(k) { return T[currentLang]?.[k] ?? T.en[k] ?? k; }
 
 function setLang(lang) {
   currentLang = lang;
-  localStorage.setItem('interntrack_lang', lang);
+  localStorage.setItem('InTrack_lang', lang);
   document.documentElement.lang = lang;
   document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
   const btn = document.getElementById('langBtn');
@@ -335,9 +335,9 @@ new MutationObserver(mutations => {
 // ── FIREBASE INIT ─────────────────────────────────────────────────────────────
 const firebaseConfig = {
   apiKey:            "AIzaSyD_-yWpUgTnxis_ngDIVz-3NmKcLpHKPMc",
-  authDomain:        "interntrack-d.firebaseapp.com",
-  projectId:         "interntrack-d",
-  storageBucket:     "interntrack-d.firebasestorage.app",
+  authDomain:        "InTrack-d.firebaseapp.com",
+  projectId:         "InTrack-d",
+  storageBucket:     "InTrack-d.firebasestorage.app",
   messagingSenderId: "926551364573",
   appId:             "1:926551364573:web:5c4df4ea01ea809c6bdc34"
 };
@@ -399,7 +399,7 @@ function setActiveNav(page) {
     achievements: t('tb_achievements'),
     login:        t('tb_login')
   };
-  document.getElementById('topbarTitle').textContent = titles[page] || 'InternTrack';
+  document.getElementById('topbarTitle').textContent = titles[page] || 'InTrack';
 }
 
 function updateAuthUI() {
@@ -847,8 +847,8 @@ function renderLogin(el) {
         <!-- Role selector card -->
         <div id="roleSelectCard" style="background:var(--card-bg);border-radius:24px;padding:36px 32px;box-shadow:var(--shadow-lg);border:1px solid var(--border);margin-bottom:16px;">
           <div style="text-align:center;margin-bottom:24px;">
-            <img src="/images/interntrack-128.png" style="width:52px;border-radius:12px;" onerror="this.style.display='none'">
-            <h1 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;margin-top:10px;">InternTrack</h1>
+            <img src="/images/InTrack-128.png" style="width:52px;border-radius:12px;" onerror="this.style.display='none'">
+            <h1 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;margin-top:10px;">InTrack</h1>
             <p style="font-size:14px;color:var(--text-muted);margin-top:4px;" id="roleSelectTitle">${window.t('role_select_title')}</p>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="roleGrid">
@@ -963,7 +963,7 @@ function resetRoleSelect() {
 // ── INIT ──────────────────────────────────────────────────────────────────────
 (async () => {
   // Apply saved language on load
-  const savedLang = localStorage.getItem('interntrack_lang') || 'en';
+  const savedLang = localStorage.getItem('InTrack_lang') || 'en';
   currentLang = savedLang;
   document.getElementById('langBtn').textContent = savedLang === 'ar' ? 'English' : 'عربي';
   applyTranslations();

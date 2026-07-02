@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>InternTrack – SGMB Supervisor Portal</title>
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/interntrack-32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/interntrack-16.png">
+  <title>InTrack – SGMB Supervisor Portal</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/InTrack-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/InTrack-16.png">
   <link rel="stylesheet" href="/css/style.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script>
     (function() {
-      const lang = localStorage.getItem('interntrack_lang') || 'en';
+      const lang = localStorage.getItem('InTrack_lang') || 'en';
       document.documentElement.lang = lang;
       document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     })();
@@ -81,13 +81,13 @@
   </style>
 </head>
 <body>
-<script>if (localStorage.getItem('interntrack_theme') === 'dark') document.body.classList.add('dark-mode');</script>
+<script>if (localStorage.getItem('InTrack_theme') === 'dark') document.body.classList.add('dark-mode');</script>
 
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-brand">
-    <img src="/images/interntrack-128.png" alt="InternTrack" onerror="this.style.display='none'">
+    <img src="/images/InTrack-128.png" alt="InTrack" onerror="this.style.display='none'">
     <div class="sidebar-brand-text">
-      <h2>InternTrack</h2>
+      <h2>InTrack</h2>
       <p data-i18n="supervisor_portal">SGMB · Supervisor Portal</p>
     </div>
   </div>
@@ -141,6 +141,19 @@
     </div>
     <div class="topbar-right">
       <button class="lang-btn" onclick="toggleLang()" id="langBtn">عربي</button>
+      <div style="position:relative;" id="notifWrapper">
+        <button onclick="toggleNotifDropdown(event)" id="notifBtn" style="position:relative;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:5px 11px;cursor:pointer;font-size:15px;color:var(--text-muted);display:flex;align-items:center;gap:5px;">
+          <i class="fa-solid fa-bell"></i>
+          <span id="notifCount" style="display:none;background:#ef4444;color:#fff;border-radius:20px;min-width:18px;height:18px;font-size:10px;font-weight:700;align-items:center;justify-content:center;padding:0 4px;"></span>
+        </button>
+        <div id="notifDropdown" style="display:none;position:absolute;top:44px;right:0;width:320px;background:var(--card-bg);border:1px solid var(--border);border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.15);z-index:9999;overflow:hidden;">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+            <strong style="font-size:14px;">Notifications</strong>
+            <button onclick="markAllNotifsRead()" style="font-size:11px;color:var(--primary);background:none;border:none;cursor:pointer;font-weight:600;">Mark all read</button>
+          </div>
+          <div id="notifList" style="max-height:360px;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
+      </div>
       <span class="topbar-badge" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;"> <span data-i18n="badge_supervisor">Supervisor</span></span>
     </div>
   </header>
@@ -150,7 +163,7 @@
   </div>
 
   <footer class="footer">
-    <p data-i18n="footer">© 2026 InternTrack — Supervisor Portal. All rights reserved.</p>
+    <p data-i18n="footer">© 2026 InTrack — Supervisor Portal. All rights reserved.</p>
   </footer>
 </div>
 
@@ -158,7 +171,7 @@
 
 <script>
 // ── I18N ──────────────────────────────────────────────────────────────────────
-let currentLang = localStorage.getItem('interntrack_lang') || 'en';
+let currentLang = localStorage.getItem('InTrack_lang') || 'en';
 
 const T = {
   en: {
@@ -250,7 +263,7 @@ const T = {
     btn_signout: 'Sign Out',
     badge_supervisor: 'Supervisor',
     loading: 'Loading…',
-    footer: '© 2026 InternTrack — Sharjah Government Media Bureau. All rights reserved.',
+    footer: '© 2026 InTrack — Sharjah Government Media Bureau. All rights reserved.',
     // Overview
     tb_overview: 'Dashboard',
     tb_feedback: 'My Feedback',
@@ -383,7 +396,7 @@ const T = {
     btn_signout: 'تسجيل الخروج',
     badge_supervisor: 'مشرف',
     loading: 'جارٍ التحميل…',
-    footer: '© 2026 InternTrack — دائرة الإعلام الحكومي في الشارقة. جميع الحقوق محفوظة.',
+    footer: '© 2026 InTrack — دائرة الإعلام الحكومي في الشارقة. جميع الحقوق محفوظة.',
     tb_overview: 'نظرة عامة',
     tb_feedback: 'ملاحظاتي',
     welcome: 'مرحباً،',
@@ -427,7 +440,7 @@ function t(k) { return T[currentLang]?.[k] ?? T.en[k] ?? k; }
 
 function setLang(lang) {
   currentLang = lang;
-  localStorage.setItem('interntrack_lang', lang);
+  localStorage.setItem('InTrack_lang', lang);
   document.documentElement.lang = lang;
   document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
   const btn = document.getElementById('langBtn');
@@ -543,7 +556,7 @@ function switchTab(tab) {
 
 function renderHelpCenter(el) {
   el.innerHTML = `
-    <div class="page-header"><div><h2>Help Center</h2><p class="text-muted">Guides and answers for using InternTrack as a Supervisor</p></div></div>
+    <div class="page-header"><div><h2>Help Center</h2><p class="text-muted">Guides and answers for using InTrack as a Supervisor</p></div></div>
     <div style="display:grid;gap:16px;max-width:860px;">
       ${[
         { q: 'How do I review intern submissions?', a: 'Go to <strong>Overview</strong> to see all recent submissions from your assigned teams. Click any card to open the full post detail, then leave feedback.' },
@@ -1588,7 +1601,7 @@ function renderSettings(el) {
 
 function toggleTheme() {
   const isDark = document.body.classList.toggle('dark-mode');
-  localStorage.setItem('interntrack_theme', isDark ? 'dark' : 'light');
+  localStorage.setItem('InTrack_theme', isDark ? 'dark' : 'light');
   renderSettings(document.getElementById('pageContent'));
 }
 
@@ -1632,7 +1645,7 @@ async function savePassword() {
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 (async () => {
-  const savedLang = localStorage.getItem('interntrack_lang') || 'en';
+  const savedLang = localStorage.getItem('InTrack_lang') || 'en';
   currentLang = savedLang;
   document.getElementById('langBtn').textContent = savedLang === 'ar' ? 'English' : 'عربي';
   applyTranslations();
@@ -1834,6 +1847,55 @@ async function deleteNewsFeedPost(id) {
   if (r.ok) { showToast('Deleted.', 'info'); renderNewsFeed(document.getElementById('pageContent')); }
   else showToast('Failed to delete.', 'error');
 }
+
+// ── Notifications ──────────────────────────────────────────────────────────
+let _notifOpen = false;
+function toggleNotifDropdown(e) {
+  e.stopPropagation();
+  _notifOpen = !_notifOpen;
+  document.getElementById('notifDropdown').style.display = _notifOpen ? 'block' : 'none';
+  if (_notifOpen) loadNotifList();
+}
+document.addEventListener('click', () => {
+  if (_notifOpen) { _notifOpen = false; const d = document.getElementById('notifDropdown'); if (d) d.style.display = 'none'; }
+});
+async function loadNotifList() {
+  const list = document.getElementById('notifList');
+  list.innerHTML = '<p style="font-size:12px;color:var(--text-muted);padding:8px;">Loading…</p>';
+  try {
+    const notifs = await fetch('/api/notifications', { headers: getHeaders() }).then(r => r.json());
+    if (!notifs.length) { list.innerHTML = '<p style="font-size:12px;color:var(--text-muted);padding:12px;text-align:center;">No notifications yet</p>'; return; }
+    list.innerHTML = notifs.map(n => `
+      <div onclick="markNotifRead('${n.NotificationID}',this)" id="notif_${n.NotificationID}" style="padding:10px 12px;border-radius:8px;cursor:pointer;background:${n.IsRead || n.dynamic ? 'transparent' : 'rgba(37,99,235,.06)'};border:1px solid ${n.IsRead || n.dynamic ? 'transparent' : 'rgba(37,99,235,.12)'};">
+        <div style="font-size:13px;font-weight:${n.IsRead && !n.dynamic ? '500' : '700'};margin-bottom:2px;">${escHtml(n.Title)}</div>
+        <div style="font-size:12px;color:var(--text-muted);">${escHtml(n.Message)}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:3px;">${new Date(n.CreatedAt).toLocaleDateString()}</div>
+      </div>`).join('');
+  } catch(e) { list.innerHTML = '<p style="font-size:12px;color:var(--text-muted);padding:8px;">Failed to load.</p>'; }
+}
+async function markNotifRead(id, el) {
+  if (String(id).startsWith('r_') || String(id).startsWith('e_')) return;
+  try {
+    await fetch(`/api/notifications/${id}/read`, { method: 'PUT', headers: getHeaders() });
+    if (el) { el.style.background = 'transparent'; el.style.border = '1px solid transparent'; el.querySelector('div').style.fontWeight = '500'; }
+    refreshNotifCount();
+  } catch(e) {}
+}
+async function markAllNotifsRead() {
+  try {
+    await fetch('/api/notifications/mark-all-read', { method: 'PUT', headers: getHeaders() });
+    loadNotifList(); refreshNotifCount();
+  } catch(e) {}
+}
+async function refreshNotifCount() {
+  try {
+    const { count } = await fetch('/api/notifications/count', { headers: getHeaders() }).then(r => r.json());
+    const badge = document.getElementById('notifCount');
+    if (badge) { badge.textContent = count > 9 ? '9+' : count; badge.style.display = count > 0 ? 'inline-flex' : 'none'; }
+  } catch(e) {}
+}
+setTimeout(refreshNotifCount, 1500);
+setInterval(refreshNotifCount, 60000);
 
 function openHelpModal() {
   document.getElementById('helpModal').classList.add('open');

@@ -1,18 +1,18 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>InternTrack – SGMB Internship Portal</title>
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/interntrack-32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/interntrack-16.png">
+  <title>InTrack – SGMB Internship Portal</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/InTrack-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/InTrack-16.png">
 
   <link rel="stylesheet" href="/css/style.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
   <script>
     (function () {
-      const lang = localStorage.getItem('interntrack_lang') || 'en';
+      const lang = localStorage.getItem('InTrack_lang') || 'en';
       document.documentElement.lang = lang;
       document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     })();
@@ -427,7 +427,7 @@
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid rgba(255,255,255,.18);">
         <div>
           <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.7;margin-bottom:2px;">Sharjah Government Media Bureau</div>
-          <div style="font-size:17px;font-weight:800;letter-spacing:-.2px;">InternTrack System</div>
+          <div style="font-size:17px;font-weight:800;letter-spacing:-.2px;">InTrack System</div>
         </div>
       </div>
       <h2 id="brand_title">Internship Management Platform</h2>
@@ -453,10 +453,10 @@
   <section class="login-panel">
    <div class="login-top">
   <div class="login-icon">
-    <img src="/images/interntrack-256.png" alt="Logo">
+    <img src="/images/InTrack-256.png" alt="Logo">
   </div>
 
-  <h1>InternTrack</h1>
+  <h1>InTrack</h1>
   <p id="lbl_portal">Access Your Internship Portal</p>
 </div>
 
@@ -505,9 +505,9 @@
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyD_-yWpUgTnxis_ngDIVz-3NmKcLpHKPMc",
-  authDomain: "interntrack-d.firebaseapp.com",
-  projectId: "interntrack-d",
-  storageBucket: "interntrack-d.firebasestorage.app",
+  authDomain: "InTrack-d.firebaseapp.com",
+  projectId: "InTrack-d",
+  storageBucket: "InTrack-d.firebasestorage.app",
   messagingSenderId: "926551364573",
   appId: "1:926551364573:web:5c4df4ea01ea809c6bdc34"
 };
@@ -558,7 +558,7 @@ feat3: 'التقييمات والملاحظات',
   }
 };
 
-let currentLang = localStorage.getItem('interntrack_lang') || 'en';
+let currentLang = localStorage.getItem('InTrack_lang') || 'en';
 applyTranslations();
 
 function applyTranslations(){
@@ -586,7 +586,7 @@ function applyTranslations(){
 
 function toggleLang(){
   currentLang = currentLang === 'en' ? 'ar' : 'en';
-  localStorage.setItem('interntrack_lang', currentLang);
+  localStorage.setItem('InTrack_lang', currentLang);
   applyTranslations();
 }
 
