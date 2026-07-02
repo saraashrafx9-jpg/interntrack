@@ -1200,19 +1200,99 @@ async function loadCardDetails(id) {
   }
 }
 
-function renderFeedbackList(id, feedback) {
-  const el = document.getElementById(`card-fb-${id}`);
+function renderFeedbackList(achievementId, feedback) {
+  const el = document.getElementById(`card-fb-${achievementId}`);
   if (!el) return;
   if (!feedback.length) { el.innerHTML = ''; return; }
+  const myId = currentUser && (currentUser.UserID || currentUser.userId);
   el.innerHTML = `
     <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;"> ${t('lbl_supervisor_feedback')}</div>
     <div class="ach-fb-existing">
-      ${feedback.map(f => `
-        <div class="ach-fb-note">
-          <div class="ach-fb-note-who"> ${escHtml(f.AuthorName)} · ${fmtDate(f.CreatedAt)}</div>
-          <div class="ach-fb-note-text">${escHtml(f.Content)}</div>
-        </div>`).join('')}
+      ${feedback.map(f => {
+        const isOwn = myId && String(f.SupervisorUserID) === String(myId);
+        return `<div class="ach-fb-note" id="fb-note-${f.FeedbackID}">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="ach-fb-note-who"> ${escHtml(f.AuthorName)} · ${fmtDate(f.CreatedAt)}</div>
+            ${isOwn ? `<div style="display:flex;gap:6px;">
+              <button onclick="editFeedbackItem(${f.FeedbackID},${achievementId},'${escHtml(f.Content).replace(/'/g,'&#39;')}')" style="background:none;border:none;cursor:pointer;color:#2563eb;font-size:12px;">Edit</button>
+              <button onclick="deleteFeedbackItem(${f.FeedbackID},${achievementId})" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px;">Delete</button>
+            </div>` : ''}
+          </div>
+          <div id="fb-text-${f.FeedbackID}" class="ach-fb-note-text">${escHtml(f.Content)}</div>
+          <div id="fb-edit-${f.FeedbackID}" style="display:none;margin-top:6px;">
+            <textarea id="fb-edit-input-${f.FeedbackID}" class="form-textarea" rows="3" style="width:100%;font-size:13px;resize:vertical;">${escHtml(f.Content)}</textarea>
+            <div style="display:flex;gap:6px;margin-top:4px;">
+              <button class="btn btn-sm btn-primary" onclick="saveFeedbackEdit(${f.FeedbackID},${achievementId})">Save</button>
+              <button class="btn btn-sm btn-ghost" onclick="cancelFeedbackEdit(${f.FeedbackID})">Cancel</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
     </div>`;
+}
+
+function editFeedbackItem(feedbackId, achievementId, currentContent) {
+  document.getElementById('fb-text-' + feedbackId).style.display = 'none';
+  document.getElementById('fb-edit-' + feedbackId).style.display = 'block';
+  document.getElementById('fb-edit-input-' + feedbackId).focus();
+}
+
+function cancelFeedbackEdit(feedbackId) {
+  document.getElementById('fb-text-' + feedbackId).style.display = '';
+  document.getElementById('fb-edit-' + feedbackId).style.display = 'none';
+}
+
+async function saveFeedbackEdit(feedbackId, achievementId) {
+  const content = document.getElementById('fb-edit-input-' + feedbackId)?.value.trim();
+  if (!content) return;
+  const r = await fetch('/api/supervisor/feedback/' + feedbackId, {
+    method: 'PUT', headers: getHeaders(), body: JSON.stringify({ content })
+  });
+  if (r.ok) {
+    const feedback = await fetch('/api/supervisor/achievements/' + achievementId + '/feedback', { headers: getHeaders() }).then(r => r.json());
+    renderFeedbackList(achievementId, feedback);
+  } else showToast('Failed to update feedback.', 'error');
+}
+
+async function deleteFeedbackItem(feedbackId, achievementId) {
+  if (!confirm('Delete this feedback?')) return;
+  const r = await fetch('/api/supervisor/feedback/' + feedbackId, { method: 'DELETE', headers: getHeaders() });
+  if (r.ok) {
+    const feedback = await fetch('/api/supervisor/achievements/' + achievementId + '/feedback', { headers: getHeaders() }).then(r => r.json());
+    renderFeedbackList(achievementId, feedback);
+  } else showToast('Failed to delete feedback.', 'error');
+}
+
+function editHistoryFeedback(feedbackId) {
+  document.getElementById('hist-fb-text-' + feedbackId).style.display = 'none';
+  document.getElementById('hist-fb-edit-' + feedbackId).style.display = 'block';
+  document.getElementById('hist-fb-input-' + feedbackId).focus();
+}
+
+function cancelHistoryFeedback(feedbackId) {
+  document.getElementById('hist-fb-text-' + feedbackId).style.display = '';
+  document.getElementById('hist-fb-edit-' + feedbackId).style.display = 'none';
+}
+
+async function saveHistoryFeedback(feedbackId, achievementId) {
+  const content = document.getElementById('hist-fb-input-' + feedbackId)?.value.trim();
+  if (!content) return;
+  const r = await fetch('/api/supervisor/feedback/' + feedbackId, {
+    method: 'PUT', headers: getHeaders(), body: JSON.stringify({ content })
+  });
+  if (r.ok) {
+    document.getElementById('hist-fb-text-' + feedbackId).textContent = content;
+    cancelHistoryFeedback(feedbackId);
+  } else showToast('Failed to update feedback.', 'error');
+}
+
+async function deleteHistoryFeedback(feedbackId, achievementId) {
+  if (!confirm('Delete this feedback?')) return;
+  const r = await fetch('/api/supervisor/feedback/' + feedbackId, { method: 'DELETE', headers: getHeaders() });
+  if (r.ok) {
+    const row = document.getElementById('hist-fb-' + feedbackId);
+    if (row) row.remove();
+  } else showToast('Failed to delete feedback.', 'error');
 }
 
 async function postFeedback(achievementId) {
@@ -1274,11 +1354,24 @@ async function renderMyFeedback(el) {
       <div class="full-panel" style="margin-top:24px;">
         <div class="panel-header"><h3>${t('h_my_feedback_history')}</h3></div>
         ${myFeedback.length ? myFeedback.map(f => `
-          <div style="padding:16px 0;border-bottom:1px solid var(--border);">
+          <div id="hist-fb-${f.FeedbackID}" style="padding:16px 0;border-bottom:1px solid var(--border);">
             <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">${t('on_achievement')} <strong>${escHtml(f.AchievementTitle)}</strong> · ${escHtml(f.TeamName || '')} · ${fmtDate(f.CreatedAt)}</div>
             <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;">
-              <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:4px;"> ${t('lbl_supervisor_feedback')}</div>
-              <div style="font-size:14px;color:#374151;">${escHtml(f.Content)}</div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <div style="font-size:12px;font-weight:700;color:#92400e;"> ${t('lbl_supervisor_feedback')}</div>
+                <div style="display:flex;gap:6px;">
+                  <button onclick="editHistoryFeedback(${f.FeedbackID})" style="background:none;border:none;cursor:pointer;color:#2563eb;font-size:12px;">Edit</button>
+                  <button onclick="deleteHistoryFeedback(${f.FeedbackID},${f.AchievementID})" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px;">Delete</button>
+                </div>
+              </div>
+              <div id="hist-fb-text-${f.FeedbackID}" style="font-size:14px;color:#374151;">${escHtml(f.Content)}</div>
+              <div id="hist-fb-edit-${f.FeedbackID}" style="display:none;margin-top:6px;">
+                <textarea id="hist-fb-input-${f.FeedbackID}" class="form-textarea" rows="3" style="width:100%;font-size:13px;resize:vertical;">${escHtml(f.Content)}</textarea>
+                <div style="display:flex;gap:6px;margin-top:4px;">
+                  <button class="btn btn-sm btn-primary" onclick="saveHistoryFeedback(${f.FeedbackID},${f.AchievementID})">Save</button>
+                  <button class="btn btn-sm btn-ghost" onclick="cancelHistoryFeedback(${f.FeedbackID})">Cancel</button>
+                </div>
+              </div>
             </div>
           </div>`).join('') + '<style>div[style*="border-bottom"]:last-child{border-bottom:none;}</style>'
         : `<div class="empty-state"><div class="empty-icon"></div><h3>${t('no_my_feedback')}</h3></div>`}

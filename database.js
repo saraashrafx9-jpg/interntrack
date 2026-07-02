@@ -1164,6 +1164,25 @@ getTeamTodos: (teamId) => {
     );
   },
 
+  getSupervisorFeedbackById: (feedbackId) => {
+    return queryOne("SELECT * FROM SupervisorFeedback WHERE FeedbackID = ?", [feedbackId]);
+  },
+
+  updateSupervisorFeedback: (feedbackId, content) => {
+    const result = runQuery(
+      "UPDATE SupervisorFeedback SET Content = ? WHERE FeedbackID = ?",
+      [content, feedbackId]
+    );
+    saveDatabase();
+    return result;
+  },
+
+  deleteSupervisorFeedback: (feedbackId) => {
+    const result = runQuery("DELETE FROM SupervisorFeedback WHERE FeedbackID = ?", [feedbackId]);
+    saveDatabase();
+    return result;
+  },
+
   getHelpMessageById: (id) => {
     return queryOne("SELECT * FROM HelpMessages WHERE MessageID = ?", [id]);
   },

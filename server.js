@@ -2152,6 +2152,46 @@ app.post(
   }
 );
 
+app.put(
+  "/api/supervisor/feedback/:id",
+  authenticateToken,
+  authorizeRole("Supervisor"),
+  (req, res) => {
+    try {
+      const fb = dbHelpers.getSupervisorFeedbackById(req.params.id);
+      if (!fb) return res.status(404).json({ error: "Feedback not found" });
+      const user = dbHelpers.getUserByEmail(req.user.email);
+      if (fb.SupervisorUserID !== (user?.UserID || null)) return res.status(403).json({ error: "Not authorized" });
+      const { content } = req.body;
+      if (!content || !content.trim()) return res.status(400).json({ error: "Content required" });
+      dbHelpers.updateSupervisorFeedback(req.params.id, content.trim());
+      broadcast("feedback");
+      res.json({ message: "Feedback updated" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update feedback" });
+    }
+  }
+);
+
+app.delete(
+  "/api/supervisor/feedback/:id",
+  authenticateToken,
+  authorizeRole("Supervisor"),
+  (req, res) => {
+    try {
+      const fb = dbHelpers.getSupervisorFeedbackById(req.params.id);
+      if (!fb) return res.status(404).json({ error: "Feedback not found" });
+      const user = dbHelpers.getUserByEmail(req.user.email);
+      if (fb.SupervisorUserID !== (user?.UserID || null)) return res.status(403).json({ error: "Not authorized" });
+      dbHelpers.deleteSupervisorFeedback(req.params.id);
+      broadcast("feedback");
+      res.json({ message: "Feedback deleted" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete feedback" });
+    }
+  }
+);
+
 app.get(
   "/api/supervisor/my-feedback",
   authenticateToken,
