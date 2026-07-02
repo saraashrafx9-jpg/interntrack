@@ -1235,6 +1235,21 @@ getTeamTodos: (teamId) => {
     );
     saveDatabase();
     return result;
+  },
+
+  deleteEventRequest: (id) => {
+    const result = runQuery("DELETE FROM EventRequests WHERE RequestID = ?", [id]);
+    saveDatabase();
+    return result;
+  },
+
+  updateNewsFeedComment: (commentId, content, authorId) => {
+    const result = runQuery(
+      "UPDATE NewsFeedComments SET Content = ? WHERE CommentID = ? AND AuthorID = ?",
+      [content, commentId, authorId]
+    );
+    saveDatabase();
+    return result;
   }
 };
 

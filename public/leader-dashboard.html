@@ -2153,13 +2153,23 @@ async function loadEventRequests() {
         <td>${escHtml(r.EventTime || '—')}</td>
         <td style="max-width:160px;">${escHtml(r.Description || '—')}</td>
         <td><span style="padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;${r.Status==='pending'?'background:#fef3c7;color:#92400e;':r.Status==='accepted'?'background:#dcfce7;color:#15803d;':'background:#fee2e2;color:#991b1b;'}">${r.Status}</span></td>
-        <td>${r.Status==='pending' ? `<div style="display:flex;gap:4px;">
+        <td><div style="display:flex;gap:4px;">${r.Status==='pending' ? `
           <button style="background:#16a34a;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;" onclick="reviewEventRequest(${r.RequestID},'accepted')">Accept</button>
           <button style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;" onclick="reviewEventRequest(${r.RequestID},'declined')">Decline</button>
-        </div>` : '—'}</td>
+        ` : `<button style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;" onclick="deleteEventRequest(${r.RequestID})">Delete</button>`}</div></td>
       </tr>`).join('')}</tbody>
     </table></div>`;
   } catch(e) { if (container) container.innerHTML = '<p class="text-muted" style="font-size:13px;">Failed to load requests.</p>'; }
+}
+
+async function deleteEventRequest(id) {
+  if (!confirm('Delete this request?')) return;
+  try {
+    const res = await fetch(`/api/event-requests/${id}`, { method: 'DELETE', headers: getHeaders() });
+    if (!res.ok) throw new Error();
+    showToast('Request deleted.', 'info');
+    loadEventRequests();
+  } catch(e) { showToast('Failed to delete request.', 'error'); }
 }
 
 async function reviewEventRequest(id, status) {

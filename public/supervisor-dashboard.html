@@ -1770,14 +1770,47 @@ async function toggleComments(postId) {
 
 function renderComment(c) {
   const isOwn = currentUser && c.AuthorID === currentUser.UserID;
-  return `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
-    <div>
+  return `<div id="comment-row-${c.CommentID}" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
+    <div style="flex:1;">
       <span style="font-weight:700;font-size:13px;">${escHtml(c.AuthorName)}</span>
       <span style="font-size:12px;color:var(--text-muted);margin-left:6px;">${fmtDate(c.CreatedAt)}</span>
-      <p style="font-size:13px;margin:2px 0 0;line-height:1.5;">${escHtml(c.Content)}</p>
+      <p id="comment-text-${c.CommentID}" style="font-size:13px;margin:2px 0 0;line-height:1.5;">${escHtml(c.Content)}</p>
+      <div id="comment-edit-${c.CommentID}" style="display:none;margin-top:4px;">
+        <input id="comment-edit-input-${c.CommentID}" class="form-input" style="font-size:13px;width:100%;" value="${escHtml(c.Content)}">
+        <div style="display:flex;gap:6px;margin-top:4px;">
+          <button class="btn btn-sm btn-primary" onclick="saveEditComment(${c.CommentID},${c.PostID})">Save</button>
+          <button class="btn btn-sm btn-ghost" onclick="cancelEditComment(${c.CommentID})">Cancel</button>
+        </div>
+      </div>
     </div>
-    ${isOwn ? `<button onclick="deleteComment(${c.CommentID},${c.PostID})" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px;flex-shrink:0;">Delete</button>` : ''}
+    ${isOwn ? `<div style="display:flex;gap:4px;flex-shrink:0;">
+      <button onclick="editComment(${c.CommentID})" style="background:none;border:none;cursor:pointer;color:#2563eb;font-size:12px;">Edit</button>
+      <button onclick="deleteComment(${c.CommentID},${c.PostID})" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px;">Delete</button>
+    </div>` : ''}
   </div>`;
+}
+
+function editComment(commentId) {
+  document.getElementById('comment-text-' + commentId).style.display = 'none';
+  document.getElementById('comment-edit-' + commentId).style.display = 'block';
+  document.getElementById('comment-edit-input-' + commentId).focus();
+}
+
+function cancelEditComment(commentId) {
+  document.getElementById('comment-text-' + commentId).style.display = '';
+  document.getElementById('comment-edit-' + commentId).style.display = 'none';
+}
+
+async function saveEditComment(commentId, postId) {
+  const input = document.getElementById('comment-edit-input-' + commentId);
+  const content = input?.value.trim();
+  if (!content) return;
+  const r = await fetch('/api/news-feed/comments/' + commentId, { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ content }) });
+  if (r.ok) {
+    const comments = await fetch('/api/news-feed/' + postId + '/comments', { headers: getHeaders() }).then(r => r.json()).catch(() => []);
+    const list = document.getElementById('comment-list-' + postId);
+    if (list) list.innerHTML = comments.length ? comments.map(c => renderComment(c)).join('') : '<p style="font-size:12px;color:var(--text-muted);">No comments yet.</p>';
+  } else showToast('Failed to save comment.', 'error');
 }
 
 async function submitComment(postId) {

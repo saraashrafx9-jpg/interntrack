@@ -1148,6 +1148,41 @@ app.put("/api/event-requests/:id", authenticateToken, (req, res) => {
   }
 });
 
+app.delete("/api/event-requests/:id", authenticateToken, (req, res) => {
+  try {
+    const user = dbHelpers.getUserById(req.user.userId);
+    const isMedia = user.TeamName && user.TeamName.toLowerCase().includes('media');
+    if (req.user.role !== 'Admin' && req.user.role !== 'Supervisor' && !isMedia) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+    const request = dbHelpers.getEventRequestById(req.params.id);
+    if (!request) return res.status(404).json({ error: "Request not found" });
+    if (request.Status === 'pending') return res.status(400).json({ error: "Cannot delete a pending request" });
+    dbHelpers.deleteEventRequest(req.params.id);
+    broadcast("event-requests");
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete request" });
+  }
+});
+
+app.put("/api/news-feed/comments/:commentId", authenticateToken, (req, res) => {
+  try {
+    const comment = dbHelpers.getNewsFeedCommentById(req.params.commentId);
+    if (!comment) return res.status(404).json({ error: "Comment not found" });
+    const user = dbHelpers.getUserByEmail(req.user.email);
+    const userId = user?.UserID || req.user.userId;
+    if (comment.AuthorID !== userId) return res.status(403).json({ error: "Not authorized" });
+    const { content } = req.body;
+    if (!content || !content.trim()) return res.status(400).json({ error: "Content required" });
+    dbHelpers.updateNewsFeedComment(req.params.commentId, content.trim(), userId);
+    broadcast("newsfeed");
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update comment" });
+  }
+});
+
 // ==================== PERSONAL REMINDERS & TO-DO (private per user) ====================
 
 app.get("/api/reminders", authenticateToken, (req, res) => {
