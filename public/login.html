@@ -494,11 +494,6 @@
       </button>
     </form>
 
-    <div class="help-link">
-      <i class="fa-solid fa-shield-halved"></i>
-      <span id="lbl_need">Need help?</span>
-      <span id="lbl_contact">Contact Administrator</span>
-    </div>
   </section>
 </main>
 
@@ -532,8 +527,6 @@ feat3: 'Reviews & Feedback',
     forgot: 'Forgot Password?',
     signin: 'Sign In',
     signing: 'Signing in…',
-    need: 'Need help?',
-    contact: 'Contact Administrator',
     err_not_found: 'No account found with this email.',
     err_wrong_pw: 'Incorrect password. Please try again.',
     err_invalid: 'Invalid email or password.',
@@ -554,8 +547,6 @@ feat3: 'التقييمات والملاحظات',
     forgot: 'نسيت كلمة المرور؟',
     signin: 'دخول',
     signing: 'جارٍ تسجيل الدخول…',
-    need: 'تحتاج مساعدة؟',
-    contact: 'تواصل مع المسؤول',
     err_not_found: 'لا يوجد حساب بهذا البريد الإلكتروني.',
     err_wrong_pw: 'كلمة المرور غير صحيحة.',
     err_invalid: 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
@@ -584,8 +575,7 @@ function applyTranslations(){
   document.getElementById('lbl_remember').textContent = l.remember;
   document.getElementById('lbl_forgot').textContent = l.forgot;
   document.getElementById('btnText').textContent = l.signin;
-  document.getElementById('lbl_need').textContent = l.need;
-  document.getElementById('lbl_contact').textContent = l.contact;
+
 
   document.getElementById('langBtn').textContent = currentLang === 'ar' ? 'English' : 'عربي';
   document.documentElement.lang = currentLang;

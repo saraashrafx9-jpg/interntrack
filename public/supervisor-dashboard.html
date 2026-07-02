@@ -541,6 +541,7 @@ let calendarEventsCache = [];
 let remindersCache = [];
 let calendarSideTab = 'events';
 let editingEventId = null;
+let editingEventPosterUrl = null;
 
 function calLocale() { return currentLang === 'ar' ? 'ar-AE' : 'en-US'; }
 
@@ -597,7 +598,7 @@ function calSidePanelBody(monthEvents) {
 
 
   return `
-    <div style="display:flex;flex-direction:column;gap:14px;max-height:520px;overflow-y:auto;">
+    <div style="display:flex;flex-direction:column;gap:14px;max-height:460px;overflow-y:auto;margin-bottom:14px;">
       ${monthEvents.length ? monthEvents.map(ev => {
         const d = new Date(ev.EventDate + 'T00:00:00');
         return `<div style="display:flex;gap:12px;">
@@ -613,7 +614,8 @@ function calSidePanelBody(monthEvents) {
           </div>
         </div>`;
       }).join('') : `<p class="text-muted" style="font-size:13px;">${t('no_events_month')}</p>`}
-    </div>`;
+    </div>
+    <button class="btn btn-primary" style="width:100%;" onclick="openEventModal()">${t('btn_add_event')}</button>`;
 }
 
 function renderCalendarUI(el) {
@@ -683,20 +685,67 @@ function renderCalendarUI(el) {
       <div class="table-wrapper"><table>
         <thead><tr>
           <th>Event Poster</th><th>Event Name</th><th>Speakers / Holders</th>
-          <th>Description</th><th>Date</th><th>Time</th><th>Location</th>
+          <th>Description</th><th>Date</th><th>Time</th><th>Location</th><th>Actions</th>
         </tr></thead>
         <tbody>
           ${calendarEventsCache.map(ev => `<tr>
-            <td>${escHtml(ev.EventPoster || ev.CreatedByName || '—')}</td>
+            <td>${ev.EventPoster && ev.EventPoster.startsWith('/') ? `<img src="${ev.EventPoster}" style="max-height:48px;max-width:70px;border-radius:4px;object-fit:cover;">` : escHtml(ev.EventPoster || ev.CreatedByName || '—')}</td>
             <td><strong>${escHtml(ev.Title)}</strong></td>
             <td>${escHtml(ev.EventSpeakers || '—')}</td>
             <td style="max-width:200px;">${escHtml(ev.Description || '—')}</td>
             <td>${escHtml(ev.EventDate)}</td>
             <td>${escHtml(ev.EventTime || '—')}</td>
             <td>${escHtml(ev.EventLocation || '—')}</td>
+            <td>
+              ${currentUser && ev.CreatedBy === currentUser.UserID ? `<div style="display:flex;gap:6px;">
+                <button class="btn btn-sm btn-ghost" onclick="openEventModal(${ev.EventID})">✏</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteCalendarEvent(${ev.EventID})"></button>
+              </div>` : ''}
+            </td>
           </tr>`).join('')}
         </tbody>
       </table></div>` : `<p class="text-muted">No events yet.</p>`}
+    </div>
+
+    <div class="modal-overlay" id="eventModal">
+      <div class="modal-box" style="max-width:560px;">
+        <div class="modal-header">
+          <h3 id="eventModalTitle">${t('h_add_event')}</h3>
+          <button class="modal-close" onclick="closeModal('eventModal')">✕</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Event Poster Image</label>
+          <input id="eventPosterFile" type="file" accept="image/*" class="form-input">
+          <div id="eventPosterPreview" style="margin-top:6px;"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Event Name *</label>
+          <input id="eventTitle" class="form-input" placeholder="Name of the event">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Event Speakers / Holders</label>
+          <input id="eventSpeakers" class="form-input" placeholder="Names of speakers or event holders">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Event Description</label>
+          <textarea id="eventDescription" class="form-textarea" placeholder="Describe the event..."></textarea>
+        </div>
+        <div style="display:flex;gap:12px;">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Date *</label>
+            <input id="eventDate" type="date" class="form-input">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Event Time</label>
+            <input id="eventTime" type="time" class="form-input">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Event Location</label>
+          <input id="eventLocation" class="form-input" placeholder="Where will the event be held?">
+        </div>
+        <button class="btn btn-primary" onclick="saveCalendarEvent()">${t('btn_save_event')}</button>
+      </div>
     </div>
 
     <div class="modal-overlay" id="reminderModal">
@@ -776,6 +825,59 @@ async function deleteReminderItem(id) {
   await fetch('/api/reminders/' + id, { method: 'DELETE', headers: getHeaders() });
   showToast(t('toast_deleted'), 'info');
   renderCalendar(document.getElementById('pageContent'));
+}
+
+function openEventModal(eventId, prefillDate) {
+  editingEventId = eventId || null;
+  const ev = eventId ? calendarEventsCache.find(e => e.EventID === eventId) : null;
+  document.getElementById('eventModalTitle').textContent = ev ? t('h_edit_event') : t('h_add_event');
+  editingEventPosterUrl = (ev && ev.EventPoster) ? ev.EventPoster : null;
+  const posterFileEl = document.getElementById('eventPosterFile');
+  if (posterFileEl) posterFileEl.value = '';
+  const posterPrev = document.getElementById('eventPosterPreview');
+  if (posterPrev) posterPrev.innerHTML = (ev && ev.EventPoster && ev.EventPoster.startsWith('/')) ? `<img src="${ev.EventPoster}" style="max-height:70px;border-radius:6px;object-fit:cover;"> <span style="font-size:11px;color:var(--text-muted);">Upload new image to replace</span>` : '';
+  document.getElementById('eventTitle').value = ev ? ev.Title : '';
+  document.getElementById('eventSpeakers').value = ev ? (ev.EventSpeakers || '') : '';
+  document.getElementById('eventDescription').value = ev ? (ev.Description || '') : '';
+  const now = new Date();
+  document.getElementById('eventDate').value = ev ? ev.EventDate : (prefillDate || calDateKey(now.getFullYear(), now.getMonth(), now.getDate()));
+  document.getElementById('eventTime').value = ev ? (ev.EventTime || '') : '';
+  document.getElementById('eventLocation').value = ev ? (ev.EventLocation || '') : '';
+  openModal('eventModal');
+}
+
+async function saveCalendarEvent() {
+  const title = document.getElementById('eventTitle').value.trim();
+  const description = document.getElementById('eventDescription').value.trim();
+  const eventDate = document.getElementById('eventDate').value;
+  const eventTime = document.getElementById('eventTime').value;
+  const eventSpeakers = document.getElementById('eventSpeakers').value.trim();
+  const eventLocation = document.getElementById('eventLocation').value.trim();
+  if (!title || !eventDate) return showToast(t('err_event_required'), 'error');
+  let eventPoster = editingEventPosterUrl || '';
+  const pFile = document.getElementById('eventPosterFile');
+  if (pFile && pFile.files[0]) {
+    const fd = new FormData(); fd.append('posterImage', pFile.files[0]);
+    const up = await fetch('/api/upload-event-poster', { method: 'POST', headers: getHeaders(false), body: fd });
+    if (up.ok) { const d = await up.json(); eventPoster = d.url; }
+  }
+  const url = editingEventId ? '/api/admin/calendar-events/' + editingEventId : '/api/admin/calendar-events';
+  const method = editingEventId ? 'PUT' : 'POST';
+  const r = await fetch(url, { method, headers: getHeaders(), body: JSON.stringify({ title, description, eventDate, eventTime, eventPoster, eventSpeakers, eventLocation }) });
+  if (r.ok) {
+    closeModal('eventModal');
+    showToast(editingEventId ? t('toast_updated') : t('toast_created'), 'success');
+    renderCalendar(document.getElementById('pageContent'));
+  } else {
+    showToast(t('toast_failed'), 'error');
+  }
+}
+
+async function deleteCalendarEvent(id) {
+  if (!confirm(t('confirm_delete_event'))) return;
+  const r = await fetch('/api/admin/calendar-events/' + id, { method: 'DELETE', headers: getHeaders() });
+  if (r.ok) { showToast(t('toast_deleted'), 'info'); renderCalendar(document.getElementById('pageContent')); }
+  else showToast(t('toast_failed'), 'error');
 }
 
 // ── OVERVIEW ──────────────────────────────────────────────────────────────────

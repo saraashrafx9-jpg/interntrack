@@ -350,8 +350,9 @@ function isMediaTeamUser(req) {
 
 function authorizeCalendarWrite(req, res, next) {
   if (req.user.role === "Admin") return next();
+  if (req.user.role === "Supervisor") return next();
   if (isMediaTeamUser(req)) return next();
-  return res.status(403).json({ error: "Only administrators and Media Team members can manage calendar events." });
+  return res.status(403).json({ error: "Only administrators, supervisors, and Media Team members can manage calendar events." });
 }
 
 app.get("/api/calendar-events", authenticateToken, (req, res) => {
@@ -404,12 +405,15 @@ app.put(
         });
       }
 
-      // Media Team members can only edit their own events; leaders can edit any
-      if (req.user.role !== "Admin" && isMediaTeamUser(req)) {
-        const ev = dbHelpers.getCalendarEventById(req.params.id);
-        if (!ev) return res.status(404).json({ error: "Event not found" });
-        if (req.user.role !== "Leader" && ev.CreatedBy !== req.user.userId) {
-          return res.status(403).json({ error: "You can only edit your own events." });
+      // Media Team leaders can edit any event; all others can only edit their own
+      if (req.user.role !== "Admin") {
+        const canEditAll = isMediaTeamUser(req) && req.user.role === "Leader";
+        if (!canEditAll) {
+          const ev = dbHelpers.getCalendarEventById(req.params.id);
+          if (!ev) return res.status(404).json({ error: "Event not found" });
+          if (ev.CreatedBy !== req.user.userId) {
+            return res.status(403).json({ error: "You can only edit your own events." });
+          }
         }
       }
 
@@ -431,12 +435,15 @@ app.delete(
   authorizeCalendarWrite,
   (req, res) => {
     try {
-      // Media Team members can only delete their own events; leaders can delete any
-      if (req.user.role !== "Admin" && isMediaTeamUser(req)) {
-        const ev = dbHelpers.getCalendarEventById(req.params.id);
-        if (!ev) return res.status(404).json({ error: "Event not found" });
-        if (req.user.role !== "Leader" && ev.CreatedBy !== req.user.userId) {
-          return res.status(403).json({ error: "You can only delete your own events." });
+      // Media Team leaders can delete any event; all others can only delete their own
+      if (req.user.role !== "Admin") {
+        const canDeleteAll = isMediaTeamUser(req) && req.user.role === "Leader";
+        if (!canDeleteAll) {
+          const ev = dbHelpers.getCalendarEventById(req.params.id);
+          if (!ev) return res.status(404).json({ error: "Event not found" });
+          if (ev.CreatedBy !== req.user.userId) {
+            return res.status(403).json({ error: "You can only delete your own events." });
+          }
         }
       }
       dbHelpers.deleteCalendarEvent(req.params.id);
@@ -450,6 +457,11 @@ app.delete(
     }
   }
 );
+
+app.post("/api/upload-event-poster", authenticateToken, authorizeCalendarWrite, upload.single("posterImage"), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+  res.json({ url: "/uploads/" + req.file.filename });
+});
 
 app.get("/api/achievements/:id/documents", (req, res) => {
   try {

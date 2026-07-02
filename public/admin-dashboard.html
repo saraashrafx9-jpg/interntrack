@@ -1692,6 +1692,7 @@ let calendarEventsCache = [];
 let remindersCache = [];
 let calendarSideTab = 'events';
 let editingEventId = null;
+let editingEventPosterUrl = null;
 
 function calLocale() { return currentLang === 'ar' ? 'ar-AE' : 'en-US'; }
 
@@ -1842,7 +1843,7 @@ function renderCalendarUI(el) {
         </tr></thead>
         <tbody>
           ${calendarEventsCache.map(ev => `<tr>
-            <td>${escHtml(ev.EventPoster || ev.CreatedByName || '—')}</td>
+            <td>${ev.EventPoster && ev.EventPoster.startsWith('/') ? `<img src="${ev.EventPoster}" style="max-height:48px;max-width:70px;border-radius:4px;object-fit:cover;">` : escHtml(ev.EventPoster || ev.CreatedByName || '—')}</td>
             <td><strong>${escHtml(ev.Title)}</strong></td>
             <td>${escHtml(ev.EventSpeakers || '—')}</td>
             <td style="max-width:200px;">${escHtml(ev.Description || '—')}</td>
@@ -1867,8 +1868,9 @@ function renderCalendarUI(el) {
           <button class="modal-close" onclick="closeModal('eventModal')">✕</button>
         </div>
         <div class="form-group">
-          <label class="form-label">Event Poster</label>
-          <input id="eventPoster" class="form-input" placeholder="Who is posting this event?">
+          <label class="form-label">Event Poster Image</label>
+          <input id="eventPosterFile" type="file" accept="image/*" class="form-input">
+          <div id="eventPosterPreview" style="margin-top:6px;"></div>
         </div>
         <div class="form-group">
           <label class="form-label">Event Name *</label>
@@ -1981,7 +1983,11 @@ function openEventModal(eventId, prefillDate) {
   editingEventId = eventId || null;
   const ev = eventId ? calendarEventsCache.find(e => e.EventID === eventId) : null;
   document.getElementById('eventModalTitle').textContent = ev ? t('h_edit_event') : t('h_add_event');
-  document.getElementById('eventPoster').value = ev ? (ev.EventPoster || '') : '';
+  editingEventPosterUrl = (ev && ev.EventPoster) ? ev.EventPoster : null;
+  const posterFileEl = document.getElementById('eventPosterFile');
+  if (posterFileEl) posterFileEl.value = '';
+  const posterPrev = document.getElementById('eventPosterPreview');
+  if (posterPrev) posterPrev.innerHTML = (ev && ev.EventPoster && ev.EventPoster.startsWith('/')) ? `<img src="${ev.EventPoster}" style="max-height:70px;border-radius:6px;object-fit:cover;"> <span style="font-size:11px;color:var(--text-muted);">Upload new image to replace</span>` : '';
   document.getElementById('eventTitle').value = ev ? ev.Title : '';
   document.getElementById('eventSpeakers').value = ev ? (ev.EventSpeakers || '') : '';
   document.getElementById('eventDescription').value = ev ? (ev.Description || '') : '';
@@ -1997,10 +2003,16 @@ async function saveCalendarEvent() {
   const description = document.getElementById('eventDescription').value.trim();
   const eventDate = document.getElementById('eventDate').value;
   const eventTime = document.getElementById('eventTime').value;
-  const eventPoster = document.getElementById('eventPoster').value.trim();
   const eventSpeakers = document.getElementById('eventSpeakers').value.trim();
   const eventLocation = document.getElementById('eventLocation').value.trim();
   if (!title || !eventDate) return showToast(t('err_event_required'), 'error');
+  let eventPoster = editingEventPosterUrl || '';
+  const pFile = document.getElementById('eventPosterFile');
+  if (pFile && pFile.files[0]) {
+    const fd = new FormData(); fd.append('posterImage', pFile.files[0]);
+    const up = await fetch('/api/upload-event-poster', { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: fd });
+    if (up.ok) { const d = await up.json(); eventPoster = d.url; }
+  }
 
   const url = editingEventId ? '/api/admin/calendar-events/' + editingEventId : '/api/admin/calendar-events';
   const method = editingEventId ? 'PUT' : 'POST';
