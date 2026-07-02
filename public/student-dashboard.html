@@ -67,35 +67,14 @@
 </div>
 
   <div class="sidebar-footer">
-    <div class="sidebar-user" onclick="toggleStudentMenu(event)">
-      <div class="admin-avatar" id="sidebarAvatar" style="overflow:hidden;">
-        <i class="fa-solid fa-user-graduate"></i>
+    <div class="user-card">
+      <div class="user-avatar" id="sidebarAvatar" style="overflow:hidden;"><i class="fa-solid fa-user-graduate" style="font-size:15px;"></i></div>
+      <div class="user-info">
+        <strong id="studentName">Student</strong>
+        <span id="studentTeam" style="display:inline-block;background:var(--primary);color:#fff;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:600;">Student</span>
       </div>
-
-      <div class="admin-info">
-        <h4 id="studentName">Student</h4>
-        <p id="studentTeam">Loading...</p>
-      </div>
-
-      <span class="admin-arrow">▼</span>
     </div>
-
-    <div id="studentDropdown" class="sidebar-admin-menu">
-      <div class="language-menu">
-        <a href="#" onclick="toggleStudentLanguageMenu(event)">
-          <i class="fa-solid fa-globe" style="width:14px;"></i> Language ▶
-        </a>
-
-        <div id="studentLanguageDropdown" class="language-dropdown">
-          <a href="#" onclick="setLang('en')">English</a>
-          <a href="#" onclick="setLang('ar')" data-i18n="lang_arabic">Arabic</a>
-        </div>
-      </div>
-
-      <a href="#" onclick="logout()">
-        <i class="fa-solid fa-right-from-bracket" style="width:14px;"></i> <span data-i18n="btn_signout">Sign Out</span>
-      </a>
-    </div>
+    <button class="sidebar-login-btn" style="background:#374151;margin-top:8px;" onclick="logout()" data-i18n="btn_signout">Sign Out</button>
   </div>
 </aside>
 

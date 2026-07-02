@@ -793,7 +793,7 @@ function renderCalendarUI(el) {
       </div>
     </div>
 
-    <div style="margin-top:24px;">
+    ${canManageCalendar() ? `<div style="margin-top:24px;">
       <h3 style="margin-bottom:12px;"> All Events Details</h3>
       ${calendarEventsCache.length ? `
       <div class="table-wrapper"><table>
@@ -814,7 +814,7 @@ function renderCalendarUI(el) {
           </tr>`).join('')}
         </tbody>
       </table></div>` : `<p class="text-muted">No events yet.</p>`}
-    </div>
+    </div>` : ''}
 
     <div class="modal-overlay" id="posterModal" onclick="closeModal('posterModal')" style="background:rgba(0,0,0,0.88);">
       <div style="position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%;" onclick="event.stopPropagation()">
