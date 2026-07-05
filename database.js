@@ -1266,6 +1266,15 @@ getTeamTodos: (teamId) => {
     return result;
   },
 
+  updateEventRequest: (id, eventName, eventSpeaker, eventDate, eventTime, description) => {
+    const result = runQuery(
+      "UPDATE EventRequests SET EventName=?, EventSpeaker=?, EventDate=?, EventTime=?, Description=? WHERE RequestID=? AND Status='pending'",
+      [eventName, eventSpeaker || null, eventDate, eventTime || null, description || null, id]
+    );
+    saveDatabase();
+    return result;
+  },
+
   updateNewsFeedComment: (commentId, content, authorId) => {
     const result = runQuery(
       "UPDATE NewsFeedComments SET Content = ? WHERE CommentID = ? AND AuthorID = ?",

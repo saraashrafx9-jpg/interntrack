@@ -1176,6 +1176,37 @@ app.delete("/api/event-requests/:id", authenticateToken, (req, res) => {
   }
 });
 
+// Requester edits their own pending request
+app.patch("/api/event-requests/:id/my", authenticateToken, (req, res) => {
+  try {
+    const request = dbHelpers.getEventRequestById(req.params.id);
+    if (!request) return res.status(404).json({ error: "Request not found" });
+    if (String(request.RequesterID) !== String(req.user.userId)) return res.status(403).json({ error: "Not authorized" });
+    if (request.Status !== 'pending') return res.status(400).json({ error: "Only pending requests can be edited" });
+    const { eventName, eventSpeaker, eventDate, eventTime, description } = req.body;
+    if (!eventName || !eventDate) return res.status(400).json({ error: "Event name and date are required" });
+    dbHelpers.updateEventRequest(req.params.id, eventName, eventSpeaker, eventDate, eventTime, description);
+    broadcast("event-requests");
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update request" });
+  }
+});
+
+// Requester deletes their own request (any status)
+app.delete("/api/event-requests/:id/my", authenticateToken, (req, res) => {
+  try {
+    const request = dbHelpers.getEventRequestById(req.params.id);
+    if (!request) return res.status(404).json({ error: "Request not found" });
+    if (String(request.RequesterID) !== String(req.user.userId)) return res.status(403).json({ error: "Not authorized" });
+    dbHelpers.deleteEventRequest(req.params.id);
+    broadcast("event-requests");
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete request" });
+  }
+});
+
 app.put("/api/news-feed/comments/:commentId", authenticateToken, (req, res) => {
   try {
     const comment = dbHelpers.getNewsFeedCommentById(req.params.commentId);

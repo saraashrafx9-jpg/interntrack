@@ -2191,6 +2191,17 @@ async function reviewEventRequest(id, status) {
   } catch(e) { showToast('Failed to update request.', 'error'); }
 }
 
+let _editingRequestId = null;
+
+function _reqDescHtml(text, id) {
+  if (!text) return '—';
+  const MAX = 80;
+  if (text.length <= MAX) return escHtml(text);
+  const short = escHtml(text.slice(0, MAX));
+  const full = escHtml(text);
+  return `<span id="rdesc-s-${id}">${short}… <a href="#" onclick="event.preventDefault();document.getElementById('rdesc-s-${id}').style.display='none';document.getElementById('rdesc-f-${id}').style.display='';" style="color:#2563eb;font-size:12px;">Read more</a></span><span id="rdesc-f-${id}" style="display:none;">${full} <a href="#" onclick="event.preventDefault();document.getElementById('rdesc-f-${id}').style.display='none';document.getElementById('rdesc-s-${id}').style.display='';" style="color:#2563eb;font-size:12px;">Show less</a></span>`;
+}
+
 async function loadMyEventRequests() {
   const container = document.getElementById('myRequestsContainer');
   if (!container) return;
@@ -2199,39 +2210,70 @@ async function loadMyEventRequests() {
     if (!requests.length) { container.innerHTML = '<p class="text-muted" style="font-size:13px;">No requests yet.</p>'; return; }
     const statusStyle = s => s === 'pending' ? 'background:#fef3c7;color:#92400e;' : s === 'accepted' ? 'background:#dcfce7;color:#15803d;' : 'background:#fee2e2;color:#991b1b;';
     container.innerHTML = `<div class="table-wrapper"><table>
-      <thead><tr><th>Event Name</th><th>Speaker</th><th>Date</th><th>Time</th><th>Description</th><th>Status</th><th>Review Note</th></tr></thead>
+      <thead><tr><th>Event Name</th><th>Speaker</th><th>Date</th><th>Time</th><th>Description</th><th>Status</th><th>Review Note</th><th></th></tr></thead>
       <tbody>${requests.map(r => `<tr>
         <td><strong>${escHtml(r.EventName)}</strong></td>
         <td>${escHtml(r.EventSpeaker || '—')}</td>
         <td>${escHtml(r.EventDate)}</td>
         <td>${escHtml(r.EventTime || '—')}</td>
-        <td style="max-width:160px;">${escHtml(r.Description || '—')}</td>
+        <td style="max-width:160px;">${_reqDescHtml(r.Description, r.RequestID)}</td>
         <td><span style="padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;${statusStyle(r.Status)}">${r.Status}</span></td>
         <td style="font-size:12px;color:var(--text-muted);">${escHtml(r.ReviewNote || '—')}</td>
+        <td style="white-space:nowrap;">
+          ${r.Status === 'pending' ? `<button onclick="openEditRequestModal(${JSON.stringify(r).replace(/"/g,'&quot;')})" style="background:none;border:none;cursor:pointer;color:#2563eb;font-size:12px;padding:2px 6px;">Edit</button>` : ''}
+          <button onclick="deleteMyRequest(${r.RequestID})" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px;padding:2px 6px;">Delete</button>
+        </td>
       </tr>`).join('')}</tbody>
     </table></div>`;
   } catch(e) { if (container) container.innerHTML = '<p class="text-muted" style="font-size:13px;">Failed to load.</p>'; }
+}
+
+function openEditRequestModal(r) {
+  _editingRequestId = r.RequestID;
+  document.getElementById('erEventName').value = r.EventName || '';
+  document.getElementById('erEventSpeaker').value = r.EventSpeaker || '';
+  document.getElementById('erEventDate').value = r.EventDate || '';
+  document.getElementById('erEventTime').value = r.EventTime || '';
+  document.getElementById('erDescription').value = r.Description || '';
+  const title = document.querySelector('#eventRequestModal .modal-header h3');
+  if (title) title.textContent = 'Edit Request';
+  const btn = document.querySelector('#eventRequestModal .btn-primary');
+  if (btn) btn.textContent = 'Save Changes';
+  openModal('eventRequestModal');
+}
+
+async function deleteMyRequest(id) {
+  if (!confirm('Delete this request?')) return;
+  const r = await fetch('/api/event-requests/' + id + '/my', { method: 'DELETE', headers: getHeaders() });
+  if (r.ok) { showToast('Request deleted.', 'success'); loadMyEventRequests(); }
+  else showToast('Failed to delete request.', 'error');
 }
 
 async function submitEventRequest() {
   const eventName = document.getElementById('erEventName').value.trim();
   const eventDate = document.getElementById('erEventDate').value;
   if (!eventName || !eventDate) { showToast('Event name and date are required.', 'error'); return; }
+  const body = {
+    eventName,
+    eventSpeaker: document.getElementById('erEventSpeaker').value.trim(),
+    eventDate,
+    eventTime: document.getElementById('erEventTime').value,
+    description: document.getElementById('erDescription').value.trim()
+  };
   try {
-    const res = await fetch('/api/event-requests', {
-      method: 'POST', headers: getHeaders(),
-      body: JSON.stringify({
-        eventName,
-        eventSpeaker: document.getElementById('erEventSpeaker').value.trim(),
-        eventDate,
-        eventTime: document.getElementById('erEventTime').value,
-        description: document.getElementById('erDescription').value.trim()
-      })
+    const isEdit = !!_editingRequestId;
+    const res = await fetch(isEdit ? '/api/event-requests/' + _editingRequestId + '/my' : '/api/event-requests', {
+      method: isEdit ? 'PATCH' : 'POST', headers: getHeaders(), body: JSON.stringify(body)
     });
-    if (!res.ok) throw new Error();
-    showToast('Event request submitted!', 'success');
+    if (!res.ok) { const d = await res.json().catch(() => ({})); showToast(d.error || 'Failed.', 'error'); return; }
+    showToast(isEdit ? 'Request updated!' : 'Event request submitted!', 'success');
     closeModal('eventRequestModal');
+    _editingRequestId = null;
     ['erEventName','erEventSpeaker','erEventDate','erEventTime','erDescription'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    const title = document.querySelector('#eventRequestModal .modal-header h3');
+    if (title) title.textContent = 'Request an Event';
+    const btn = document.querySelector('#eventRequestModal .btn-primary');
+    if (btn) btn.textContent = 'Submit Request';
     loadMyEventRequests();
   } catch(e) { showToast('Failed to submit request.', 'error'); }
 }
@@ -2256,7 +2298,7 @@ async function submitEventRequest() {
   <div class="modal-box" style="max-width:500px;">
     <div class="modal-header">
       <h3>Request an Event</h3>
-      <button class="modal-close" onclick="closeModal('eventRequestModal')">✕</button>
+      <button class="modal-close" onclick="closeModal('eventRequestModal');_editingRequestId=null;document.querySelector('#eventRequestModal .modal-header h3').textContent='Request an Event';document.querySelector('#eventRequestModal .btn-primary').textContent='Submit Request';">✕</button>
     </div>
     <div class="form-group">
       <label class="form-label">Event Name *</label>
