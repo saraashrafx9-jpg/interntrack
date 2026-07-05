@@ -2192,43 +2192,52 @@ async function reviewEventRequest(id, status) {
 }
 
 let _editingRequestId = null;
-
-function _reqDescHtml(text, id) {
-  if (!text) return '—';
-  const MAX = 80;
-  if (text.length <= MAX) return escHtml(text);
-  const short = escHtml(text.slice(0, MAX));
-  const full = escHtml(text);
-  return `<span id="rdesc-s-${id}">${short}… <a href="#" onclick="event.preventDefault();document.getElementById('rdesc-s-${id}').style.display='none';document.getElementById('rdesc-f-${id}').style.display='';" style="color:#2563eb;font-size:12px;">Read more</a></span><span id="rdesc-f-${id}" style="display:none;">${full} <a href="#" onclick="event.preventDefault();document.getElementById('rdesc-f-${id}').style.display='none';document.getElementById('rdesc-s-${id}').style.display='';" style="color:#2563eb;font-size:12px;">Show less</a></span>`;
-}
+let _myRequestsCache = [];
 
 async function loadMyEventRequests() {
   const container = document.getElementById('myRequestsContainer');
   if (!container) return;
   try {
     const requests = await fetch('/api/event-requests/my', { headers: getHeaders() }).then(r => r.json());
+    _myRequestsCache = requests;
     if (!requests.length) { container.innerHTML = '<p class="text-muted" style="font-size:13px;">No requests yet.</p>'; return; }
     const statusStyle = s => s === 'pending' ? 'background:#fef3c7;color:#92400e;' : s === 'accepted' ? 'background:#dcfce7;color:#15803d;' : 'background:#fee2e2;color:#991b1b;';
-    container.innerHTML = `<div class="table-wrapper"><table>
+    container.innerHTML = `<div class="table-wrapper"><table style="table-layout:fixed;width:100%;">
+      <colgroup><col style="width:14%"><col style="width:10%"><col style="width:9%"><col style="width:7%"><col style="width:28%"><col style="width:9%"><col style="width:13%"><col style="width:10%"></colgroup>
       <thead><tr><th>Event Name</th><th>Speaker</th><th>Date</th><th>Time</th><th>Description</th><th>Status</th><th>Review Note</th><th></th></tr></thead>
       <tbody>${requests.map(r => `<tr>
-        <td><strong>${escHtml(r.EventName)}</strong></td>
+        <td style="word-break:break-word;"><strong>${escHtml(r.EventName)}</strong></td>
         <td>${escHtml(r.EventSpeaker || '—')}</td>
         <td>${escHtml(r.EventDate)}</td>
         <td>${escHtml(r.EventTime || '—')}</td>
-        <td style="max-width:160px;">${_reqDescHtml(r.Description, r.RequestID)}</td>
+        <td style="word-break:break-word;">
+          ${r.Description && r.Description.length > 80
+            ? `<span id="rdesc-s-${r.RequestID}">${escHtml(r.Description.slice(0,80))}… <a href="#" onclick="event.preventDefault();toggleDesc(${r.RequestID})" style="color:#2563eb;font-size:12px;">Read more</a></span><span id="rdesc-f-${r.RequestID}" style="display:none;">${escHtml(r.Description)} <a href="#" onclick="event.preventDefault();toggleDesc(${r.RequestID})" style="color:#2563eb;font-size:12px;">Show less</a></span>`
+            : escHtml(r.Description || '—')}
+        </td>
         <td><span style="padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;${statusStyle(r.Status)}">${r.Status}</span></td>
-        <td style="font-size:12px;color:var(--text-muted);">${escHtml(r.ReviewNote || '—')}</td>
+        <td style="font-size:12px;color:var(--text-muted);word-break:break-word;">${escHtml(r.ReviewNote || '—')}</td>
         <td style="white-space:nowrap;">
-          ${r.Status === 'pending' ? `<button onclick="openEditRequestModal(${JSON.stringify(r).replace(/"/g,'&quot;')})" style="background:none;border:none;cursor:pointer;color:#2563eb;font-size:12px;padding:2px 6px;">Edit</button>` : ''}
-          <button onclick="deleteMyRequest(${r.RequestID})" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px;padding:2px 6px;">Delete</button>
+          ${r.Status === 'pending' ? `<button onclick="openEditRequestModal(${r.RequestID})" style="background:none;border:none;cursor:pointer;color:#2563eb;font-size:12px;padding:2px 4px;">Edit</button>` : ''}
+          <button onclick="deleteMyRequest(${r.RequestID})" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px;padding:2px 4px;">Delete</button>
         </td>
       </tr>`).join('')}</tbody>
     </table></div>`;
   } catch(e) { if (container) container.innerHTML = '<p class="text-muted" style="font-size:13px;">Failed to load.</p>'; }
 }
 
-function openEditRequestModal(r) {
+function toggleDesc(id) {
+  const s = document.getElementById('rdesc-s-' + id);
+  const f = document.getElementById('rdesc-f-' + id);
+  if (!s || !f) return;
+  const showing = s.style.display === 'none';
+  s.style.display = showing ? '' : 'none';
+  f.style.display = showing ? 'none' : '';
+}
+
+function openEditRequestModal(requestId) {
+  const r = _myRequestsCache.find(x => x.RequestID === requestId);
+  if (!r) return;
   _editingRequestId = r.RequestID;
   document.getElementById('erEventName').value = r.EventName || '';
   document.getElementById('erEventSpeaker').value = r.EventSpeaker || '';
