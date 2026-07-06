@@ -2153,7 +2153,7 @@ async function loadMyEventRequests() {
     const statusStyle = s => s === 'pending' ? 'background:#fef3c7;color:#92400e;' : s === 'accepted' ? 'background:#dcfce7;color:#15803d;' : 'background:#fee2e2;color:#991b1b;';
     container.innerHTML = `<div class="table-wrapper"><table style="table-layout:fixed;width:100%;">
       <colgroup><col style="width:14%"><col style="width:10%"><col style="width:9%"><col style="width:7%"><col style="width:28%"><col style="width:9%"><col style="width:13%"><col style="width:10%"></colgroup>
-      <thead><tr><th>Event Name</th><th>Speaker</th><th>Date</th><th>Time</th><th>Description</th><col><th>Status</th><th>Review Note</th><th></th></tr></thead>
+      <thead><tr><th>Event Name</th><th>Speaker</th><th>Date</th><th>Time</th><th>Description</th><th>Status</th><th>Review Note</th><th></th></tr></thead>
       <tbody>${requests.map(r => `<tr>
         <td style="word-break:break-word;"><strong>${escHtml(r.EventName)}</strong></td>
         <td>${escHtml(r.EventSpeaker || '—')}</td>
