@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
   <title>InTrack – SGMB Internship Portal</title>
   <link rel="icon" type="image/png" sizes="32x32" href="/images/InTrack-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/images/InTrack-16.png">
@@ -620,6 +620,19 @@ async function forgotPassword(){
   }
 }
 
+function saveToken(token) {
+  const remember = document.getElementById('rememberMe')?.checked;
+  const maxAge = remember ? 60 * 60 * 24 * 30 : 3600;
+  document.cookie = `token=${token};path=/;max-age=${maxAge};sameSite=lax`;
+  if (remember) {
+    localStorage.setItem('token', token);
+    sessionStorage.removeItem('token');
+  } else {
+    sessionStorage.setItem('token', token);
+    localStorage.removeItem('token');
+  }
+}
+
 async function handleLogin(e){
   e.preventDefault();
 
@@ -651,9 +664,7 @@ async function handleLogin(e){
       throw new Error(data.error || 'Login failed');
     }
 
-    document.cookie = `token=${idToken};path=/;max-age=3600;sameSite=lax`;
-    localStorage.setItem('token', idToken);
-
+    saveToken(idToken);
     window.location.href = data.redirectUrl || '/student-dashboard.html';
 
   }catch(err){
@@ -668,8 +679,7 @@ async function handleLogin(e){
       });
       const data = await r.json();
       if(!r.ok) throw new Error(data.error || 'Login failed');
-      document.cookie = `token=${data.token};path=/;max-age=3600;sameSite=lax`;
-      localStorage.setItem('token', data.token);
+      saveToken(data.token);
       window.location.href = data.redirectUrl || '/student-dashboard.html';
       return;
     }catch(localErr){

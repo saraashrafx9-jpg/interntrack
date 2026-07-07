@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <title>InTrack – SGMB Leader Portal</title>
   <link rel="icon" type="image/png" sizes="32x32" href="/images/InTrack-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/images/InTrack-16.png">
@@ -86,6 +86,7 @@
     <button class="sidebar-login-btn" style="background:#374151;margin-top:8px;" onclick="logout()" data-i18n="btn_signout">Sign Out</button>
   </div>
 </aside>
+<div id="sidebarOverlay" onclick="closeSidebar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:199;"></div>
 
 <div class="main" id="mainLayout">
   <header class="topbar">
@@ -536,14 +537,14 @@ function suppressNextAutoRefresh() { _suppressNextRefresh = true; }
 // ── CORE ──────────────────────────────────────────────────────────────────────
 const token = (() => {
   const c = document.cookie.split(';').find(c => c.trim().startsWith('token='));
-  return c ? c.trim().slice(6) : localStorage.getItem('token');
+  return c ? c.trim().slice(6) : (localStorage.getItem('token') || sessionStorage.getItem('token'));
 })();
 
 if (!token) {
   document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;"><div style="text-align:center;"><h1>${t('not_authenticated')}</h1><a href="/" style="color:var(--primary);">${t('go_to_login')}</a></div></div>`;
 }
 
-let currentUser = null, editingId = null, myAchievements = [], pendingFromStudents = [];
+let currentUser = null, editingId = null, myAchievements = [], pendingFromStudents = [], publishedFromStudents = [];
 let currentTabName = 'overview';
 
 function getHeaders(json=true) {
@@ -567,20 +568,29 @@ function showToast(msg,type='info') {
 }
 
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('collapsed');
-  document.getElementById('sidebar').classList.toggle('open');
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  sb.classList.toggle('collapsed');
+  sb.classList.toggle('open');
   document.getElementById('mainLayout').classList.toggle('expanded');
+  if (ov) ov.style.display = sb.classList.contains('open') ? 'block' : 'none';
+}
+function closeSidebar() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  sb.classList.remove('open');
+  if (ov) ov.style.display = 'none';
 }
 
 async function logout() {
   await fetch('/api/auth/logout',{method:'POST'});
   document.cookie='token=;max-age=0;path=/';
-  localStorage.removeItem('token');
+  localStorage.removeItem('token'); sessionStorage.removeItem('token');
   window.location.href='/';
 }
 
 function switchTab(tab) {
-  if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+  if (window.innerWidth <= 768) { document.getElementById('sidebar').classList.remove('open'); const ov=document.getElementById('sidebarOverlay'); if(ov) ov.style.display='none'; }
   currentTabName = tab;
   localStorage.setItem('leaderCurrentTab', tab);
   document.querySelectorAll('.sidebar-nav .nav-item').forEach(n=>n.classList.remove('active'));
@@ -635,6 +645,7 @@ async function loadAchievements() {
   const data = await fetch('/api/leader/achievements',{headers:getHeaders()}).then(r=>r.json());
   myAchievements = data.own || [];
   pendingFromStudents = data.pendingFromStudents || [];
+  publishedFromStudents = data.publishedFromStudents || [];
   const badge = document.getElementById('pendingBadge');
   if (badge) {
     if (pendingFromStudents.length > 0) {
@@ -1465,7 +1476,6 @@ async function renderOverviewSub(el) {
               ${memberAvatarHtml(m, 40)}
               <div>
                 <div style="font-weight:700;font-size:14px;">${escHtml(m.Name)}</div>
-                <div style="font-size:11px;color:var(--text-muted);">ID: ${m.UserID}</div>
               </div>
             </div>
             <span class="badge ${m.Role === 'Leader' ? 'badge-blue' : 'badge-green'}">${m.Role === 'Leader' ? t('leader_badge') : t('member_badge')}</span>
@@ -1573,26 +1583,32 @@ async function deleteTeamLink(id) {
 }
 
 function renderPostForm(el, prefill={}) {
+  const weekOptions = Array.from({length:20},(_,i)=>{
+    const n=i+1, label=currentLang==='ar'?`الأسبوع ${n}`:`Week ${n}`;
+    return `<option value="${label}" ${prefill.weekLabel===label?'selected':''}>${label}</option>`;
+  }).join('');
   el.innerHTML=`
     <div class="page-header">
       <div><h2>${editingId?t('h_edit_ach'):t('h_post_new')}</h2><p>${editingId?t('sub_edit'):t('sub_post')}</p></div>
     </div>
     <div class="full-panel">
       <form id="achievementForm" onsubmit="submitAchievement(event)">
-        <div class="form-group">
-          <label class="form-label">${t('lbl_title')}</label>
-          <input type="text" id="aTitle" class="form-input" placeholder="${t('title_ph')}" value="${escHtml(prefill.title||'')}" required>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">${t('lbl_title')}</label>
+            <input type="text" id="aTitle" class="form-input" placeholder="${t('title_ph')}" value="${escHtml(prefill.title||'')}" required>
+          </div>
+          <div class="form-group" style="margin-bottom:0;min-width:140px;">
+            <label class="form-label">${t('lbl_week')}</label>
+            <select id="aWeek" class="form-input">
+              <option value="">${t('week_ph')||'Select week'}</option>
+              ${weekOptions}
+            </select>
+          </div>
         </div>
-        <div class="form-group">
+        <div class="form-group" style="margin-top:16px;">
           <label class="form-label">${t('lbl_desc')}</label>
           <textarea id="aDesc" class="form-textarea" style="min-height:220px;" placeholder="${t('desc_ph')}" required>${escHtml(prefill.description||'')}</textarea>
-        </div>
-        <div class="form-group">
-          <label class="form-label">${t('lbl_status')}</label>
-          <select id="aStatus" class="form-input">
-            <option value="published" ${prefill.status==='published'||!prefill.status?'selected':''}>${t('opt_publish')}</option>
-            <option value="draft" ${prefill.status==='draft'?'selected':''}>${t('opt_draft')}</option>
-          </select>
         </div>
         ${(prefill.existingImages?.length || prefill.existingDocuments?.length) ? `
         <div class="form-group">
@@ -1618,7 +1634,7 @@ function renderPostForm(el, prefill={}) {
         </div>
         <div class="form-group">
           <label class="form-label">${t('lbl_images')}</label>
-          <input type="file" id="aImages" class="form-input" accept="image/*" multiple onchange="previewImages(this)">
+          <input type="file" id="aImages" class="form-input" accept="image/*" onchange="previewImages(this)">
           <small class="text-muted">${t('img_hint')}</small>
           <div id="imagePreview"></div>
         </div>
@@ -1663,7 +1679,7 @@ async function submitAchievement(e) {
   e.preventDefault();
   const title=document.getElementById('aTitle').value.trim();
   const description=document.getElementById('aDesc').value.trim();
-  const status=document.getElementById('aStatus').value;
+  const weekLabel=document.getElementById('aWeek')?.value||'';
   const imagesInput=document.getElementById('aImages');
   const docsInput=document.getElementById('aDocs');
   const btn=document.getElementById('submitBtn');
@@ -1672,13 +1688,15 @@ async function submitAchievement(e) {
     let r;
     if(editingId) {
       const fd=new FormData();
-      fd.append('title',title); fd.append('description',description); fd.append('status',status);
+      fd.append('title',title); fd.append('description',description);
+      if(weekLabel) fd.append('weekLabel',weekLabel);
       if(imagesInput?.files) [...imagesInput.files].forEach(f=>fd.append('images',f));
       if(docsInput?.files) [...docsInput.files].forEach(f=>fd.append('documents',f));
       r=await fetch('/api/leader/achievements/'+editingId,{method:'PUT',headers:{Authorization:'Bearer '+token},body:fd});
     } else {
       const fd=new FormData();
-      fd.append('title',title); fd.append('description',description); fd.append('status',status);
+      fd.append('title',title); fd.append('description',description); fd.append('status','published');
+      if(weekLabel) fd.append('weekLabel',weekLabel);
       if(imagesInput?.files) [...imagesInput.files].forEach(f=>fd.append('images',f));
       if(docsInput?.files) [...docsInput.files].forEach(f=>fd.append('documents',f));
       r=await fetch('/api/leader/achievements',{method:'POST',headers:{Authorization:'Bearer '+token},body:fd});
@@ -1773,7 +1791,7 @@ async function renderApprovals(el) {
         <div style="display:flex;flex-direction:column;gap:8px;min-width:160px;">
           <button class="btn btn-success" onclick="reviewAchievement(${a.AchievementID},'approve')">${t('btn_approve_publish')}</button>
           <button class="btn btn-danger" onclick="promptReject(${a.AchievementID})">${t('btn_reject_feedback')}</button>
-          <button class="btn btn-sm btn-danger" style="background:#6b7280;" onclick="deleteAchievement(${a.AchievementID})"> ${t('btn_delete')}</button>
+          <button class="btn btn-sm btn-danger" style="background:#6b7280;" onclick="deleteAchievement(${a.AchievementID})">Remove Submission</button>
         </div>
       </div>
     </div>`).join('') : `
@@ -1783,7 +1801,26 @@ async function renderApprovals(el) {
         <h3>${t('h_all_caught')}</h3>
         <p>${t('no_pending')}</p>
       </div>
-    </div>`}`;
+    </div>`}
+  ${publishedFromStudents.length ? `
+  <div style="margin-top:24px;">
+    <h3 style="margin-bottom:12px;font-size:15px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;">Published Summaries</h3>
+    ${publishedFromStudents.map(a=>`
+    <div class="full-panel" style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <strong style="font-size:15px;">${escHtml(a.Title)}</strong>
+            <span class="badge badge-green">${t('badge_published')}</span>
+            ${a.WeekLabel?`<span style="background:#dce8f5;color:#3d5a7d;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;">${escHtml(a.WeekLabel)}</span>`:''}
+          </div>
+          <p style="font-size:13px;color:var(--text-muted);">${t('submitted_by')} <strong>${escHtml(a.CreatorName)}</strong> · ${fmtDate(a.CreatedAt)}</p>
+          <p style="font-size:14px;line-height:1.6;">${escHtml(a.Description).substring(0,120)}${a.Description.length>120?'…':''}</p>
+        </div>
+        <button class="btn btn-sm btn-danger" onclick="deleteAchievement(${a.AchievementID})">Delete</button>
+      </div>
+    </div>`).join('')}
+  </div>` : ''}`;
 }
 
 async function reviewAchievement(id, action, feedback='') {
@@ -1812,7 +1849,7 @@ async function openEdit(id) {
     existingImages = await fetch('/api/achievements/' + id, { headers: getHeaders() }).then(r => r.json()).then(d => d.images || []);
     existingDocuments = await fetch('/api/achievements/' + id + '/documents', { headers: getHeaders() }).then(r => r.json());
   } catch (e) {}
-  renderPostForm(document.getElementById('pageContent'),{title:a.Title,description:a.Description,status:a.Status,existingImages,existingDocuments});
+  renderPostForm(document.getElementById('pageContent'),{title:a.Title,description:a.Description,weekLabel:a.WeekLabel,existingImages,existingDocuments});
   document.getElementById('topbarTitle').textContent=t('tb_edit');
   document.querySelectorAll('.sidebar-nav .nav-item').forEach(n=>n.classList.remove('active'));
   document.querySelectorAll('.sidebar-nav .nav-item')[1]?.classList.add('active');

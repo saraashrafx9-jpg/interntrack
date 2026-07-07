@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <title>InTrack – SGMB Supervisor Portal</title>
   <link rel="icon" type="image/png" sizes="32x32" href="/images/InTrack-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/images/InTrack-16.png">
@@ -137,6 +137,7 @@
     <button class="sidebar-login-btn" style="background:#374151;margin-top:8px;" onclick="logout()" data-i18n="btn_signout">Sign Out</button>
   </div>
 </aside>
+<div id="sidebarOverlay" onclick="closeSidebar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:199;"></div>
 
 <div class="main" id="mainLayout">
   <header class="topbar">
@@ -482,7 +483,7 @@ new MutationObserver(mutations => {
 // ── CORE ──────────────────────────────────────────────────────────────────────
 const token = (() => {
   const c = document.cookie.split(';').find(c => c.trim().startsWith('token='));
-  return c ? c.trim().slice(6) : localStorage.getItem('token');
+  return c ? c.trim().slice(6) : (localStorage.getItem('token') || sessionStorage.getItem('token'));
 })();
 
 if (!token) { window.location.href = '/login.html'; }
@@ -514,15 +515,24 @@ function showToast(msg, type = 'info') {
 }
 
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('collapsed');
-  document.getElementById('sidebar').classList.toggle('open');
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  sb.classList.toggle('collapsed');
+  sb.classList.toggle('open');
   document.getElementById('mainLayout').classList.toggle('expanded');
+  if (ov) ov.style.display = sb.classList.contains('open') ? 'block' : 'none';
+}
+function closeSidebar() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  sb.classList.remove('open');
+  if (ov) ov.style.display = 'none';
 }
 
 async function logout() {
   await fetch('/api/auth/logout', { method: 'POST' });
   document.cookie = 'token=;max-age=0;path=/';
-  localStorage.removeItem('token');
+  localStorage.removeItem('token'); sessionStorage.removeItem('token');
   window.location.href = '/login.html';
 }
 
@@ -537,7 +547,7 @@ function statusBadge(status) {
 }
 
 function switchTab(tab) {
-  if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+  if (window.innerWidth <= 768) { document.getElementById('sidebar').classList.remove('open'); const ov=document.getElementById('sidebarOverlay'); if(ov) ov.style.display='none'; }
   currentTabName = tab;
   localStorage.setItem('supervisorCurrentTab', tab);
   document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
@@ -1017,8 +1027,8 @@ async function renderOverview(el) {
       fetch('/api/supervisor/achievements', { headers: getHeaders() }).then(r => r.json()),
       fetch('/api/teams').then(r => r.json())
     ]);
-    allAchievements = achievements;
-    overviewAchievements = achievements;
+    allAchievements = achievements.filter(a => a.Status !== 'rejected');
+    overviewAchievements = allAchievements;
     overviewTeams = teams;
 
     overviewDocsMap = {};
@@ -1124,7 +1134,7 @@ function renderOverviewTeamSections() {
 function filterAndRender() {
   const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
   const tid = document.getElementById('teamFilter')?.value;
-  let filtered = allAchievements;
+  let filtered = allAchievements.filter(a => a.Status !== 'rejected');
   if (q) filtered = filtered.filter(a => a.Title.toLowerCase().includes(q) || (a.Description || '').toLowerCase().includes(q));
   if (tid) filtered = filtered.filter(a => String(a.TeamID) === tid);
 
@@ -1329,7 +1339,7 @@ async function renderMyFeedback(el) {
       fetch('/api/teams').then(r => r.json()),
       fetch('/api/supervisor/my-feedback', { headers: getHeaders() }).then(r => r.json())
     ]);
-    allAchievements = achievements;
+    allAchievements = achievements.filter(a => a.Status !== 'rejected');
 
     const teamOptions = teams.map(t =>
       `<option value="${t.TeamID}">${escHtml(t.TeamName)}</option>`

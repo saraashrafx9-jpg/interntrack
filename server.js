@@ -679,12 +679,6 @@ app.delete(
         });
       }
 
-      if (achievement.Status === "published") {
-        return res.status(400).json({
-          error: "Cannot delete a published achievement"
-        });
-      }
-
       dbHelpers.deleteAchievement(req.params.id);
 
       broadcast("achievement");
@@ -1338,9 +1332,17 @@ app.get(
         })
         .filter((a) => a.CreatedBy !== req.user.userId);
 
+      const publishedFromStudents = dbHelpers
+        .getAllAchievements({
+          teamId: req.user.teamId,
+          statusFilter: ["published"]
+        })
+        .filter((a) => a.CreatedBy !== req.user.userId);
+
       res.json({
         own,
-        pendingFromStudents
+        pendingFromStudents,
+        publishedFromStudents
       });
     } catch (error) {
       res.status(500).json({
@@ -1357,7 +1359,7 @@ app.post(
   upload.fields([{ name: 'images', maxCount: 5 }, { name: 'documents', maxCount: 10 }]),
   (req, res) => {
     try {
-      const { title, description, status } = req.body;
+      const { title, description, status, weekLabel } = req.body;
 
       if (!title || !description) {
         return res.status(400).json({
@@ -1382,7 +1384,8 @@ app.post(
         description,
         req.user.teamId,
         req.user.userId,
-        status || "published"
+        status || "published",
+        weekLabel || null
       );
 
       const allFiles = [...(req.files?.images || []), ...(req.files?.documents || [])];

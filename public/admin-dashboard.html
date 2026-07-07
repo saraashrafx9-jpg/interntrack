@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <title>InTrack – SGMB Admin Portal</title>
   <link rel="icon" type="image/png" sizes="32x32" href="/images/InTrack-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/images/InTrack-16.png">
@@ -82,6 +82,7 @@
     <button class="sidebar-login-btn" style="background:#374151;margin-top:8px;" onclick="logout()" data-i18n="btn_signout">Sign Out</button>
   </div>
 </aside>
+<div id="sidebarOverlay" onclick="closeSidebar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:199;"></div>
 
 <div class="main" id="mainLayout">
  <header class="topbar">
@@ -725,13 +726,16 @@ new MutationObserver(mutations => {
 (function() {
   const es = new EventSource('/api/events');
   let _rt;
-  es.onmessage = () => { clearTimeout(_rt); _rt = setTimeout(() => { viewingTeamId ? viewTeamDetail(viewingTeamId) : loadTab(currentTab); refreshRequestsBadge(); }, 300); };
+  es.onmessage = (e) => {
+    try { const { resource } = JSON.parse(e.data); if (currentTab === 'newsfeed' && resource !== 'newsfeed') return; } catch(_) {}
+    clearTimeout(_rt); _rt = setTimeout(() => { viewingTeamId ? viewTeamDetail(viewingTeamId) : loadTab(currentTab); refreshRequestsBadge(); }, 300);
+  };
 })();
 
 // ── CORE ──────────────────────────────────────────────────────────────────────
 const token = (() => {
   const c = document.cookie.split(';').find(c => c.trim().startsWith('token='));
-  return c ? c.trim().slice(6) : localStorage.getItem('token');
+  return c ? c.trim().slice(6) : (localStorage.getItem('token') || sessionStorage.getItem('token'));
 })();
 
 if (!token) {
@@ -760,20 +764,29 @@ function showToast(msg, type='info') {
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('collapsed');
-  document.getElementById('sidebar').classList.toggle('open');
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  sb.classList.toggle('collapsed');
+  sb.classList.toggle('open');
   document.getElementById('mainLayout').classList.toggle('expanded');
+  if (ov) ov.style.display = sb.classList.contains('open') ? 'block' : 'none';
+}
+function closeSidebar() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  sb.classList.remove('open');
+  if (ov) ov.style.display = 'none';
 }
 
 async function logout() {
   await fetch('/api/auth/logout', { method:'POST' });
   document.cookie = 'token=;max-age=0;path=/';
-  localStorage.removeItem('token');
+  localStorage.removeItem('token'); sessionStorage.removeItem('token');
   window.location.href = '/';
 }
 
 function switchTab(tab) {
-  if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+  if (window.innerWidth <= 768) { document.getElementById('sidebar').classList.remove('open'); const ov=document.getElementById('sidebarOverlay'); if(ov) ov.style.display='none'; }
   currentTab = tab;
   viewingTeamId = null;
   localStorage.setItem("adminCurrentTab", tab);
