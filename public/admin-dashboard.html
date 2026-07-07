@@ -2326,12 +2326,12 @@ async function renderRequests(el) {
       </div>
       ${messages.length ? messages.map(m => `
         <div class="panel" style="margin-bottom:12px;border-left:4px solid ${statusColor[m.Status] || '#94a3b8'};">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
             <div>
               <strong>${escHtml(m.SenderName)}</strong>
               <span class="badge badge-blue" style="margin-left:8px;">${t('role_' + m.SenderRole.toLowerCase())}</span>
             </div>
-            <div style="display:flex;gap:6px;flex-shrink:0;align-items:center;">
+            <div style="display:flex;gap:6px;flex-shrink:0;align-items:center;flex-wrap:wrap;">
               <select class="form-input" style="padding:6px 10px;font-size:12px;width:auto;" onchange="changeRequestStatus(${m.MessageID}, this.value)">
                 <option value="pending" ${m.Status === 'pending' ? 'selected' : ''}>${t('status_pending')}</option>
                 <option value="done" ${m.Status === 'done' ? 'selected' : ''}>${t('status_done')}</option>
@@ -2341,7 +2341,16 @@ async function renderRequests(el) {
             </div>
           </div>
           <p style="margin:10px 0 4px;font-size:14px;">${escHtml(m.Message)}</p>
-          <p class="text-muted" style="font-size:12px;margin:0;">${fmtDate(m.CreatedAt)}</p>
+          <p class="text-muted" style="font-size:12px;margin:0 0 10px;">${fmtDate(m.CreatedAt)}</p>
+          ${m.AdminReply ? `
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;margin-bottom:10px;">
+            <div style="font-size:11px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Admin Reply · ${fmtDate(m.RepliedAt)}</div>
+            <p style="font-size:13px;color:#166534;margin:0;">${escHtml(m.AdminReply)}</p>
+          </div>` : ''}
+          <div style="display:flex;gap:8px;align-items:flex-end;">
+            <textarea id="reply-${m.MessageID}" class="form-textarea" rows="2" style="flex:1;font-size:13px;resize:vertical;" placeholder="${m.AdminReply ? 'Update reply…' : 'Write a reply…'}">${escHtml(m.AdminReply || '')}</textarea>
+            <button class="btn btn-sm btn-primary" style="flex-shrink:0;" onclick="sendReply(${m.MessageID})">Send Reply</button>
+          </div>
         </div>
       `).join('') : `<div class="full-panel"><div class="empty-state"><div class="empty-icon"></div><h3>${t('no_requests')}</h3></div></div>`}
     `;
@@ -2377,6 +2386,16 @@ async function deleteRequest(id) {
   await fetch('/api/admin/help-messages/' + id, { method: 'DELETE', headers: getHeaders() });
   showToast(t('toast_deleted'), 'info');
   renderRequests(document.getElementById('pageContent'));
+}
+
+async function sendReply(id) {
+  const reply = document.getElementById('reply-' + id)?.value.trim();
+  if (!reply) { showToast('Reply cannot be empty.', 'error'); return; }
+  const r = await fetch('/api/admin/help-messages/' + id + '/reply', {
+    method: 'PUT', headers: getHeaders(), body: JSON.stringify({ reply })
+  });
+  if (r.ok) { showToast('Reply sent.', 'success'); renderRequests(document.getElementById('pageContent')); }
+  else showToast('Failed to send reply.', 'error');
 }
 
 // ── TEAM CRUD ─────────────────────────────────────────────────────────────────

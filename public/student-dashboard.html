@@ -1856,11 +1856,15 @@ async function loadMyRequests() {
     const requests = await fetch('/api/help-messages/mine', { headers: getHeaders() }).then(r => r.json());
     list.innerHTML = requests.length ? requests.map(r => `
       <div style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;">
           <span class="badge" style="${REQUEST_STATUS_STYLE[r.Status] || ''}">${t('status_' + r.Status)}</span>
           <span style="font-size:11px;color:var(--text-muted);flex-shrink:0;">${fmtDate(r.CreatedAt)}</span>
         </div>
-        <p style="font-size:13px;margin:0;">${escHtml(r.Message)}</p>
+        <p style="font-size:13px;margin:0 0 6px;">${escHtml(r.Message)}</p>
+        ${r.AdminReply ? `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px;margin-top:4px;">
+          <div style="font-size:10px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;">Admin Reply</div>
+          <p style="font-size:12px;color:#166534;margin:0;">${escHtml(r.AdminReply)}</p>
+        </div>` : ''}
       </div>`).join('') : `<p class="text-muted" style="font-size:12px;">${t('no_my_requests')}</p>`;
   } catch (e) {
     list.innerHTML = `<p class="text-muted" style="font-size:12px;">${t('err_load')}</p>`;

@@ -1000,6 +1000,28 @@ app.put(
   }
 );
 
+app.put(
+  "/api/admin/help-messages/:id/reply",
+  authenticateToken,
+  authorizeRole("Admin"),
+  (req, res) => {
+    try {
+      const { reply } = req.body;
+      if (!reply || !reply.trim()) return res.status(400).json({ error: "Reply cannot be empty" });
+      dbHelpers.replyHelpMessage(req.params.id, reply.trim());
+      const hm = dbHelpers.getHelpMessageById(req.params.id);
+      if (hm && hm.SenderID) {
+        dbHelpers.createNotification(hm.SenderID, 'help_reply', 'Admin replied to your request', reply.trim(), hm.MessageID);
+        broadcast("notifications");
+      }
+      broadcast("help-messages");
+      res.json({ message: "Reply sent" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to send reply" });
+    }
+  }
+);
+
 app.delete(
   "/api/admin/help-messages/:id",
   authenticateToken,

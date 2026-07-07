@@ -240,6 +240,8 @@ db.run(`
 // Migration: normalize old unread/read statuses to the pending/done/rejected model
 try { db.run("UPDATE HelpMessages SET Status = 'pending' WHERE Status = 'unread'"); } catch(e) {}
 try { db.run("UPDATE HelpMessages SET Status = 'done' WHERE Status = 'read'"); } catch(e) {}
+try { db.run("ALTER TABLE HelpMessages ADD COLUMN AdminReply TEXT DEFAULT NULL"); } catch(e) {}
+try { db.run("ALTER TABLE HelpMessages ADD COLUMN RepliedAt DATETIME DEFAULT NULL"); } catch(e) {}
 
 // Shared calendar events (created by Admin, visible to everyone)
 db.run(`
@@ -699,6 +701,15 @@ getHelpMessagesBySender: (senderId) => {
 
 updateHelpMessageStatus: (id, status) => {
   const result = runQuery("UPDATE HelpMessages SET Status = ? WHERE MessageID = ?", [status, id]);
+  saveDatabase();
+  return result;
+},
+
+replyHelpMessage: (id, reply) => {
+  const result = runQuery(
+    "UPDATE HelpMessages SET AdminReply = ?, RepliedAt = CURRENT_TIMESTAMP, Status = 'done' WHERE MessageID = ?",
+    [reply, id]
+  );
   saveDatabase();
   return result;
 },
