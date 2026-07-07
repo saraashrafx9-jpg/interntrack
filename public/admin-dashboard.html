@@ -107,6 +107,22 @@
 <div class="toast" id="toast"></div>
 
 <!-- MODALS -->
+<div class="modal-overlay" id="editPostModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Edit Post</h3>
+      <button class="modal-close" onclick="closeModal('editPostModal')">✕</button>
+    </div>
+    <div class="form-group">
+      <textarea id="editPostContent" class="form-input" rows="5" style="resize:vertical;" placeholder="Edit your post..."></textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal('editPostModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditedPost()">Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="teamModal">
   <div class="modal-box">
     <div class="modal-header">
@@ -727,8 +743,18 @@ new MutationObserver(mutations => {
   const es = new EventSource('/api/events');
   let _rt;
   es.onmessage = (e) => {
-    try { const { resource } = JSON.parse(e.data); if (currentTab === 'newsfeed' && resource !== 'newsfeed') return; } catch(_) {}
-    clearTimeout(_rt); _rt = setTimeout(() => { viewingTeamId ? viewTeamDetail(viewingTeamId) : loadTab(currentTab); refreshRequestsBadge(); }, 300);
+    let resource = '';
+    try { resource = JSON.parse(e.data).resource || ''; } catch(_) {}
+    if (currentTab === 'newsfeed' && resource !== 'newsfeed') return;
+    clearTimeout(_rt);
+    _rt = setTimeout(() => {
+      if (currentTab === 'newsfeed' && resource === 'newsfeed') {
+        refreshNewsFeedList();
+      } else {
+        viewingTeamId ? viewTeamDetail(viewingTeamId) : loadTab(currentTab);
+      }
+      refreshRequestsBadge();
+    }, 300);
   };
 })();
 
@@ -2658,6 +2684,7 @@ async function deleteAchievement(id) {
       headers: { Authorization: 'Bearer ' + token }
     }).then(r => r.json());
 
+    currentAdmin = me;
     document.getElementById('adminName').textContent = me.Name || 'Admin';
   } catch(e) {}
 
@@ -2677,17 +2704,9 @@ window.addEventListener("scroll", () => {
 let newsFeedCache = [];
 let editingPostId = null;
 let myLikedPosts = new Set();
+let currentAdmin = null;
 
 async function renderNewsFeed(el) {
-  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-  try {
-    const [posts, likes] = await Promise.all([
-      fetch('/api/news-feed', { headers: getHeaders() }).then(r => r.json()),
-      fetch('/api/news-feed/my-likes', { headers: getHeaders() }).then(r => r.json()).catch(() => [])
-    ]);
-    newsFeedCache = posts;
-    myLikedPosts = new Set(likes);
-  } catch(e) { newsFeedCache = []; }
   el.innerHTML = `
     <div class="page-header">
       <div><h2>News Feed</h2><p>Share news and updates with everyone in the program</p></div>
@@ -2698,23 +2717,8 @@ async function renderNewsFeed(el) {
         <button class="btn btn-primary" onclick="submitNewsFeedPost()">Post</button>
       </div>
     </div>
-    <div id="newsFeedPosts">
-      ${newsFeedCache.length
-        ? newsFeedCache.map(p => renderNewsFeedPostCard(p, true)).join('')
-        : '<div class="full-panel"><div class="empty-state"><h3>No posts yet. Be the first to share!</h3></div></div>'}
-    </div>
-    <div class="modal-overlay" id="editPostModal">
-      <div class="modal-box">
-        <div class="modal-header">
-          <h3>Edit Post</h3>
-          <button class="modal-close" onclick="closeModal('editPostModal')">X</button>
-        </div>
-        <div class="form-group">
-          <textarea id="editPostContent" class="form-textarea" rows="5" style="resize:vertical;width:100%;"></textarea>
-        </div>
-        <button class="btn btn-primary" onclick="saveEditedPost()">Save</button>
-      </div>
-    </div>`;
+    <div id="newsFeedPosts"><div class="loading"><div class="spinner"></div></div></div>`;
+  await refreshNewsFeedList();
 }
 
 function renderNewsFeedPostCard(p, isAdmin) {
@@ -2840,11 +2844,18 @@ async function submitNewsFeedPost() {
 }
 
 async function refreshNewsFeedList() {
-  newsFeedCache = await fetch('/api/news-feed', { headers: getHeaders() }).then(r => r.json()).catch(() => []);
+  try {
+    const [posts, likes] = await Promise.all([
+      fetch('/api/news-feed', { headers: getHeaders() }).then(r => r.json()),
+      fetch('/api/news-feed/my-likes', { headers: getHeaders() }).then(r => r.json()).catch(() => [])
+    ]);
+    newsFeedCache = posts;
+    myLikedPosts = new Set(likes);
+  } catch(e) { newsFeedCache = []; }
   const el = document.getElementById('newsFeedPosts');
   if (el) el.innerHTML = newsFeedCache.length
     ? newsFeedCache.map(p => renderNewsFeedPostCard(p, true)).join('')
-    : '<div class="full-panel"><div class="empty-state"><h3>No posts yet.</h3></div></div>';
+    : '<div class="full-panel"><div class="empty-state"><h3>No posts yet. Be the first to share!</h3></div></div>';
 }
 
 function openEditPost(id) {
