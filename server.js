@@ -113,7 +113,7 @@ function broadcast(resource) {
 
 app.post("/api/auth/session", async (req, res) => {
   try {
-    const { idToken } = req.body;
+    const { idToken, remember } = req.body;
 
     if (!idToken) {
       return res.status(400).json({
@@ -122,7 +122,20 @@ app.post("/api/auth/session", async (req, res) => {
     }
 
     const decoded = await admin.auth().verifyIdToken(idToken);
-    const role = decoded.role || null;
+    let role = decoded.role || null;
+    let teamId = decoded.teamId || null;
+
+    // Firebase ID tokens are always short-lived (~1h) and this app never
+    // refreshes them, so "remember me" would silently stop working after an
+    // hour. Mint our own longer-lived local token for the ongoing session
+    // instead of reusing the raw Firebase idToken.
+    try {
+      const dbUser = dbHelpers.getUserByEmail(decoded.email);
+      if (dbUser) {
+        role = role || dbUser.Role;
+        teamId = dbUser.TeamID || teamId;
+      }
+    } catch (e) {}
 
     const dashboardUrl =
       role === "Admin"
@@ -133,8 +146,18 @@ app.post("/api/auth/session", async (req, res) => {
         ? "/supervisor-dashboard.html"
         : "/student-dashboard.html";
 
-    res.cookie("token", idToken, {
-      maxAge: 60 * 60 * 1000,
+    const maxAgeMs = remember ? 30 * 24 * 60 * 60 * 1000 : 60 * 60 * 1000;
+
+    const sessionToken = signLocalToken({
+      uid: decoded.uid,
+      email: decoded.email,
+      role,
+      teamId,
+      exp: Math.floor(Date.now() / 1000) + maxAgeMs / 1000
+    });
+
+    res.cookie("token", sessionToken, {
+      maxAge: maxAgeMs,
       httpOnly: false,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -143,11 +166,12 @@ app.post("/api/auth/session", async (req, res) => {
 
     res.json({
       message: "Session started",
+      token: sessionToken,
       user: {
         uid: decoded.uid,
         email: decoded.email,
         role,
-        teamId: decoded.teamId || null
+        teamId
       },
       redirectUrl: dashboardUrl
     });
@@ -171,7 +195,7 @@ app.post("/api/auth/logout", (req, res) => {
 
 app.post("/api/auth/local-login", (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, remember } = req.body;
     if (!email || !password) return res.status(400).json({ error: "Email and password required" });
 
     const user = dbHelpers.getUserByEmail(email);
@@ -182,12 +206,14 @@ app.post("/api/auth/local-login", (req, res) => {
     const valid = bcrypt.compareSync(password, user.Password);
     if (!valid) return res.status(401).json({ error: "Invalid credentials" });
 
+    const maxAgeMs = remember ? 30 * 24 * 60 * 60 * 1000 : 60 * 60 * 1000;
+
     const token = signLocalToken({
       uid:    `local_${user.UserID}`,
       email:  user.Email,
       role:   user.Role,
       teamId: user.TeamID || null,
-      exp:    Math.floor(Date.now() / 1000) + 3600
+      exp:    Math.floor(Date.now() / 1000) + maxAgeMs / 1000
     });
 
     const redirectUrl = user.Role === "Admin"      ? "/admin-dashboard.html"
@@ -195,7 +221,7 @@ app.post("/api/auth/local-login", (req, res) => {
                       : user.Role === "Supervisor" ? "/supervisor-dashboard.html"
                       :                              "/student-dashboard.html";
 
-    res.cookie("token", token, { maxAge: 3600000, httpOnly: false, sameSite: "lax", path: "/" });
+    res.cookie("token", token, { maxAge: maxAgeMs, httpOnly: false, sameSite: "lax", path: "/" });
     res.json({ token, redirectUrl, user: { email: user.Email, role: user.Role } });
   } catch (err) {
     res.status(500).json({ error: "Login failed" });

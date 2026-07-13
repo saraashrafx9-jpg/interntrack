@@ -1479,6 +1479,13 @@ async function viewSupTeamDetail(teamId) {
     const leader = team.LeaderName ? { Name: team.LeaderName } : (supUsersCache.leaders || []).find(l => l.TeamID === teamId);
     const { bg } = supTeamCardBanner(team, idx);
 
+    const teamDocsMap = {};
+    await Promise.all(teamAchievements.map(async a => {
+      try {
+        teamDocsMap[a.AchievementID] = await fetch(`/api/achievements/${a.AchievementID}/documents`).then(r => r.ok ? r.json() : []);
+      } catch (e) { teamDocsMap[a.AchievementID] = []; }
+    }));
+
     el.innerHTML = `
       <button class="btn btn-ghost" style="margin-bottom:16px;" onclick="switchTab('teams')">← ${t('h_teams')}</button>
       <div class="panel" style="padding:0;overflow:hidden;margin-bottom:20px;">
@@ -1502,7 +1509,15 @@ async function viewSupTeamDetail(teamId) {
               ${statusBadge(a.Status)}
               <h3 style="margin:10px 0 4px;">${escHtml(a.Title)}</h3>
               <p class="text-muted" style="font-size:13px;margin:0 0 12px;">${escHtml(a.CreatorName || '—')} · ${fmtDate(a.CreatedAt)}</p>
-              <p style="font-size:14px;line-height:1.6;margin:0;white-space:pre-wrap;">${escHtml(a.Description || '')}</p>
+              <p style="font-size:14px;line-height:1.6;margin:0 0 ${(teamDocsMap[a.AchievementID] || []).length ? '10px' : '0'};white-space:pre-wrap;">${escHtml(a.Description || '')}</p>
+              ${(teamDocsMap[a.AchievementID] || []).length ? `
+              <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                ${teamDocsMap[a.AchievementID].map(d => {
+                  const ext = d.FileName.split('.').pop().toLowerCase();
+                  const icon = {pdf:'',ppt:'',pptx:'',doc:'',docx:''}[ext] || '';
+                  return `<a href="${escHtml(d.FilePath)}" target="_blank" download style="display:flex;align-items:center;gap:5px;background:#ebebdf;border:1px solid #e2e8f0;border-radius:8px;padding:4px 10px;font-size:12px;text-decoration:none;color:#334155;">${icon} ${escHtml(d.FileName)}</a>`;
+                }).join('')}
+              </div>` : ''}
             </div>
           </div>`).join('')}
         </div>` : `<div class="full-panel"><div class="empty-state"><div class="empty-icon"></div><h3>${t('no_posts_yet')}</h3></div></div>`}`;
