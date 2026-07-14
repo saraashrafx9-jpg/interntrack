@@ -2647,11 +2647,14 @@ async function startServer() {
 // ═══════════════════════════════════════════════════════════════
 
 const emailTransporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
   auth: {
     user: process.env.GMAIL_USER || "intracknotifications@gmail.com",
     pass: (process.env.GMAIL_APP_PASSWORD || "fnlkrwfmtwramgpr").replace(/\s/g, "")
-  }
+  },
+  tls: { rejectUnauthorized: false }
 });
 
 const APP_URL = process.env.APP_URL || "https://interntrack-production.up.railway.app";
