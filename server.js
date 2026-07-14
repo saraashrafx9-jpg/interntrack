@@ -2837,6 +2837,41 @@ app.put("/api/admin/current-week", authenticateToken, authorizeRole("Admin"), (r
   res.json({ success: true, weekLabel });
 });
 
+app.post("/api/admin/test-email", authenticateToken, authorizeRole("Admin"), async (req, res) => {
+  const users = dbHelpers.getUsersForEmailReminder();
+  const supervisors = dbHelpers.getSupervisors();
+  const all = [...users, ...supervisors].filter(u => u.Email);
+  const uniqueEmails = [...new Map(all.map(u => [u.Email, u])).values()];
+
+  let sent = 0;
+  const errors = [];
+  for (const user of uniqueEmails) {
+    try {
+      await emailTransporter.sendMail({
+        from: FROM_ADDRESS,
+        to: user.Email,
+        subject: "Test Email — InTrack Notifications",
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+            <div style="background:#2563eb;padding:24px 28px;">
+              <h1 style="color:#fff;margin:0;font-size:20px;">InTrack — Test Email</h1>
+            </div>
+            <div style="padding:28px;">
+              <p style="font-size:15px;color:#1e293b;">Hi <strong>${user.Name}</strong>,</p>
+              <p style="font-size:15px;color:#1e293b;">This is a test message from InTrack to confirm that email notifications are working correctly.</p>
+              <p style="font-size:14px;color:#475569;">You will receive real reminders every <strong>Thursday</strong> if your weekly summary hasn't been submitted yet.</p>
+              <p style="font-size:12px;color:#94a3b8;margin-top:32px;">InTrack — SGMB Student Portal</p>
+            </div>
+          </div>`
+      });
+      sent++;
+    } catch (e) {
+      errors.push(`${user.Email}: ${e.message}`);
+    }
+  }
+  res.json({ success: true, totalRecipients: uniqueEmails.length, sent, errors });
+});
+
 process.on("SIGINT", () => {
   if (dbHelpers && dbHelpers.close) {
     dbHelpers.close();

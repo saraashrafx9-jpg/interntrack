@@ -2119,6 +2119,9 @@ async function renderEmailReminders(el) {
         <br>Cron runs automatically: <strong>Thursday 9 AM</strong> (reminder) · <strong>Friday 9 AM</strong> (overdue) — Gulf time.
       </p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn" style="background:#6b7280;color:#fff;" onclick="sendTestEmail()" id="btnTest">
+          <i class="fa-solid fa-vial"></i> Send Test Email to All
+        </button>
         <button class="btn btn-primary" onclick="triggerReminders(false)" id="btnRemind">
           <i class="fa-solid fa-bell"></i> Send Reminder Now
         </button>
@@ -2173,6 +2176,18 @@ async function triggerReminders(isOverdue) {
     } else showToast(data.error || 'Failed', 'error');
   } catch(e) { showToast('Error: ' + e.message, 'error'); }
   finally { if(btn) { btn.disabled = false; btn.innerHTML = isOverdue ? '<i class="fa-solid fa-triangle-exclamation"></i> Send Overdue Notice' : '<i class="fa-solid fa-bell"></i> Send Reminder Now'; } }
+}
+
+async function sendTestEmail() {
+  const btn = document.getElementById('btnTest');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+  try {
+    const r = await fetch('/api/admin/test-email', { method:'POST', headers: getHeaders() });
+    const data = await r.json();
+    if (r.ok) showToast(`Test emails sent to ${data.sent} of ${data.totalRecipients} users!`, 'success');
+    else showToast(data.error || 'Failed', 'error');
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+  finally { if(btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-vial"></i> Send Test Email to All'; } }
 }
 
 // ── SETTINGS ──────────────────────────────────────────────────────────────────
