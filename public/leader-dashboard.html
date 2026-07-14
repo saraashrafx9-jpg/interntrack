@@ -1586,10 +1586,25 @@ async function deleteTeamLink(id) {
   renderOverview(document.getElementById('pageContent'));
 }
 
+function autoDetectWeek() {
+  let max = 0;
+  for (const a of myAchievements) {
+    const m = (a.WeekLabel || a.Title || '').match(/\d+/);
+    if (m) max = Math.max(max, parseInt(m[0], 10));
+  }
+  for (const a of publishedFromStudents) {
+    const m = (a.WeekLabel || a.Title || '').match(/\d+/);
+    if (m) max = Math.max(max, parseInt(m[0], 10));
+  }
+  const n = max + 1;
+  return currentLang === 'ar' ? `الأسبوع ${n}` : `Week ${n}`;
+}
+
 function renderPostForm(el, prefill={}) {
+  const autoWeek = prefill.weekLabel || autoDetectWeek();
   const weekOptions = Array.from({length:20},(_,i)=>{
     const n=i+1, label=currentLang==='ar'?`الأسبوع ${n}`:`Week ${n}`;
-    return `<option value="${label}" ${prefill.weekLabel===label?'selected':''}>${label}</option>`;
+    return `<option value="${label}" ${autoWeek===label?'selected':''}>${label}</option>`;
   }).join('');
   el.innerHTML=`
     <div class="page-header">

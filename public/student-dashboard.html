@@ -1545,11 +1545,28 @@ async function deleteMemberTodo(id) {
 }
 
 // ── SUBMIT FORM ───────────────────────────────────────────────────────────────
+function autoDetectWeek() {
+  // Find the highest week number already submitted by this student
+  let max = 0;
+  for (const a of myAchievements) {
+    const m = (a.WeekLabel || a.Title || '').match(/\d+/);
+    if (m) max = Math.max(max, parseInt(m[0], 10));
+  }
+  // Also check all team posts so we don't suggest an already-used week
+  for (const a of Object.values(teamPostsMap)) {
+    const m = (a.WeekLabel || '').match(/\d+/);
+    if (m) max = Math.max(max, parseInt(m[0], 10));
+  }
+  const n = max + 1;
+  return currentLang === 'ar' ? `الأسبوع ${n}` : `Week ${n}`;
+}
+
 function renderSubmitForm(el, prefill = {}) {
+  const autoWeek = prefill.weekLabel || autoDetectWeek();
   const weekOptions = Array.from({length: 20}, (_, i) => {
     const n = i + 1;
     const label = currentLang === 'ar' ? `الأسبوع ${n}` : `Week ${n}`;
-    const sel = prefill.weekLabel === label ? 'selected' : '';
+    const sel = autoWeek === label ? 'selected' : '';
     return `<option value="${label}" ${sel}>${label}</option>`;
   }).join('');
 
