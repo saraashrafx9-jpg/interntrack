@@ -2651,14 +2651,14 @@ const emailTransporter = nodemailer.createTransport({
   port: 587,
   secure: false,
   auth: {
-    user: process.env.GMAIL_USER || "intracknotifications@gmail.com",
-    pass: (process.env.GMAIL_APP_PASSWORD || "fnlkrwfmtwramgpr").replace(/\s/g, "")
+    user: process.env.GMAIL_USER,
+    pass: (process.env.GMAIL_APP_PASSWORD || "").replace(/\s/g, "")
   },
   tls: { rejectUnauthorized: false }
 });
 
 const APP_URL = process.env.APP_URL || "https://interntrack-production.up.railway.app";
-const FROM_ADDRESS = `"InTrack Notifications" <${process.env.GMAIL_USER || "intracknotifications@gmail.com"}>`;
+const FROM_ADDRESS = `"InTrack Notifications" <${process.env.GMAIL_USER}>`;
 
 function getCurrentWeekLabel() {
   const stored = dbHelpers.getSetting("current_week");
