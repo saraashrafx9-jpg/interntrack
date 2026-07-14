@@ -21,6 +21,8 @@ const {
 } = require("./auth");
 
 const bcrypt = require("bcryptjs");
+const nodemailer = require("nodemailer");
+const cron = require("node-cron");
 
 // Initialize Firebase Admin SDK
 initFirebase();
@@ -2630,11 +2632,210 @@ async function startServer() {
     app.listen(PORT, () => {
       console.log("Server running on http://localhost:" + PORT);
     });
+
+    // ── Email system ──────────────────────────────────────────────
+    startEmailScheduler();
+
   } catch (error) {
     console.error("Failed to start:", error);
     process.exit(1);
   }
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  EMAIL REMINDER SYSTEM
+// ═══════════════════════════════════════════════════════════════
+
+const emailTransporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_USER || "intracknotifications@gmail.com",
+    pass: (process.env.GMAIL_APP_PASSWORD || "fnlkrwfmtwramgpr").replace(/\s/g, "")
+  }
+});
+
+const APP_URL = process.env.APP_URL || "https://interntrack-production.up.railway.app";
+const FROM_ADDRESS = `"InTrack Notifications" <${process.env.GMAIL_USER || "intracknotifications@gmail.com"}>`;
+
+function getCurrentWeekLabel() {
+  const stored = dbHelpers.getSetting("current_week");
+  if (stored) return stored;
+  // Auto-detect: find highest week number in DB and use it
+  const rows = dbHelpers.getAllAchievements({ statusFilter: ["published", "pending", "draft"] });
+  let max = 0;
+  for (const a of rows) {
+    const m = (a.WeekLabel || a.Title || "").match(/\d+/);
+    if (m) max = Math.max(max, parseInt(m[0], 10));
+  }
+  return `Week ${max > 0 ? max : 1}`;
+}
+
+function studentReminderHTML(name, weekLabel, isOverdue) {
+  const color = isOverdue ? "#dc2626" : "#2563eb";
+  const subject = isOverdue ? "OVERDUE" : "Reminder";
+  return `
+  <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+    <div style="background:${color};padding:24px 28px;">
+      <h1 style="color:#fff;margin:0;font-size:20px;">InTrack — ${subject}</h1>
+    </div>
+    <div style="padding:28px;">
+      <p style="font-size:15px;color:#1e293b;">Hi <strong>${name}</strong>,</p>
+      ${isOverdue
+        ? `<p style="font-size:15px;color:#dc2626;font-weight:600;">Your <strong>${weekLabel}</strong> summary is <u>overdue</u>. The deadline was Thursday end of day.</p>
+           <p style="font-size:14px;color:#475569;">Please submit it as soon as possible so your supervisor can review your progress.</p>`
+        : `<p style="font-size:15px;color:#1e293b;">This is a reminder to submit your <strong>${weekLabel}</strong> weekly summary.</p>
+           <p style="font-size:14px;color:#475569;">The deadline is <strong>Thursday end of day</strong>. Log in to InTrack and submit your summary before the deadline.</p>`
+      }
+      <div style="margin:28px 0;">
+        <a href="${APP_URL}/student-dashboard.html" style="background:${color};color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">Submit Now →</a>
+      </div>
+      <p style="font-size:12px;color:#94a3b8;margin-top:32px;">InTrack — SGMB Student Portal</p>
+    </div>
+  </div>`;
+}
+
+function supervisorSummaryHTML(supervisorName, weekLabel, submitted, notSubmitted, isOverdue) {
+  const color = isOverdue ? "#dc2626" : "#2563eb";
+  const makeRow = (u, done) => `
+    <tr>
+      <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;">${u.Name}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;color:#475569;">${u.TeamName || ""}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;font-weight:600;color:${done ? "#16a34a" : "#dc2626"};">${done ? "✓ Submitted" : "✗ Not Submitted"}</td>
+    </tr>`;
+  return `
+  <div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+    <div style="background:${color};padding:24px 28px;">
+      <h1 style="color:#fff;margin:0;font-size:20px;">InTrack — ${isOverdue ? "Overdue" : "Weekly"} Summary Report</h1>
+    </div>
+    <div style="padding:28px;">
+      <p style="font-size:15px;color:#1e293b;">Hi <strong>${supervisorName}</strong>,</p>
+      <p style="font-size:15px;color:#1e293b;">Here is the <strong>${weekLabel}</strong> submission status for your students${isOverdue ? " (as of Friday — submissions still missing)" : ""}:</p>
+      <table style="width:100%;border-collapse:collapse;margin-top:16px;font-size:14px;">
+        <thead>
+          <tr style="background:#f8fafc;">
+            <th style="padding:10px 12px;text-align:left;color:#475569;">Student</th>
+            <th style="padding:10px 12px;text-align:left;color:#475569;">Team</th>
+            <th style="padding:10px 12px;text-align:left;color:#475569;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${submitted.map(u => makeRow(u, true)).join("")}
+          ${notSubmitted.map(u => makeRow(u, false)).join("")}
+        </tbody>
+      </table>
+      ${notSubmitted.length === 0
+        ? `<p style="margin-top:20px;color:#16a34a;font-weight:600;">All students have submitted on time!</p>`
+        : `<p style="margin-top:20px;color:#dc2626;"><strong>${notSubmitted.length}</strong> student(s) have not submitted yet.</p>`
+      }
+      <p style="font-size:12px;color:#94a3b8;margin-top:32px;">InTrack — SGMB Student Portal</p>
+    </div>
+  </div>`;
+}
+
+async function sendWeeklyReminders(weekLabel, isOverdue = false) {
+  const users = dbHelpers.getUsersForEmailReminder();
+  const supervisors = dbHelpers.getSupervisors();
+  const submitterRows = dbHelpers.getWeekSubmitters(weekLabel);
+  const submitterIds = new Set(submitterRows.map(r => r.UserID));
+
+  const notSubmitted = users.filter(u => !submitterIds.has(u.UserID));
+  const submitted = users.filter(u => submitterIds.has(u.UserID));
+
+  let emailsSent = 0;
+  const errors = [];
+
+  // Send individual reminder to each student/leader who hasn't submitted
+  for (const user of notSubmitted) {
+    if (!user.Email) continue;
+    try {
+      await emailTransporter.sendMail({
+        from: FROM_ADDRESS,
+        to: user.Email,
+        subject: isOverdue
+          ? `[OVERDUE] ${weekLabel} Weekly Summary — InTrack`
+          : `Reminder: Submit Your ${weekLabel} Summary by Thursday — InTrack`,
+        html: studentReminderHTML(user.Name, weekLabel, isOverdue)
+      });
+      emailsSent++;
+    } catch (e) {
+      errors.push(`${user.Email}: ${e.message}`);
+    }
+  }
+
+  // Send summary to each supervisor
+  for (const sup of supervisors) {
+    if (!sup.Email) continue;
+    try {
+      await emailTransporter.sendMail({
+        from: FROM_ADDRESS,
+        to: sup.Email,
+        subject: isOverdue
+          ? `Overdue Submissions — ${weekLabel} — InTrack`
+          : `${weekLabel} Submission Status Report — InTrack`,
+        html: supervisorSummaryHTML(sup.Name, weekLabel, submitted, notSubmitted, isOverdue)
+      });
+      emailsSent++;
+    } catch (e) {
+      errors.push(`${sup.Email}: ${e.message}`);
+    }
+  }
+
+  dbHelpers.setSetting("last_reminder_sent", new Date().toISOString());
+  dbHelpers.setSetting("last_reminder_week", weekLabel);
+  dbHelpers.setSetting("last_reminder_type", isOverdue ? "overdue" : "reminder");
+  dbHelpers.setSetting("last_reminder_stats", JSON.stringify({ submitted: submitted.length, notSubmitted: notSubmitted.length, emailsSent, errors }));
+
+  console.log(`[Email] ${isOverdue ? "Overdue" : "Reminder"} emails sent for ${weekLabel}: ${emailsSent} sent, ${errors.length} errors`);
+  return { submitted: submitted.length, notSubmitted: notSubmitted.length, emailsSent, errors };
+}
+
+function startEmailScheduler() {
+  // Every Thursday at 9 AM Gulf time (5 AM UTC) — send reminders to non-submitters
+  cron.schedule("0 5 * * 4", async () => {
+    const week = getCurrentWeekLabel();
+    console.log(`[Cron] Thursday reminder for ${week}`);
+    await sendWeeklyReminders(week, false);
+  }, { timezone: "UTC" });
+
+  // Every Friday at 9 AM Gulf time (5 AM UTC) — send overdue notices
+  cron.schedule("0 5 * * 5", async () => {
+    const week = getCurrentWeekLabel();
+    console.log(`[Cron] Friday overdue notice for ${week}`);
+    await sendWeeklyReminders(week, true);
+  }, { timezone: "UTC" });
+
+  console.log("[Email] Scheduler started — reminders fire Thursday 9 AM, overdue Friday 9 AM (Gulf time)");
+}
+
+// ── Admin: manual trigger ──────────────────────────────────────
+app.post("/api/admin/send-reminders", authenticateToken, authorizeRole("Admin"), async (req, res) => {
+  try {
+    const weekLabel = req.body.weekLabel || getCurrentWeekLabel();
+    const isOverdue = req.body.isOverdue === true;
+    const result = await sendWeeklyReminders(weekLabel, isOverdue);
+    res.json({ success: true, weekLabel, ...result });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get("/api/admin/email-status", authenticateToken, authorizeRole("Admin"), (req, res) => {
+  res.json({
+    currentWeek: getCurrentWeekLabel(),
+    lastSent: dbHelpers.getSetting("last_reminder_sent"),
+    lastWeek: dbHelpers.getSetting("last_reminder_week"),
+    lastType: dbHelpers.getSetting("last_reminder_type"),
+    lastStats: JSON.parse(dbHelpers.getSetting("last_reminder_stats") || "null"),
+    gmailUser: process.env.GMAIL_USER || "intracknotifications@gmail.com"
+  });
+});
+
+app.put("/api/admin/current-week", authenticateToken, authorizeRole("Admin"), (req, res) => {
+  const { weekLabel } = req.body;
+  if (!weekLabel) return res.status(400).json({ error: "weekLabel required" });
+  dbHelpers.setSetting("current_week", weekLabel);
+  res.json({ success: true, weekLabel });
+});
 
 process.on("SIGINT", () => {
   if (dbHelpers && dbHelpers.close) {

@@ -66,6 +66,11 @@
       <span id="requestsBadge" style="display:none;background:#ef4444;color:#fff;border-radius:20px;padding:1px 7px;font-size:11px;margin-left:4px;"></span>
     </a>
 
+    <a class="nav-item" onclick="switchTab('emails')" href="#">
+      <span class="nav-icon"><i class="fa-solid fa-paper-plane"></i></span>
+      <span>Email Reminders</span>
+    </a>
+
     <a class="nav-item" onclick="switchTab('settings')" href="#">
       <span class="nav-icon"><i class="fa-solid fa-gear"></i></span>
       <span data-i18n="nav_settings">Settings</span>
@@ -827,7 +832,8 @@ function switchTab(tab) {
     calendar: 3,
     newsfeed: 4,
     requests: 5,
-    settings: 6
+    emails: 6,
+    settings: 7
   };
 
   document.querySelectorAll('.sidebar-nav .nav-item')[idx[tab]]?.classList.add('active');
@@ -839,6 +845,7 @@ function switchTab(tab) {
     calendar: t('nav_calendar'),
     newsfeed: 'News Feed',
     requests: t('nav_messages'),
+    emails: 'Email Reminders',
     settings: t('tb_settings')
   };
 
@@ -899,6 +906,10 @@ async function loadTab(tab) {
 
       case 'requests':
         renderRequests(el);
+        break;
+
+      case 'emails':
+        renderEmailReminders(el);
         break;
 
       case 'settings':
@@ -2068,6 +2079,100 @@ async function deleteCalendarEvent(id) {
   const r = await fetch('/api/admin/calendar-events/' + id, { method: 'DELETE', headers: getHeaders() });
   if (r.ok) { showToast(t('toast_deleted'), 'info'); renderCalendar(document.getElementById('pageContent')); }
   else showToast(t('toast_failed'), 'error');
+}
+
+// ── EMAIL REMINDERS ───────────────────────────────────────────────────────────
+async function renderEmailReminders(el) {
+  el.innerHTML = `<div class="loading" style="padding:40px;text-align:center;">Loading...</div>`;
+  let status = {};
+  try { status = await fetch('/api/admin/email-status', { headers: getHeaders() }).then(r => r.json()); } catch(e) {}
+
+  const weekOptions = Array.from({length:20},(_,i)=>{
+    const n=i+1, label=`Week ${n}`;
+    const sel = status.currentWeek === label ? 'selected' : '';
+    return `<option value="${label}" ${sel}>${label}</option>`;
+  }).join('');
+
+  const stats = status.lastStats;
+  const lastSentStr = status.lastSent ? new Date(status.lastSent).toLocaleString() : 'Never';
+
+  el.innerHTML = `
+    <div class="page-header"><div><h2>Email Reminders</h2><p>Send weekly summary reminders to students and supervisors.</p></div></div>
+
+    <div class="full-panel" style="margin-bottom:16px;">
+      <h3 style="margin:0 0 16px;font-size:15px;font-weight:600;">Current Week</h3>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Set which week's submissions to check when sending reminders.</p>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <select id="weekSelect" class="form-input" style="width:160px;">${weekOptions}</select>
+        <button class="btn btn-primary" onclick="saveCurrentWeek()">Save Week</button>
+      </div>
+      <p style="margin-top:10px;font-size:13px;color:var(--text-muted);">
+        Auto-detected: <strong>${status.currentWeek || 'Week 1'}</strong> &nbsp;|&nbsp;
+        Sending from: <strong>${status.gmailUser || ''}</strong>
+      </p>
+    </div>
+
+    <div class="full-panel" style="margin-bottom:16px;">
+      <h3 style="margin:0 0 4px;font-size:15px;font-weight:600;">Send Reminder Emails</h3>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+        Sends a reminder to every student/leader who hasn't submitted yet, and a status report to all supervisors.
+        <br>Cron runs automatically: <strong>Thursday 9 AM</strong> (reminder) · <strong>Friday 9 AM</strong> (overdue) — Gulf time.
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="triggerReminders(false)" id="btnRemind">
+          <i class="fa-solid fa-bell"></i> Send Reminder Now
+        </button>
+        <button class="btn btn-danger" onclick="triggerReminders(true)" id="btnOverdue">
+          <i class="fa-solid fa-triangle-exclamation"></i> Send Overdue Notice
+        </button>
+      </div>
+    </div>
+
+    <div class="full-panel">
+      <h3 style="margin:0 0 12px;font-size:15px;font-weight:600;">Last Send Status</h3>
+      ${stats ? `
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:14px;">
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
+            <div style="font-size:22px;font-weight:700;color:#16a34a;">${stats.submitted}</div>
+            <div style="font-size:12px;color:var(--text-muted);">Submitted</div>
+          </div>
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
+            <div style="font-size:22px;font-weight:700;color:#dc2626;">${stats.notSubmitted}</div>
+            <div style="font-size:12px;color:var(--text-muted);">Not Submitted</div>
+          </div>
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
+            <div style="font-size:22px;font-weight:700;color:#2563eb;">${stats.emailsSent}</div>
+            <div style="font-size:12px;color:var(--text-muted);">Emails Sent</div>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--text-muted);">
+          Last sent: <strong>${lastSentStr}</strong> &nbsp;·&nbsp; Week: <strong>${status.lastWeek || '—'}</strong> &nbsp;·&nbsp; Type: <strong>${status.lastType || '—'}</strong>
+        </p>
+        ${stats.errors?.length ? `<p style="font-size:12px;color:#dc2626;">Errors: ${stats.errors.join(', ')}</p>` : ''}
+      ` : `<p style="color:var(--text-muted);">No emails sent yet.</p>`}
+    </div>`;
+}
+
+async function saveCurrentWeek() {
+  const weekLabel = document.getElementById('weekSelect').value;
+  const r = await fetch('/api/admin/current-week', { method:'PUT', headers: getHeaders(), body: JSON.stringify({ weekLabel }) });
+  if (r.ok) showToast(`Current week set to ${weekLabel}`, 'success');
+  else showToast('Failed to save', 'error');
+}
+
+async function triggerReminders(isOverdue) {
+  const weekLabel = document.getElementById('weekSelect')?.value;
+  const btn = document.getElementById(isOverdue ? 'btnOverdue' : 'btnRemind');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+  try {
+    const r = await fetch('/api/admin/send-reminders', { method:'POST', headers: getHeaders(), body: JSON.stringify({ weekLabel, isOverdue }) });
+    const data = await r.json();
+    if (r.ok) {
+      showToast(`Done! ${data.emailsSent} email(s) sent. ${data.notSubmitted} student(s) not submitted.`, 'success');
+      renderEmailReminders(document.getElementById('pageContent'));
+    } else showToast(data.error || 'Failed', 'error');
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+  finally { if(btn) { btn.disabled = false; btn.innerHTML = isOverdue ? '<i class="fa-solid fa-triangle-exclamation"></i> Send Overdue Notice' : '<i class="fa-solid fa-bell"></i> Send Reminder Now'; } }
 }
 
 // ── SETTINGS ──────────────────────────────────────────────────────────────────

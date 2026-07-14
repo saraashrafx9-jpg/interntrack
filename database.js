@@ -192,6 +192,12 @@ db.run('CREATE INDEX IF NOT EXISTS idx_team_links_team ON TeamLinks(TeamID)');
   // Add WeekLabel column if not exists (migration-safe)
   try { db.run('ALTER TABLE Achievements ADD COLUMN WeekLabel TEXT DEFAULT NULL'); } catch(e) {}
 
+  // App settings key-value store
+  db.run(`CREATE TABLE IF NOT EXISTS AppSettings (Key TEXT PRIMARY KEY, Value TEXT)`);
+  // HelpMessages reply columns
+  try { db.run("ALTER TABLE HelpMessages ADD COLUMN AdminReply TEXT DEFAULT NULL"); } catch(e) {}
+  try { db.run("ALTER TABLE HelpMessages ADD COLUMN RepliedAt DATETIME DEFAULT NULL"); } catch(e) {}
+
   db.run(`
     CREATE TABLE IF NOT EXISTS Documents (
       DocumentID   INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1293,6 +1299,50 @@ getTeamTodos: (teamId) => {
     );
     saveDatabase();
     return result;
+  },
+
+  // ── App Settings ──────────────────────────────────────────────
+  getSetting: (key) => {
+    const row = queryOne("SELECT Value FROM AppSettings WHERE Key = ?", [key]);
+    return row ? row.Value : null;
+  },
+  setSetting: (key, value) => {
+    runQuery("INSERT OR REPLACE INTO AppSettings (Key, Value) VALUES (?, ?)", [key, value]);
+    saveDatabase();
+  },
+
+  // ── Email reminder helpers ────────────────────────────────────
+  getUsersForEmailReminder: () => {
+    return queryAll(`
+      SELECT u.UserID, u.Name, u.Email, u.Role, u.TeamID, t.TeamName,
+             lu.Name as LeaderName, lu.Email as LeaderEmail
+      FROM Users u
+      LEFT JOIN Teams t ON u.TeamID = t.TeamID
+      LEFT JOIN Users lu ON t.LeaderUserID = lu.UserID
+      WHERE u.Role IN ('Student', 'Leader')
+        AND u.Email IS NOT NULL AND u.Email != ''
+        AND u.TeamID IS NOT NULL
+      ORDER BY u.TeamID, u.Role, u.Name
+    `);
+  },
+
+  getSupervisors: () => {
+    return queryAll("SELECT UserID, Name, Email FROM Users WHERE Role = 'Supervisor' AND Email IS NOT NULL AND Email != ''");
+  },
+
+  getWeekSubmitters: (weekLabel) => {
+    return queryAll(
+      `SELECT DISTINCT CreatedBy as UserID FROM Achievements WHERE WeekLabel = ? OR Title = ?`,
+      [weekLabel, weekLabel]
+    );
+  },
+
+  getAllTeamsWithLeaders: () => {
+    return queryAll(`
+      SELECT t.TeamID, t.TeamName, u.UserID as LeaderID, u.Name as LeaderName, u.Email as LeaderEmail
+      FROM Teams t
+      LEFT JOIN Users u ON t.LeaderUserID = u.UserID
+    `);
   }
 };
 

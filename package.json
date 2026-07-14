@@ -19,6 +19,8 @@
     "firebase": "^12.14.0",
     "firebase-admin": "^12.0.0",
     "multer": "^2.0.0",
+    "node-cron": "^4.6.0",
+    "nodemailer": "^9.0.3",
     "sql.js": "^1.10.3"
   },
   "devDependencies": {
