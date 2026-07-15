@@ -1295,6 +1295,7 @@ async function viewTeamDetail(teamId) {
                 <button class="btn btn-sm btn-danger" onclick="deleteAchievementInTeamDetail(${a.AchievementID})">Delete</button>
               </div>
               <h3 style="margin:0 0 4px;">${escHtml(a.Title)}</h3>
+              ${(a.WeekLabel || /^week\s+\d+$/i.test((a.Title||'').trim())) ? `<div style="margin:2px 0 8px;"><span style="background:#dce8f5;color:#3d5a7d;font-size:11px;font-weight:600;padding:2px 10px;border-radius:20px;">${escHtml(a.WeekLabel || a.Title)}</span></div>` : ''}
               <p class="text-muted" style="font-size:13px;margin:0 0 12px;">${escHtml(a.CreatorName || '—')} · ${fmtDate(a.CreatedAt)}</p>
               <p style="font-size:14px;line-height:1.6;margin:0 0 12px;white-space:pre-wrap;">${escHtml(a.Description || '')}</p>
               <div id="post-docs-${a.AchievementID}" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
@@ -1495,7 +1496,7 @@ async function renderAchievements(el) {
         <thead><tr><th>${t('th_team')}</th><th>${t('th_team')}</th><th>${t('th_author')}</th><th>${t('th_status')}</th><th>${t('th_date')}</th><th>${t('th_actions')}</th></tr></thead>
         <tbody>${achievements.map(a=>`
           <tr>
-            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><strong>${escHtml(a.Title)}</strong></td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><strong>${escHtml(a.Title)}</strong>${(a.WeekLabel||/^week\s+\d+$/i.test((a.Title||'').trim()))?`<br><span style="background:#dce8f5;color:#3d5a7d;font-size:10px;font-weight:600;padding:1px 8px;border-radius:20px;">${escHtml(a.WeekLabel||a.Title)}</span>`:''}</td>
             <td><span class="badge badge-blue">${escHtml(a.TeamName||'—')}</span></td>
             <td>${escHtml(a.CreatorName||'—')}</td>
             <td>${statusBadge(a.Status)}</td>

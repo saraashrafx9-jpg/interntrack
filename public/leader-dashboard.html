@@ -1310,6 +1310,7 @@ let teamPostsMap = {}, teamPostsDocsMap = {};
 
 function renderTeamPostCard(a, docs) {
   docs = docs || [];
+  const weekDisplay = a.WeekLabel || (/^week\s+\d+$/i.test((a.Title||'').trim()) ? a.Title.trim() : null);
   return `
     <div class="achievement-card-full" style="cursor:pointer;" onclick="openPostDetail(${a.AchievementID})">
       ${a.FirstImage
@@ -1317,6 +1318,7 @@ function renderTeamPostCard(a, docs) {
         : `<div class="card-image"></div>`}
       <div class="card-body">
         <div class="card-title">${escHtml(a.Title)}</div>
+        ${weekDisplay ? `<div style="margin:4px 0 6px;"><span style="background:#dce8f5;color:#3d5a7d;font-size:11px;font-weight:600;padding:2px 10px;border-radius:20px;">${escHtml(weekDisplay)}</span></div>` : ''}
         <div class="card-desc">${escHtml(a.Description || '')}</div>
         <div class="card-meta">
           <span>${escHtml(a.CreatorName || '')} · ${fmtDate(a.CreatedAt)}</span>
