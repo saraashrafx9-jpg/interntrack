@@ -938,7 +938,9 @@ getTeamTodos: (teamId) => {
       params.push(filters.userId);
     }
 
-    query += ' ORDER BY a.DatePosted DESC';
+    query += ` ORDER BY
+      CASE WHEN a.WeekLabel IS NOT NULL AND a.WeekLabel != '' THEN CAST(REPLACE(REPLACE(a.WeekLabel,'Week ',''),'الأسبوع ','') AS INTEGER) ELSE 9999 END ASC,
+      a.DatePosted ASC`;
 
     if (filters.limit) {
       query += ' LIMIT ?';
